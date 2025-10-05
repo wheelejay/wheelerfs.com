@@ -55,31 +55,33 @@ const App = () => {
     <>
       {/* Header */}
       <header role="banner">
-        <div className="logo">
-          <img src="/wheelerfslogo.png" alt="Wheeler Food Safety Logo" style={{ height: '80px', width: 'auto' }} />
+        <div className="header-flex">
+          <div className="logo">
+            <img src="/wheelerfslogo.png" alt="Wheeler Food Safety Logo" style={{ height: '80px', width: 'auto' }} />
+          </div>
+          <nav aria-label="Main navigation">
+            <button
+              className="hamburger"
+              aria-label="Toggle menu"
+              aria-controls="nav-links"
+              aria-expanded={menuOpen ? 'true' : 'false'}
+              onClick={handleHamburgerClick}
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+            <ul
+              id="nav-links"
+              className={menuOpen ? 'active' : ''}
+            >
+              <li><a href="#services" onClick={handleNavLinkClick}>Services</a></li>
+              <li><a href="#pricing" onClick={handleNavLinkClick}>Pricing</a></li>
+              <li><a href="#why-us" onClick={handleNavLinkClick}>Why Us</a></li>
+              <li><a href="#contact" onClick={handleNavLinkClick}>Contact</a></li>
+            </ul>
+          </nav>
         </div>
-        <nav aria-label="Main navigation">
-          <button
-            className="hamburger"
-            aria-label="Toggle menu"
-            aria-controls="nav-links"
-            aria-expanded={menuOpen ? 'true' : 'false'}
-            onClick={handleHamburgerClick}
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-          <ul
-            id="nav-links"
-            className={menuOpen ? 'active' : ''}
-          >
-            <li><a href="#services" onClick={handleNavLinkClick}>Services</a></li>
-            <li><a href="#pricing" onClick={handleNavLinkClick}>Pricing</a></li>
-            <li><a href="#why-us" onClick={handleNavLinkClick}>Why Us</a></li>
-            <li><a href="#contact" onClick={handleNavLinkClick}>Contact</a></li>
-          </ul>
-        </nav>
       </header>
 
   <main>

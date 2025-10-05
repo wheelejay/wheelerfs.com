@@ -157,11 +157,6 @@ main {
   border-color: #00182b;
 }
 header {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 0.2rem 1vw;
   background: #f9f9f9;
   border-bottom: 1px solid #ddd;
   position: sticky;
@@ -175,6 +170,18 @@ header {
   right: 0;
   box-sizing: border-box;
   color: #2d6a4f;
+  padding: 0.2rem 1vw;
+}
+
+
+.header-flex {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 h1, h2, h3, h4, h5, h6 {
