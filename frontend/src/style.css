@@ -1,3 +1,29 @@
+@media (min-width: 1100px) {
+  .service-cards .card {
+    width: 400px !important;
+    height: 450px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    aspect-ratio: 1 / 1;
+    padding: 1.2rem !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #00182b;
+    box-sizing: border-box;
+  }
+  .service-cards {
+    display: flex !important;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: stretch;
+    gap: 2rem;
+  }
+}
 /* --- Hamburger Menu Final Override --- */
 .hamburger {
   display: none;
@@ -28,15 +54,21 @@
     margin-left: auto;
   }
   nav ul {
-    display: none !important;
+    display: none;
     flex-direction: column;
     position: absolute;
     top: 60px;
     right: 0;
-    left: auto;
     background: #f9f9f9;
     border: 1px solid #ddd;
     padding: 1rem;
+    z-index: 1001;
+  }
+
+  .footer-columns p,
+  .footer-columns br + span,
+  .footer-columns br + div,
+  .footer-columns > div > :not(strong):not(a):not(:first-child) {
     border-radius: 8px;
     min-width: 160px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -62,27 +94,29 @@
     min-width: 0;
   }
 }
-.footer-divider {
-  width: 100vw;
-  max-width: 100vw;
-  height: 2px;
-  background: #e0e7ef;
+
+.footer-columns {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  max-width: 1200px;
   margin: 0 auto 1.5rem auto;
-}
-.footer-copyright {
-  text-align: center;
-  margin-top: 1.5rem;
+  text-align: left;
+  width: 100%;
   color: #fff;
-  font-size: 1rem;
+  flex-wrap: wrap;
 }
-.services, .why-us, .contact {
-  scroll-margin-top: 60px;
-  margin: 0 !important;
+
+.footer-columns p,
+.footer-columns br + span,
+.footer-columns br + div,
+.footer-columns > div > :not(strong):not(a):not(:first-child) {
+  color: #cfd8e3;
+  font-size: 4rem;
 }
-.hamburger span {
-  display: block;
-  width: 25px;
-  height: 3px;
+
+.footer-columns > div > br + * {
+  color: #cfd8e3;
   background: #222;
   border-radius: 2px;
   transition: background 0.3s;
@@ -93,13 +127,13 @@ main {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-section {
-  width: 100vw;
   box-sizing: border-box;
-  padding-left: max(24px, calc((100vw - 900px) / 2));
-  padding-right: max(24px, calc((100vw - 900px) / 2));
+  margin: 0 auto;
+  max-width: 1200px;
+  padding: 1.5rem 1.5rem 0 1.5rem;
 }
-}
+
+
 /* Modern, square card style for service cards only */
 .card {
   padding: 2rem 1.2rem 1.2rem 1.2rem;
@@ -473,6 +507,7 @@ footer.footer-dark {
   width: 100%;
   color: #fff;
   flex-wrap: wrap;
+}
 .footer-columns p,
 .footer-columns br + span,
 .footer-columns br + div,
@@ -517,17 +552,12 @@ footer.footer-dark p {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    min-width: 0;
   }
   footer.footer-dark p, .footer-copyright {
     text-align: center;
   }
-    gap: 1.5rem;
-    text-align: center;
-  }
-  .footer-columns > div {
-    min-width: 0;
-  }
-
+}
 
 @media (max-width: 900px) {
   .service-cards {
@@ -554,6 +584,7 @@ footer.footer-dark p {
     opacity: 0;
     visibility: hidden;
   }
+}
   nav ul.active {
     display: flex !important;
     opacity: 1;

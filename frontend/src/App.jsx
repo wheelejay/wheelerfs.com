@@ -97,28 +97,28 @@ const App = () => {
           <h2>Professional Validation Services</h2>
           <h3 style={{ textAlign: 'center', color: '#01426A', fontSize: '1.18rem', marginBottom: '2.2rem', fontWeight: 500 }}>Comprehensive food safety validation services to ensure your equipment meets industry standards and regulatory requirements.</h3>
           <div className="service-cards">
-            <div className="card" style={{ alignItems: 'center' }}>
+            <div className="card">
               <span aria-label="Metal Detector" style={{ display: 'block', textAlign: 'center', marginBottom: '0' }}>
                 <img src="/shield.png" alt="Metal Detector Shield Icon" style={{ width: '220px', height: '220px', objectFit: 'contain', display: 'inline-block', marginBottom: '-4.4rem' }} />
               </span>
               <h3 style={{ fontSize: '2rem' }}>Metal Detector Validation</h3>
               <p>Sensitivity testing with Fe/NFe/SS test samples and full audit-ready reports.</p>
             </div>
-            <div className="card" style={{ alignItems: 'center' }}>
+            <div className="card">
               <span aria-label="X-ray" style={{ display: 'block', textAlign: 'center', marginBottom: '0' }}>
                 <img src="/magglass.png" alt="X-ray Magnifying Glass Icon" style={{ width: '220px', height: '220px', objectFit: 'contain', display: 'inline-block', marginBottom: '-4.4rem' }} />
               </span>
               <h3 style={{ fontSize: '2rem' }}>X-ray System Validation</h3>
               <p>Detectability testing using certified contaminants with traceable documentation.</p>
             </div>
-            <div className="card" style={{ alignItems: 'center' }}>
+            <div className="card">
               <span aria-label="Magnet" style={{ display: 'block', textAlign: 'center', marginBottom: '0' }}>
                 <img src="/magnet.png" alt="Magnet Icon" style={{ width: '220px', height: '220px', objectFit: 'contain', display: 'inline-block', marginBottom: '-4.4rem' }} />
               </span>
               <h3 style={{ fontSize: '2rem' }}>Magnet Validation</h3>
               <p>Visual inspection, magnetic strength testing, and capture efficiency analysis.</p>
             </div>
-            <div className="card" style={{ alignItems: 'center' }}>
+            <div className="card">
               <span aria-label="Thermometer" style={{ display: 'block', textAlign: 'center', marginBottom: '0' }}>
                 <img src="/thermometer.png" alt="Thermometer Icon" style={{ width: '220px', height: '220px', objectFit: 'contain', display: 'inline-block', marginBottom: '-4.4rem' }} />
               </span>
@@ -350,25 +350,29 @@ const App = () => {
       <footer className="footer-dark">
         <div className="footer-columns">
           <div>
-            <strong>Wheeler Food Safety Services</strong><br />
-            <span style={{ color: '#cfd8e3' }}>
+            <strong style={{ fontSize: '1.15rem', fontWeight: 800 }}>Wheeler Food Safety Services</strong>
+            <div style={{ color: '#cfd8e3', marginTop: '0.5em', fontSize: '0.98rem', fontWeight: 400 }}>
               Professional food safety validation services<br />
               for Utah food manufacturers and related industries.
-            </span>
+            </div>
           </div>
           <div>
-            <strong>Services</strong><br />
-            <span style={{ color: '#cfd8e3' }}>Metal Detector Validation<br />
-            X-ray System Validation<br />
-            Magnet Validation<br />
-            Temperature Mapping</span>
+            <strong style={{ fontSize: '1.15rem', fontWeight: 800 }}>Services</strong>
+            <div style={{ color: '#cfd8e3', marginTop: '0.5em', fontSize: '0.98rem', fontWeight: 400 }}>
+              Metal Detector Validation<br />
+              X-ray System Validation<br />
+              Magnet Validation<br />
+              Temperature Mapping
+            </div>
           </div>
           <div>
-            <strong>Contact</strong><br />
-            <a href="mailto:Jordan@wheelerfs.com">Jordan@wheelerfs.com</a><br />
-            <a href="tel:8019718838">(801) 971-8838</a><br />
-            <a href="https://www.wheelerfs.com" target="_blank" rel="noopener noreferrer">www.wheelerfs.com</a><br />
-            <span style={{ color: '#cfd8e3' }}>541 W 9560 S Sandy, UT 84070</span>
+            <strong style={{ fontSize: '1.15rem', fontWeight: 800 }}>Contact</strong>
+            <div style={{ marginTop: '0.5em', fontSize: '0.98rem', fontWeight: 400, color: '#cfd8e3' }}>
+              <a href="mailto:Jordan@wheelerfs.com">Jordan@wheelerfs.com</a><br />
+              <a href="tel:8019718838">(801) 971-8838</a><br />
+              <a href="https://www.wheelerfs.com" target="_blank" rel="noopener noreferrer">www.wheelerfs.com</a><br />
+              <span style={{ color: '#cfd8e3', fontSize: '0.98rem', fontWeight: 400 }}>541 W 9560 S Sandy, UT 84070</span>
+            </div>
           </div>
         </div>
         <div className="footer-divider"></div>
