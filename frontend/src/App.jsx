@@ -51,6 +51,85 @@ const App = () => {
     setMenuOpen(false);
   };
 
+  // Dynamic data for service cards
+  const serviceCards = [
+    {
+      icon: '/shield.png',
+      alt: 'Metal Detector Shield Icon',
+      title: 'Metal Detector Validation',
+      desc: 'Sensitivity testing with Fe/NFe/SS test samples and full audit-ready reports.'
+    },
+    {
+      icon: '/magglass.png',
+      alt: 'X-ray Magnifying Glass Icon',
+      title: 'X-ray System Validation',
+      desc: 'Detectability testing using certified contaminants with traceable documentation.'
+    },
+    {
+      icon: '/magnet.png',
+      alt: 'Magnet Icon',
+      title: 'Magnet Validation',
+      desc: 'Visual inspection, magnetic strength testing, and capture efficiency analysis.'
+    },
+    {
+      icon: '/thermometer.png',
+      alt: 'Thermometer Icon',
+      title: 'Temperature Mapping',
+      desc: 'Comprehensive temperature mapping for ambient/cold rooms and high temperature with validated loggers.'
+    }
+  ];
+
+  const pricingCards = [
+    {
+      title: 'Metal Detector Validation',
+      price: '$650',
+      sub: 'First unit',
+      add: '+$250 per additional unit',
+      features: [
+        'Sensitivity testing with Fe/NFe/SS test samples',
+        'Full audit-ready report',
+        'Same-day discount for multiple units',
+        'Professional validation documentation'
+      ]
+    },
+    {
+      title: 'X-ray System Validation',
+      price: '$700',
+      sub: 'First unit',
+      add: '+$300 per additional unit',
+      features: [
+        'Detectability testing using certified contaminants',
+        'Traceable documentation',
+        'Discounted rate for multiple systems',
+        'Comprehensive validation report'
+      ]
+    },
+    {
+      title: 'Magnet Validation',
+      price: '$350',
+      sub: 'First unit',
+      add: '+$150 per additional unit',
+      features: [
+        'Visual inspection',
+        'Magnetic strength test',
+        'Capture efficiency test',
+        'Full detailed report'
+      ]
+    },
+    {
+      title: 'Temperature Mapping',
+      price: '$1200',
+      sub: 'First unit',
+      add: 'Request Quote',
+      features: [
+        'Full comprehensive report',
+        'Validated loggers',
+        '+$75 per additional logger (up to 16 total)',
+        'Custom quotes for Oven and Freezer mapping'
+      ]
+    }
+  ];
+
   return (
     <>
       {/* Header */}
@@ -99,34 +178,15 @@ const App = () => {
           <h2>Professional Validation Services</h2>
           <h3 style={{ textAlign: 'center', color: '#01426A', fontSize: '1.18rem', marginBottom: '2.2rem', fontWeight: 500 }}>Comprehensive food safety validation services to ensure your equipment meets industry standards and regulatory requirements.</h3>
           <div className="service-cards">
-            <div className="card">
-              <span aria-label="Metal Detector" style={{ display: 'block', textAlign: 'center', marginBottom: '0' }}>
-                <img src="/shield.png" alt="Metal Detector Shield Icon" style={{ width: '220px', height: '220px', objectFit: 'contain', display: 'inline-block', marginBottom: '-4.4rem' }} />
-              </span>
-              <h3 style={{ fontSize: '2rem' }}>Metal Detector Validation</h3>
-              <p>Sensitivity testing with Fe/NFe/SS test samples and full audit-ready reports.</p>
-            </div>
-            <div className="card">
-              <span aria-label="X-ray" style={{ display: 'block', textAlign: 'center', marginBottom: '0' }}>
-                <img src="/magglass.png" alt="X-ray Magnifying Glass Icon" style={{ width: '220px', height: '220px', objectFit: 'contain', display: 'inline-block', marginBottom: '-4.4rem' }} />
-              </span>
-              <h3 style={{ fontSize: '2rem' }}>X-ray System Validation</h3>
-              <p>Detectability testing using certified contaminants with traceable documentation.</p>
-            </div>
-            <div className="card">
-              <span aria-label="Magnet" style={{ display: 'block', textAlign: 'center', marginBottom: '0' }}>
-                <img src="/magnet.png" alt="Magnet Icon" style={{ width: '220px', height: '220px', objectFit: 'contain', display: 'inline-block', marginBottom: '-4.4rem' }} />
-              </span>
-              <h3 style={{ fontSize: '2rem' }}>Magnet Validation</h3>
-              <p>Visual inspection, magnetic strength testing, and capture efficiency analysis.</p>
-            </div>
-            <div className="card">
-              <span aria-label="Thermometer" style={{ display: 'block', textAlign: 'center', marginBottom: '0' }}>
-                <img src="/thermometer.png" alt="Thermometer Icon" style={{ width: '220px', height: '220px', objectFit: 'contain', display: 'inline-block', marginBottom: '-4.4rem' }} />
-              </span>
-              <h3 style={{ fontSize: '2rem' }}>Temperature Mapping</h3>
-              <p>Comprehensive temperature mapping for ambient/cold rooms and high temperature with validated loggers.</p>
-            </div>
+            {serviceCards.map(card => (
+              <div className="card" key={card.title}>
+                <span aria-label={card.title} style={{ display: 'block', textAlign: 'center', marginBottom: '0' }}>
+                  <img src={card.icon} alt={card.alt} style={{ width: '220px', height: '220px', objectFit: 'contain', display: 'inline-block', marginBottom: '-4.4rem' }} />
+                </span>
+                <h3 style={{ fontSize: '2rem' }}>{card.title}</h3>
+                <p>{card.desc}</p>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -135,143 +195,40 @@ const App = () => {
           <h2 style={{ textAlign: 'center', color: '#00182b', fontSize: '2.6rem', fontWeight: 800, marginBottom: '0.7rem', paddingTop: '3.5rem' }}>Professional Validation Pricing</h2>
           <p style={{ textAlign: 'center', color: '#01426A', fontSize: '1.18rem', marginBottom: '2.2rem', fontWeight: 500 }}>Competitive pricing for food safety validation services. Discounts available for multiple units and annual contracts.</p>
           <div className="service-cards pricing-cards">
-            {/* Metal Detector */}
-            <div className="card" style={{
-              alignItems: 'center',
-              background: '#fff',
-              border: '1.5px solid #e0e7ef',
-              borderRadius: '18px',
-              boxShadow: '0 2px 12px rgba(1,66,106,0.08)',
-              padding: '2.2rem 2.2rem',
-              color: '#01426A',
-              fontSize: '1.18rem',
-              fontWeight: 500,
-              minWidth: '420px',
-              minHeight: '420px',
-              maxWidth: '480px',
-              maxHeight: '480px',
-              width: '100%',
-              aspectRatio: '1 / 1',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.1rem',
-              transition: 'box-shadow 0.25s, transform 0.18s',
-              justifyContent: 'center',
-            }}>
-              <h3 style={{ color: '#01426A', fontSize: '1.55rem', fontWeight: 800, marginBottom: '0.5rem', textAlign: 'center', width: '100%' }}>Metal Detector Validation</h3>
-              <div style={{ color: '#16A34A', fontSize: '3rem', fontWeight: 800, marginBottom: '0.0rem', textAlign: 'center', width: '100%' }}>$650</div>
-            <div style={{ color: '#01426A', fontSize: '1.08rem', fontWeight: 700, textAlign: 'center', width: '100%', marginBottom: '0.08rem', marginTop: '-0.2rem' }}>First unit</div>
-            <div style={{ color: '#01426A', fontSize: '0.98rem', fontWeight: 500, textAlign: 'center', width: '100%', marginBottom: '0.08rem' }}>+$250 per additional unit</div>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none', textAlign: 'left', width: '100%', fontSize: '0.89rem' }}>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Sensitivity testing with Fe/NFe/SS test samples</li>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Full audit-ready report</li>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Same-day discount for multiple units</li>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Professional validation documentation</li>
-              </ul>
-            </div>
-            {/* X-ray System */}
-            <div className="card" style={{
-              alignItems: 'center',
-              background: '#fff',
-              border: '1.5px solid #e0e7ef',
-              borderRadius: '18px',
-              boxShadow: '0 2px 12px rgba(1,66,106,0.08)',
-              padding: '2.2rem 2.2rem',
-              color: '#01426A',
-              fontSize: '1.18rem',
-              fontWeight: 500,
-              minWidth: '420px',
-              minHeight: '420px',
-              maxWidth: '480px',
-              maxHeight: '480px',
-              width: '100%',
-              aspectRatio: '1 / 1',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.1rem',
-              transition: 'box-shadow 0.25s, transform 0.18s',
-              justifyContent: 'center',
-            }}>
-              <h3 style={{ color: '#01426A', fontSize: '1.55rem', fontWeight: 800, marginBottom: '0.5rem', textAlign: 'center', width: '100%' }}>X-ray System Validation</h3>
-              <div style={{ color: '#16A34A', fontSize: '3rem', fontWeight: 800, marginBottom: '0.08rem', textAlign: 'center', width: '100%' }}>$700</div>
-              <div style={{ color: '#01426A', fontSize: '1.08rem', fontWeight: 700, textAlign: 'center', width: '100%', marginBottom: '0.08rem', marginTop: '-0.08rem' }}>First unit</div>
-           
-            <div style={{ color: '#01426A', fontSize: '0.98rem', fontWeight: 500, textAlign: 'center', width: '100%', marginBottom: '0.08rem' }}>+$300 per additional unit</div>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none', textAlign: 'left', width: '100%', fontSize: '0.89rem' }}>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Detectability testing using certified contaminants</li>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Traceable documentation</li>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Discounted rate for multiple systems</li>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Comprehensive validation report</li>
-              </ul>
-            </div>
-            {/* Magnet */}
-            <div className="card" style={{
-              alignItems: 'center',
-              background: '#fff',
-              border: '1.5px solid #e0e7ef',
-              borderRadius: '18px',
-              boxShadow: '0 2px 12px rgba(1,66,106,0.08)',
-              padding: '2.2rem 2.2rem',
-              color: '#01426A',
-              fontSize: '1.18rem',
-              fontWeight: 500,
-              minWidth: '420px',
-              minHeight: '420px',
-              maxWidth: '480px',
-              maxHeight: '480px',
-              width: '100%',
-              aspectRatio: '1 / 1',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.1rem',
-              transition: 'box-shadow 0.25s, transform 0.18s',
-              justifyContent: 'center',
-            }}>
-              <h3 style={{ color: '#01426A', fontSize: '1.55rem', fontWeight: 800, marginBottom: '0.5rem', textAlign: 'center', width: '100%' }}>Magnet Validation</h3>
-              <div style={{ color: '#16A34A', fontSize: '3rem', fontWeight: 800, marginBottom: '0.08rem', textAlign: 'center', width: '100%' }}>$350</div>
-              <div style={{ color: '#01426A', fontSize: '1.08rem', fontWeight: 700, textAlign: 'center', width: '100%', marginBottom: '0.08rem', marginTop: '-0.08rem' }}>First unit</div>
-                          <div style={{ color: '#01426A', fontSize: '0.98rem', fontWeight: 500, textAlign: 'center', width: '100%', marginBottom: '0.08rem' }}>+$150 per additional unit</div>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none', textAlign: 'left', width: '100%', fontSize: '0.89rem' }}>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Visual inspection</li>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Magnetic strength test</li>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Capture efficiency test</li>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Full detailed report</li>
-              </ul>
-            </div>
-            {/* Temperature Mapping */}
-            <div className="card" style={{
-              alignItems: 'center',
-              background: '#fff',
-              border: '1.5px solid #e0e7ef',
-              borderRadius: '18px',
-              boxShadow: '0 2px 12px rgba(1,66,106,0.08)',
-              padding: '2.2rem 2.2rem',
-              color: '#01426A',
-              fontSize: '1.18rem',
-              fontWeight: 500,
-              minWidth: '420px',
-              minHeight: '420px',
-              maxWidth: '480px',
-              maxHeight: '480px',
-              width: '100%',
-              aspectRatio: '1 / 1',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.1rem',
-              transition: 'box-shadow 0.25s, transform 0.18s',
-              justifyContent: 'center',
-            }}>
-              <h3 style={{ color: '#01426A', fontSize: '1.55rem', fontWeight: 800, marginBottom: '0.5rem', textAlign: 'center', width: '100%' }}>Temperature Mapping</h3>
-              <div style={{ color: '#16A34A', fontSize: '3rem', fontWeight: 800, marginBottom: '0.08rem', textAlign: 'center', width: '100%' }}>$1200</div>
-              <div style={{ color: '#01426A', fontSize: '1.08rem', fontWeight: 700, textAlign: 'center', width: '100%', marginBottom: '0.08rem', marginTop: '-0.08rem' }}>First unit</div>
-              <div style={{ color: '#01426A', fontSize: '0.98rem', fontWeight: 500, textAlign: 'center', width: '100%', marginBottom: '0.08rem' }}>Request Quote</div>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none', textAlign: 'left', width: '100%', fontSize: '0.89rem' }}>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Full comprehensive report</li>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Validated loggers</li>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>+$75 per additional logger (up to 16 total)</li>
-                <li><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>Custom quotes for Oven and Freezer mapping</li>
-              </ul>
-            </div>
+            {pricingCards.map(card => (
+              <div className="card" key={card.title} style={{
+                alignItems: 'center',
+                background: '#fff',
+                border: '1.5px solid #e0e7ef',
+                borderRadius: '18px',
+                boxShadow: '0 2px 12px rgba(1,66,106,0.08)',
+                padding: '2.2rem 2.2rem',
+                color: '#01426A',
+                fontSize: '1.18rem',
+                fontWeight: 500,
+                minWidth: '420px',
+                minHeight: '420px',
+                maxWidth: '480px',
+                maxHeight: '480px',
+                width: '100%',
+                aspectRatio: '1 / 1',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.1rem',
+                transition: 'box-shadow 0.25s, transform 0.18s',
+                justifyContent: 'center',
+              }}>
+                <h3 style={{ color: '#01426A', fontSize: '1.55rem', fontWeight: 800, marginBottom: '0.5rem', textAlign: 'center', width: '100%' }}>{card.title}</h3>
+                <div style={{ color: '#16A34A', fontSize: '3rem', fontWeight: 800, marginBottom: '0.0rem', textAlign: 'center', width: '100%' }}>{card.price}</div>
+                <div style={{ color: '#01426A', fontSize: '1.08rem', fontWeight: 700, textAlign: 'center', width: '100%', marginBottom: '0.08rem', marginTop: '-0.2rem' }}>{card.sub}</div>
+                <div style={{ color: '#01426A', fontSize: '0.98rem', fontWeight: 500, textAlign: 'center', width: '100%', marginBottom: '0.08rem' }}>{card.add}</div>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', textAlign: 'left', width: '100%', fontSize: '0.89rem' }}>
+                  {card.features.map((feature, i) => (
+                    <li key={i}><span style={{ color: '#16A34A', fontWeight: 700, marginRight: '0.5em' }}>✔</span>{feature}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
           {/* Annual Service Contracts */}
           <div style={{ maxWidth: '900px', margin: '0 auto', marginTop: '2.5rem' }}>
