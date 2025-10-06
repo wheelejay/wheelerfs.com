@@ -29,7 +29,7 @@ const App = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:3001/api/contact', {
+      const res = await fetch('https://wheelerfs.com/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, message })
