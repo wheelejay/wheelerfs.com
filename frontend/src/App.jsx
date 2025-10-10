@@ -21,16 +21,8 @@ const App = () => {
     const name = form.elements.namedItem('name').value.trim();
     const email = form.elements.namedItem('email').value.trim();
     const message = form.elements.namedItem('message').value.trim();
-
-    if (!name || !email || !message) {
-      setContactStatus('Please fill in all fields.');
-      setContactLoading(false);
-      return;
-    }
-
     try {
-      const res =fetch('https://wheelerfs-com-1.onrender.com/api/contact', {
-
+      const res = await fetch('https://wheelerfs-com-1.onrender.com/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, message })
@@ -38,7 +30,7 @@ const App = () => {
       if (!res.ok) throw new Error('Failed to send message.');
       setContactStatus('Thank you! Your message has been sent.');
       form.reset();
-    } catch {
+    } catch (err) {
       setContactStatus('Failed to send message. Please try again later.');
     }
     setContactLoading(false);
