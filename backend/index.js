@@ -1,7 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
+
+const { Resend } = require('resend');
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.use(
 
 app.use(express.json());
 
+
 // Contact form endpoint
 app.post('/api/contact', async (req, res) => {
   const { name, email, message } = req.body;
@@ -37,26 +39,16 @@ app.post('/api/contact', async (req, res) => {
     return res.status(400).json({ error: 'All fields are required.' });
   }
 
-  // Configure transporter (using Gmail)
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_PASS
-    }
-  });
-
-  const mailOptions = {
-    from: process.env.GMAIL_USER,
-    to: 'jordan@wheelerfs.com',
-    subject: `Contact Form Submission from ${name}`,
-    text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`
-  };
-
-  console.log('Received contact form submission:', req.body);
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
   try {
-    await transporter.sendMail(mailOptions);
+    const data = await resend.emails.send({
+      from: 'contact@wheelerfs.com',
+      to: 'jordan@wheelerfs.com',
+      subject: `Contact Form Submission from ${name}`,
+      text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`
+    });
+    console.log('Resend response:', data);
     res.status(200).json({ message: 'Message sent successfully.' });
   } catch (err) {
     console.error('Error sending email:', err);
