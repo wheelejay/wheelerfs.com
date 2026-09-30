@@ -14,9 +14,13 @@ at `wheelerfs.com/blog/metal-detector-audit-prep`.
    - `draft`: `true` hides the post on the live site (it still shows when you
      run `npm run dev`, marked "Draft"). Change it to `false` to publish.
 3. Write the post in Markdown below the header.
-4. Preview it with `npm run dev`, then publish with `npm run deploy`.
+4. Commit it to `main`. The site rebuilds and publishes itself within a few
+   minutes (watch progress on the repo's **Actions** tab).
 
-Images: put them in `public/` (e.g. `public/blog/audit.jpg`) and reference
+You can do all of this on github.com: open `frontend/content/blog`, click
+**Add file → Create new file**, paste in the template, and commit.
+
+Images: upload them to `frontend/public/blog/` (e.g. `audit.jpg`) and reference
 them as `![Description](/blog/audit.jpg)`.
 
 ## Podcast episodes
@@ -32,7 +36,7 @@ published, so nothing shows until you're ready.
 
 ## What the build does
 
-`npm run build` (and therefore `npm run deploy`) creates a real HTML page for
+The build (run automatically by `.github/workflows/deploy.yml`) creates a real HTML page for
 every published post and episode, with its own title, description, and link
 preview tags. It also writes `sitemap.xml`, `robots.txt`, and `404.html`.
 Submit `https://wheelerfs.com/sitemap.xml` in Google Search Console once the
