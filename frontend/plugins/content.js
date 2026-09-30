@@ -31,6 +31,19 @@ function parseFrontmatter(raw) {
   return { data, body: match[2] };
 }
 
+// Give each table cell a data-label with its column heading, so on phones
+// the CSS can show every row as a small card ("Who does it: ...").
+function labelTableCells(html) {
+  return html.replace(/<table>([\s\S]*?)<\/table>/g, (table) => {
+    const labels = [...(table.match(/<thead>[\s\S]*?<\/thead>/)?.[0] ?? '').matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)]
+      .map((m) => m[1].replace(/<[^>]+>/g, '').replace(/"/g, '&quot;').trim());
+    return table.replace(/<tr>([\s\S]*?)<\/tr>/g, (row) => {
+      let i = 0;
+      return row.replace(/<td([^>]*)>/g, (_, attrs) => `<td${attrs} data-label="${labels[i++] ?? ''}">`);
+    });
+  });
+}
+
 function loadCollection(root, dir, includeDrafts) {
   const full = path.join(root, 'content', dir);
   if (!fs.existsSync(full)) return [];
@@ -51,7 +64,7 @@ function loadCollection(root, dir, includeDrafts) {
         draft: data.draft === true,
         audio: data.audio || '',
         embed: data.embed || '',
-        html: marked.parse(body),
+        html: labelTableCells(marked.parse(body)),
       };
     })
     .filter((item) => includeDrafts || !item.draft)

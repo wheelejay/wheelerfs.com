@@ -179,6 +179,47 @@
   .content-page {
     padding: 2rem 1rem 3rem;
   }
+  /* Tables: show each row as a card with the column headings as labels */
+  .content-body table,
+  .content-body tbody,
+  .content-body tr,
+  .content-body td {
+    display: block;
+    width: 100%;
+  }
+  .content-body table {
+    overflow: visible;
+    font-size: 1rem;
+  }
+  .content-body thead {
+    display: none;
+  }
+  .content-body tr {
+    margin-bottom: 1rem;
+    border: 1px solid #e0e7ef;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .content-body td {
+    border: none;
+    border-top: 1px solid #eef2f7;
+    padding: 0.6rem 0.9rem;
+    line-height: 1.5;
+  }
+  .content-body td:first-child {
+    border-top: none;
+    background: #f7fafc;
+    color: #01426A;
+  }
+  .content-body td[data-label]:not([data-label=""])::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #16A34A;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
   .content-page h1 {
     font-size: 2rem;
   }
