@@ -131,11 +131,9 @@ const Home = () => {
           <h3 style={{ textAlign: 'center', color: '#01426A', fontSize: '1.18rem', marginBottom: '2.2rem', fontWeight: 500 }}>Comprehensive food safety validation services to ensure your equipment meets industry standards and regulatory requirements.</h3>
           <div className="service-cards">
             {serviceCards.map(card => (
-              <div className="card" key={card.title}>
-                <span aria-label={card.title} style={{ display: 'block', textAlign: 'center', marginBottom: '0' }}>
-                  <img src={card.icon} alt={card.alt} style={{ width: '220px', height: '220px', objectFit: 'contain', display: 'inline-block', marginBottom: '-4.4rem' }} />
-                </span>
-                <h3 style={{ fontSize: '2rem' }}>{card.title}</h3>
+              <div className="card service-card" key={card.title}>
+                <img src={card.icon} alt={card.alt} className="service-card-icon" />
+                <h3>{card.title}</h3>
                 <p>{card.desc}</p>
               </div>
             ))}
