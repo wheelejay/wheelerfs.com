@@ -714,3 +714,153 @@ footer.footer-dark p {
     padding: 0.5rem 0.2rem;
   }
 }
+
+/* ------------------------------------------------------------------
+   Layout fixes. These come last so they win over the rules above.
+   ------------------------------------------------------------------ */
+
+/* 100vw includes the scrollbar and pushes the page sideways on phones */
+header,
+footer.footer-dark {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+.footer-columns {
+  padding: 0 1.5rem;
+}
+
+/* Tablets and phones */
+@media (max-width: 768px) {
+  header {
+    padding: 0.4rem 1rem;
+  }
+  .logo img {
+    height: 56px !important;
+    display: block;
+  }
+
+  /* Dropdown menu: full-width panel under the header */
+  nav {
+    position: static;
+  }
+  nav ul {
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0;
+    padding: 0.5rem 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid #ddd !important;
+    gap: 0 !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
+  }
+  nav ul li {
+    width: 100%;
+  }
+  nav ul a {
+    display: block;
+    padding: 0.85rem 1.5rem;
+    font-size: 1.1rem;
+    border-radius: 0;
+  }
+  .hamburger {
+    background: none !important;
+    border: 1.5px solid #ccc !important;
+    padding: 0.55rem !important;
+    gap: 5px;
+  }
+  .hamburger span {
+    width: 24px !important;
+    height: 3px !important;
+    margin: 0 !important;
+  }
+
+  /* Footer: one centered column with even spacing */
+  footer.footer-dark {
+    padding: 2rem 1.25rem 1.5rem !important;
+    margin-top: 2rem !important;
+  }
+  .footer-columns {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    gap: 1.75rem;
+    margin-bottom: 1.5rem !important;
+  }
+  .footer-columns > div {
+    width: 100% !important;
+  }
+  .footer-columns > div > * {
+    min-width: 0 !important;
+    box-shadow: none !important;
+    background: none !important;
+  }
+  .footer-columns a {
+    word-break: normal;
+    line-height: 2;
+  }
+  .footer-copyright {
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    font-size: 0.9rem;
+  }
+
+  /* Homepage content that was sized for desktop */
+  main {
+    padding: 0 1rem;
+  }
+  .hero {
+    padding: 2rem 0.5rem;
+    margin: 1rem auto;
+  }
+  .hero h1 {
+    font-size: 2.4rem !important;
+  }
+  .services,
+  .why-us,
+  .contact {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .services h2,
+  .why-us h2,
+  .pricing-section h2 {
+    font-size: 2rem !important;
+  }
+  .why-us {
+    transform: none;
+  }
+  .service-cards .card img {
+    width: 160px !important;
+    height: 160px !important;
+    margin-bottom: -2.5rem !important;
+  }
+  .service-cards .card h3 {
+    font-size: 1.5rem !important;
+  }
+  .pricing-section {
+    padding-top: 2rem !important;
+  }
+  .pricing-section h2 {
+    padding-top: 1rem !important;
+  }
+  .pricing-cards .card {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: auto !important;
+    padding: 1.75rem 1.25rem !important;
+  }
+  .contact form {
+    max-width: 100%;
+    min-width: 0;
+    padding: 1.5rem 1rem;
+  }
+  .contact form > div:first-child {
+    flex-direction: column;
+  }
+}
