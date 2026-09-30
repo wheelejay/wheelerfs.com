@@ -38,25 +38,25 @@ const Home = () => {
   // Dynamic data for service cards
   const serviceCards = [
     {
-      icon: '/shield.png',
+      icon: '/icons/shield.png',
       alt: 'Metal Detector Shield Icon',
       title: 'Metal Detector Validation',
       desc: 'Sensitivity testing with Fe/NFe/SS test samples and full audit-ready reports.'
     },
     {
-      icon: '/magglass.png',
+      icon: '/icons/magglass.png',
       alt: 'X-ray Magnifying Glass Icon',
       title: 'X-ray System Validation',
       desc: 'Detectability testing using certified contaminants with traceable documentation.'
     },
     {
-      icon: '/magnet.png',
+      icon: '/icons/magnet.png',
       alt: 'Magnet Icon',
       title: 'Magnet Validation',
       desc: 'Visual inspection, magnetic strength testing, and capture efficiency analysis.'
     },
     {
-      icon: '/thermometer.png',
+      icon: '/icons/thermometer.png',
       alt: 'Thermometer Icon',
       title: 'Temperature Mapping',
       desc: 'Comprehensive temperature mapping for ambient/cold rooms and high temperature with validated loggers.'
