@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="/wheelerfs-sheild.png" />
+    <link rel="icon" type="image/png" href="/wheelerfs-sheild.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light only" />
     <meta name="theme-color" content="#f9f9f9" />
@@ -16,7 +16,55 @@
     <meta property="og:url" content="https://wheelerfs.com/404/" />
     <meta property="og:image" content="https://wheelerfs.com/wheelerfslogo.png" />
     <meta name="twitter:card" content="summary" />
-    <script type="module" crossorigin src="/assets/index-CMFiBBpt.js"></script>
+    <!-- Business details for search engines (site name, phone, address, services) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://wheelerfs.com/#website",
+            "name": "Wheeler Food Safety",
+            "alternateName": ["Wheeler Food Safety Services", "Wheeler FS", "wheelerfs.com"],
+            "url": "https://wheelerfs.com/",
+            "publisher": { "@id": "https://wheelerfs.com/#business" }
+          },
+          {
+            "@type": "ProfessionalService",
+            "@id": "https://wheelerfs.com/#business",
+            "name": "Wheeler Food Safety",
+            "legalName": "Wheeler Food Safety Service",
+            "description": "Independent metal detector, X-ray system, magnet, and temperature mapping validation for Utah food manufacturers, with audit-ready reports for FDA, USDA, and GFSI compliance.",
+            "url": "https://wheelerfs.com/",
+            "logo": "https://wheelerfs.com/wheelerfslogo.png",
+            "image": "https://wheelerfs.com/wheelerfslogo.png",
+            "telephone": "+1-385-201-5609",
+            "email": "jordan@wheelerfs.com",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "541 W 9560 S",
+              "addressLocality": "Sandy",
+              "addressRegion": "UT",
+              "postalCode": "84070",
+              "addressCountry": "US"
+            },
+            "areaServed": { "@type": "State", "name": "Utah" },
+            "parentOrganization": { "@type": "Organization", "name": "Meldrum Company" },
+            "hasOfferCatalog": {
+              "@type": "OfferCatalog",
+              "name": "Food Safety Validation Services",
+              "itemListElement": [
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Metal Detector Validation" } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "X-ray System Validation" } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Magnet Validation" } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Temperature Mapping" } }
+              ]
+            }
+          }
+        ]
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/index-DEHxPVQw.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-DHt3iONy.css">
   </head>
   <body class="min-h-screen w-full bg-white text-gray-900">
