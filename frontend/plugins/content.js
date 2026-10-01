@@ -103,8 +103,7 @@ function renderPage(template, { route, title, description, body = '', type = 'we
     `<meta name="twitter:card" content="summary" />`,
   ].join('\n    ');
   return template
-    .replace(/\s*<meta name="description"[^>]*>/, '')
-    .replace(/<title>[\s\S]*?<\/title>/, head)
+    .replace(/<!-- page-meta[\s\S]*?<!-- \/page-meta -->/, head)
     .replace(/(<div id="root"[^>]*>)(<\/div>)/, `$1${body}$2`);
 }
 
