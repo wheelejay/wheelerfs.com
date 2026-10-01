@@ -3,8 +3,8 @@ import usePageMeta from '../usePageMeta';
 
 const Home = () => {
   usePageMeta({
-    title: 'Wheeler Food Safety | Utah Facility Validation & Testing Services',
-    description: 'Metal detector, X-ray, magnet, and temperature mapping validation services for Utah food manufacturers.',
+    title: 'Food Safety Validation Services in Utah | Wheeler Food Safety',
+    description: 'Independent metal detector, X-ray, magnet, and temperature mapping validation for Utah food manufacturers. Audit-ready reports for FDA, USDA, and GFSI.',
   });
 
   // Contact form state
