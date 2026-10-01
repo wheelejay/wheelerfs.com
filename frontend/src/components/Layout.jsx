@@ -85,7 +85,7 @@ const Layout = () => {
             <strong style={{ fontSize: '1.15rem', fontWeight: 800 }}>Contact</strong>
             <div style={{ marginTop: '0.5em', fontSize: '0.98rem', fontWeight: 400, color: '#cfd8e3' }}>
               <a href="mailto:Jordan@wheelerfs.com">Jordan@wheelerfs.com</a><br />
-              <a href="tel:8019718838">(801) 971-8838</a><br />
+              <a href="tel:+13852015609">(385) 201-5609</a><br />
               <a href="https://www.wheelerfs.com" target="_blank" rel="noopener noreferrer">www.wheelerfs.com</a><br />
               <span style={{ color: '#cfd8e3', fontSize: '0.98rem', fontWeight: 400 }}>541 W 9560 S Sandy, UT 84070</span>
             </div>
