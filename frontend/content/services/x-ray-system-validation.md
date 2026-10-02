@@ -1,22 +1,24 @@
 ---
 title: X-ray System Validation
 seoTitle: X-ray Inspection System Validation in Utah
-excerpt: Independent X-ray inspection system validation for Utah food manufacturers, using certified contaminants with traceable documentation and a comprehensive report.
+excerpt: Independent X-ray inspection system validation for Utah food manufacturers, with metal detection testing using certified test samples, traceable documentation, and a comprehensive report.
 icon: /icons/magglass.png
 price: $700
 priceNote: first unit · $300 each additional unit on the same visit
 order: 2
 ---
 
-X-ray inspection can find contaminants a metal detector can't, like glass, stone, bone, and dense plastic. That only counts if you can show it reliably detects them in your products. We validate your system and document it so it holds up in an audit.
+Most food manufacturers rely on X-ray inspection to find metal, often in packaging or products where a metal detector struggles, like foil packs and metallized film. That only counts if you can show it reliably finds the contaminants your food safety plan names, in your products. We validate your system and document it so it holds up in an audit.
 
 ## What's included
 
-- **Detectability testing** using certified test contaminants
+- **Metal detectability testing** using certified ferrous, non-ferrous, and stainless steel test samples
 - **Testing in your products and packaging**, where detection is hardest
 - **Reject system checks** to confirm contaminated product is removed from the line
 - **Traceable documentation** of every test sample and result
 - **A comprehensive validation report** for each system
+
+Need to validate detection of other contaminants, like glass, stone, or bone? We'll source the certified test standards your program or customer requires. Mention it when you [request a quote](/#contact).
 
 ## When to validate
 
