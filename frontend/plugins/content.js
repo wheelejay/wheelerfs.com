@@ -194,6 +194,7 @@ function prerender(outDir, { posts, episodes, services }) {
   // offline copy of the admin page, plus the Supabase library served from this site so it can be cached
   fs.copyFileSync(path.join(generatorDir, 'sw.js'), path.join(adminDir, 'sw.js'));
   fs.copyFileSync(path.resolve(outDir, '..', 'node_modules', '@supabase', 'supabase-js', 'dist', 'umd', 'supabase.js'), path.join(adminDir, 'supabase.js'));
+  fs.copyFileSync(path.resolve(outDir, '..', 'node_modules', 'jszip', 'dist', 'jszip.min.js'), path.join(adminDir, 'jszip.min.js'));
 
   // GitHub Pages serves 404.html for unknown URLs; the app shows its Not Found page.
   fs.writeFileSync(

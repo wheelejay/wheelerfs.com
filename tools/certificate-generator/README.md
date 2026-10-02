@@ -17,6 +17,14 @@ when the connection returns (the status button in the top bar shows what's waiti
 sync now). Numbers taken offline continue from the device's last known number and are checked
 against the server on sync. Publishing needs a connection.
 
+**Records (admin page only):** the **Records** button opens three tabs:
+* **Due dates:** each unit's latest valid certificate, sorted by next due date (overdue / 30 / 60 /
+  90 days / everything). *New certificate* puts that customer and unit on the form.
+* **Certificates:** search every published certificate; download the PDF, *Reopen* it on the form
+  to correct and republish (same number and QR code), *Revoke* / *Restore*, or delete permanently.
+* **Backup:** download a full backup (.json with customers, portal emails, equipment, settings,
+  counters and every certificate's details) and a .zip of all PDFs, a folder per customer.
+
 ## Using it
 
 1. Pick the **Certificate type** at the top, then fill in the form on the left; the certificate
