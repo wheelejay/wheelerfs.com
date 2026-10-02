@@ -108,14 +108,14 @@ const Home = () => {
     },
     {
       title: 'Temperature Mapping',
-      price: '$1200',
-      sub: 'First unit',
-      add: 'Request Quote',
+      price: 'Custom Quote',
+      sub: 'Priced per project',
+      add: 'Based on space size and logger count',
       features: [
         'Full comprehensive report',
-        'Validated loggers',
-        '+$75 per additional logger (up to 16 total)',
-        'Custom quotes for Oven and Freezer mapping'
+        'Validated data loggers',
+        'Coolers, freezers, warehouses, and ovens',
+        'Hot and cold spot identification'
       ]
     }
   ];
@@ -176,7 +176,7 @@ const Home = () => {
                 justifyContent: 'center',
               }}>
                 <h3 style={{ color: '#01426A', fontSize: '1.55rem', fontWeight: 800, marginBottom: '0.5rem', textAlign: 'center', width: '100%' }}>{card.title}</h3>
-                <div style={{ color: '#16A34A', fontSize: '3rem', fontWeight: 800, marginBottom: '0.0rem', textAlign: 'center', width: '100%' }}>{card.price}</div>
+                <div style={{ color: '#16A34A', fontSize: card.price.startsWith('$') ? '3rem' : '1.9rem', fontWeight: 800, marginBottom: '0.0rem', textAlign: 'center', width: '100%' }}>{card.price}</div>
                 <div style={{ color: '#01426A', fontSize: '1.08rem', fontWeight: 700, textAlign: 'center', width: '100%', marginBottom: '0.08rem', marginTop: '-0.2rem' }}>{card.sub}</div>
                 <div style={{ color: '#01426A', fontSize: '0.98rem', fontWeight: 500, textAlign: 'center', width: '100%', marginBottom: '0.08rem' }}>{card.add}</div>
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none', textAlign: 'left', width: '100%', fontSize: '0.89rem' }}>

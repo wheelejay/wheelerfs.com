@@ -972,3 +972,17 @@ a.service-card:hover .service-card-more {
     display: none;
   }
 }
+
+/* Pricing cards: size to their content (an older rule fixed them at 450px,
+   which cut off longer feature lists) and keep each row the same height */
+.pricing-section .service-cards.pricing-cards {
+  align-items: stretch !important;
+  padding: 0 1rem;
+}
+.pricing-cards .card {
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  aspect-ratio: auto !important;
+  justify-content: flex-start !important;
+}
