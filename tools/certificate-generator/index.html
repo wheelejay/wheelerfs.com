@@ -157,11 +157,23 @@
   .page .mag-split .mag-table th, .page .mag-split .mag-table td { padding: 2.5px 3px; }
   .page .content { display: flex; flex-direction: column; position: relative; }
 
+  /* ---------- website (admin) mode ---------- */
+  #gate { position: fixed; inset: 0; z-index: 100; background: var(--app-bg); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  #gate[hidden] { display: none; }
+  #gate .box { background: #fff; border-radius: 12px; box-shadow: 0 6px 30px rgba(0,24,43,.15); padding: 26px 28px; width: 100%; max-width: 380px; }
+  #gate .box img { height: 54px; display: block; margin-bottom: 10px; }
+  #gate h2 { margin: 0 0 4px; color: var(--navy); font-size: 20px; }
+  #gate label { margin-top: 10px; }
+  #gate .primary { margin-top: 14px; width: 100%; background: var(--green); color: #fff; font-weight: 700; padding: 9px; }
+  #gateMsg { font-size: 13px; color: var(--muted); margin: 6px 0 0; min-height: 18px; }
+  #gateMsg.err { color: #b91c1c; }
+  .topbar .who { font-size: 12px; opacity: .8; }
+
   /* ---------- print: certificate only ---------- */
   @page { size: Letter; margin: 0; }
   @media print {
     body { background: #fff; }
-    .topbar, .form, dialog, #toast { display: none !important; }
+    .topbar, .form, dialog, #toast, #gate { display: none !important; }
     .layout { display: block; padding: 0; }
     .preview-wrap { position: static; }
     .preview-holder { box-shadow: none; border-radius: 0; overflow: visible; width: auto !important; height: auto !important; }
@@ -179,9 +191,25 @@
   <button id="btnOpenJob">Open job file</button>
   <input type="file" id="fileJob" accept=".json,application/json" hidden>
   <span class="spacer"></span>
+  <span class="who" id="whoami" hidden></span>
+  <button id="btnSignOut" hidden>Sign out</button>
   <button id="btnSettings">Settings</button>
   <button id="btnPortal" title="Upload the saved PDF to the customer portal">Publish to portal</button>
   <button id="btnPrint" class="primary">Print / Save PDF</button>
+</div>
+
+<div id="gate" hidden>
+  <form class="box" id="gateForm" onsubmit="return false">
+    <img id="gateLogo" alt="">
+    <h2>Wheeler FS Admin</h2>
+    <p class="hint">Certificates, customers and equipment. Sign in with your admin login.</p>
+    <div id="gateFields">
+      <label>Email<input id="gateEmail" type="email" autocomplete="username"></label>
+      <label>Password<input id="gatePassword" type="password" autocomplete="current-password"></label>
+      <button type="submit" class="primary" id="gateSignIn">Sign in</button>
+    </div>
+    <p id="gateMsg"></p>
+  </form>
 </div>
 
 <div class="layout">
@@ -320,7 +348,7 @@
     </div>
     <div class="sig-preview" id="sigPreview"><span class="hint">No signature saved</span></div>
 
-    <p class="hint" style="margin-top:14px"><b>Backup.</b> Customers, equipment and settings are stored only in this browser on this computer. Export a backup now and then, and use Import to move them to another computer.</p>
+    <p class="hint" style="margin-top:14px" id="backupHint"><b>Backup.</b> Customers, equipment and settings are stored only in this browser on this computer. Export a backup now and then, and use Import to move them to another computer.</p>
     <div class="inline">
       <button type="button" class="small" id="btnExport">Export backup</button>
       <button type="button" class="small" id="btnImport">Import backup</button>
@@ -382,7 +410,11 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
 <script>
 (() => {
   const LOGO = "data:image/png;base64,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";
-  const STORE = 'wfs-certgen-v1';
+  // Opened from wheelerfs.com/admin: customers, equipment, settings and certificate
+  // numbers are stored in Supabase. Opened as a file on this computer: everything
+  // stays in this browser and works offline.
+  const HOSTED = location.protocol !== 'file:';
+  const STORE = HOSTED ? 'wfs-admin-v1' : 'wfs-certgen-v1';
   // Supabase project (the publishable key is public by design; the database's
   // row level security decides what it can do). See supabase/setup.sql.
   const SUPABASE_URL = 'https://dckhemtjpwltdpmxjouq.supabase.co';
@@ -444,9 +476,14 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   let db;
   try { db = Object.assign(structuredClone(defaults), JSON.parse(localStorage.getItem(STORE) || '{}')); }
   catch { db = structuredClone(defaults); }
-  db.settings = Object.assign(structuredClone(defaults.settings), db.settings);
-  db.settings.magnet = Object.assign(structuredClone(defaults.settings.magnet), db.settings.magnet);
-  db.settings.layouts = Object.assign(structuredClone(DEFAULT_LAYOUTS), db.settings.layouts);
+  // fills in anything an older or partial settings object is missing
+  function mergeSettings(v) {
+    const out = Object.assign(structuredClone(defaults.settings), v);
+    out.magnet = Object.assign(structuredClone(defaults.settings.magnet), v?.magnet);
+    out.layouts = Object.assign(structuredClone(DEFAULT_LAYOUTS), v?.layouts);
+    return out;
+  }
+  db.settings = mergeSettings(db.settings);
   const persist = () => { try { localStorage.setItem(STORE, JSON.stringify(db)); } catch {} };
 
   // 20 random URL-safe characters (120 bits): the unguessable part of the QR link.
@@ -534,11 +571,13 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   };
   const dateKey = iso => (iso || today()).slice(2).replace(/-/g, '');
   // takes the next sequence number for this type and date, e.g. WFS-XR-260109-02
-  function takeCertNo() {
+  async function takeCertNo() {
     const d = dateKey(cert.valDate);
     const k = cert.type === 'md' ? d : `${cert.type}:${d}`;   // metal detectors keep the original counter keys
-    db.counters[k] = (db.counters[k] || 0) + 1; persist();
-    return `${TYPES[cert.type].prefix}-${d}-${String(db.counters[k]).padStart(2, '0')}`;
+    let n;
+    if (HOSTED) n = await remote.nextNumber(k);               // shared counter: no duplicates across devices
+    else { db.counters[k] = (db.counters[k] || 0) + 1; persist(); n = db.counters[k]; }
+    return `${TYPES[cert.type].prefix}-${d}-${String(n).padStart(2, '0')}`;
   }
   const unitId = () => cert.equip.serial || cert.equip.assetId;
   const equipModel = () => cert.type === 'mg' ? [cert.equip.magnetType, cert.equip.element].filter(Boolean).join(' ') : cert.equip.model;
@@ -716,12 +755,13 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     if (c.cond) Object.assign(cert.cond, structuredClone(c.cond));
     fillForm();
   });
-  $('#btnSaveCustomer').addEventListener('click', () => {
+  $('#btnSaveCustomer').addEventListener('click', async () => {
     if (!cert.client.company.trim()) return alert('Enter the company name first.');
     let c = currentCustomer();
     if (!c) { c = { company: cert.client.company, detectors: [] }; db.customers.push(c); }
     c.client = { ...cert.client, serviceOrder: '', po: '' };
     c.cond = { criteria: cert.cond.criteria, location: cert.cond.location };
+    if (HOSTED) try { await remote.saveCustomer(c); } catch (e) { return fail('Could not save the customer.', e); }
     persist(); refreshCustomerSelect(); toast('Customer saved');
   });
   $('#selEquip').addEventListener('change', e => {
@@ -732,7 +772,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
                      techDate: cert.techDate, reviewerName: cert.reviewerName, issueDate: cert.issueDate };
       cert = Object.assign(blankCert(type), structuredClone(keep));
     }
-    const { type: _t, product, program, beltSpeed, tubes, points, testLabels, checkLabels, ...equip } = d;
+    const { type: _t, _id, product, program, beltSpeed, tubes, points, testLabels, checkLabels, ...equip } = d;
     Object.assign(cert.equip, structuredClone(equip));
     // this unit's own test points / checks; rows with the same name keep what was already entered
     if (testLabels && type !== 'mg') {
@@ -750,7 +790,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     }
     fillForm();
   });
-  $('#btnSaveEquip').addEventListener('click', () => {
+  $('#btnSaveEquip').addEventListener('click', async () => {
     const c = currentCustomer();
     if (!c) return alert('Save the customer first, then save their equipment.');
     if (!unitId()) return alert('Enter a serial # or asset ID first.');
@@ -760,21 +800,24 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     entry.checkLabels = cert.checkItems.map(ch => ch.label).filter(Boolean);
     const same = d => (d.type || 'md') === cert.type && (cert.equip.serial ? d.serial === cert.equip.serial : !d.serial && d.assetId === cert.equip.assetId);
     const i = c.detectors.findIndex(same);
+    if (i >= 0) entry._id = c.detectors[i]._id;
+    if (HOSTED) try { await remote.saveEquipment(c, entry); } catch (e) { return fail('Could not save the equipment.', e); }
     i >= 0 ? (c.detectors[i] = entry) : c.detectors.push(entry);
     persist(); refreshEquipSelect(); toast('Equipment saved to ' + c.company);
   });
 
   // ---------- quick buttons ----------
   $('#btnChecksPass').addEventListener('click', () => { cert.checkItems.forEach(ch => ch.value = 'Pass'); fillForm(); });
-  $('#btnAutoNo').addEventListener('click', () => {
-    cert.certNo = takeCertNo(); cert.verifyCode = newVerifyCode(); cert.publishedAt = '';   // new number = new certificate
+  $('#btnAutoNo').addEventListener('click', async () => {
+    try { cert.certNo = await takeCertNo(); } catch (e) { return fail('Could not get the next certificate number.', e); }
+    cert.verifyCode = newVerifyCode(); cert.publishedAt = '';   // new number = new certificate
     fillForm();
   });
   $('#btnNew').addEventListener('click', () => {
     if (!confirm('Start a blank certificate? Unsaved changes on this one will be lost.')) return;
     cert = blankCert(cert.type); fillForm();
   });
-  $('#btnNext').addEventListener('click', () => {
+  $('#btnNext').addEventListener('click', async () => {
     const keep = { client: cert.client, cond: { ...cert.cond, product: '', program: '', beltSpeed: '' }, standards: cert.standards,
                    valDate: cert.valDate, intervalMonths: cert.intervalMonths, techName: cert.techName, techDate: cert.techDate,
                    reviewerName: cert.reviewerName, issueDate: cert.issueDate };
@@ -784,7 +827,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     cert.checkItems = prevChecks.map(ch => ({ label: ch.label, value: '' }));
     Object.assign(cert.magnet, { sphereSize: m.sphereSize, sphereCert: m.sphereCert, pullerModel: m.pullerModel,
       pullerSerial: m.pullerSerial, pullerCalDue: m.pullerCalDue, limit: m.limit, points: m.points, tubes: m.tubes, pulls: grid(m.tubes, m.points) });
-    cert.certNo = takeCertNo();
+    try { cert.certNo = await takeCertNo(); } catch (e) { fail('Could not get the next certificate number; click Auto to try again.', e); }
     fillForm(); toast('Ready for the next unit');
   });
 
@@ -821,7 +864,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     s.techName = $('#setTech').value; s.reviewerTitle = $('#setReviewerTitle').value;
     s.intervalMonths = Number($('#setInterval').value) || 6; s.procedure = $('#setProcedure').value; s.criteria = $('#setCriteria').value;
     s.showQr = $('#setQr').checked;
-    persist(); dlg.close(); render();
+    saveSettings(); dlg.close(); render();
   });
   $('#btnSetStdDefault').addEventListener('click', () => {
     const s = db.settings, m = cert.magnet;
@@ -829,8 +872,13 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       pullerSerial: m.pullerSerial, pullerCalDue: m.pullerCalDue, limit: m.limit, points: m.points });
     else s[cert.type === 'xr' ? 'standardsXr' : 'standards'] = structuredClone(cert.standards);
     s.layouts[cert.type] = { tests: cert.tests.map(tp => tp.label).filter(Boolean), checks: cert.checkItems.map(ch => ch.label).filter(Boolean) };
-    persist(); toast(`Default ${TYPES[cert.type].label.toLowerCase()} standards, test points & checks saved`);
+    saveSettings(); toast(`Default ${TYPES[cert.type].label.toLowerCase()} standards, test points & checks saved`);
   });
+  // settings are saved in this browser, and online too in website mode
+  function saveSettings() {
+    persist();
+    if (HOSTED) remote.saveSettings().catch(e => fail('Could not save your settings online.', e));
+  }
   function showSig() {
     $('#sigPreview').innerHTML = db.settings.signature ? `<img src="${db.settings.signature}" alt="Signature">` : '<span class="hint">No signature saved</span>';
   }
@@ -841,13 +889,14 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       const h = Math.min(160, img.height), w = Math.round(img.width * h / img.height);
       const c = document.createElement('canvas'); c.width = w; c.height = h;
       c.getContext('2d').drawImage(img, 0, 0, w, h);
-      db.settings.signature = c.toDataURL('image/png'); persist(); showSig(); render();
+      db.settings.signature = c.toDataURL('image/png'); saveSettings(); showSig(); render();
     };
     img.src = URL.createObjectURL(f);
   });
-  $('#btnClearSig').addEventListener('click', () => { db.settings.signature = ''; persist(); showSig(); render(); });
-  $('#btnExport').addEventListener('click', () => {
+  $('#btnClearSig').addEventListener('click', () => { db.settings.signature = ''; saveSettings(); showSig(); render(); });
+  $('#btnExport').addEventListener('click', async () => {
     const { draft, ...rest } = db;
+    if (HOSTED) try { rest.counters = await remote.counters(); } catch (e) { return fail('Could not read the certificate counters.', e); }
     download(`WFS certificate generator backup ${today()}.json`, { type: 'wfs-certgen-backup', version: 2, ...rest });
   });
   $('#btnImport').addEventListener('click', () => $('#fileImport').click());
@@ -856,10 +905,15 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     try {
       const data = JSON.parse(await f.text());
       if (data.type !== 'wfs-certgen-backup') throw new Error();
+      if (HOSTED) {
+        if (!confirm('Add the customers and equipment from this backup to your online records, and use its settings?\n\nExisting customers and units with the same name or serial are updated, nothing is deleted.')) return;
+        toast('Importing…');
+        try { var n = await remote.importBackup(data); } catch (err) { return fail('The import stopped partway. You can safely run it again.', err); }
+        dlg.close(); fillForm(); toast(`Imported ${n.customers} customers and ${n.units} units`);
+        return;
+      }
       if (!confirm('Replace the customers, equipment and settings in this browser with the backup?')) return;
-      db.settings = Object.assign(structuredClone(defaults.settings), data.settings);
-      db.settings.magnet = Object.assign(structuredClone(defaults.settings.magnet), data.settings?.magnet);
-      db.settings.layouts = Object.assign(structuredClone(DEFAULT_LAYOUTS), data.settings?.layouts);
+      db.settings = mergeSettings(data.settings);
       db.customers = data.customers || []; db.counters = data.counters || {};
       persist(); dlg.close(); fillForm(); toast('Backup imported');
     } catch { alert('That file is not a certificate generator backup.'); }
@@ -1138,7 +1192,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     $('#adminPassword').value = '';
     showPortal();
   });
-  $('#btnAdminSignOut').addEventListener('click', async () => { await (await supa()).auth.signOut(); showPortal(); });
+  $('#btnAdminSignOut').addEventListener('click', async () => { await (await supa()).auth.signOut(); HOSTED ? location.reload() : showPortal(); });
 
   // Finds the customer row by company name, creating it the first time.
   async function customerId(create) {
@@ -1230,6 +1284,133 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     finally { btn.disabled = false; btn.textContent = 'Publish'; }
   });
 
+  // ---------- website mode: records stored in Supabase ----------
+  const remote = {
+    async load() {
+      const client = await supa();
+      const [cust, eq, st] = await Promise.all([
+        client.from('customers').select('id, name, details').order('name'),
+        client.from('equipment').select('id, customer_id, type, data').order('created_at'),
+        client.from('app_settings').select('value').eq('key', 'generator').maybeSingle()]);
+      for (const r of [cust, eq, st]) if (r.error) throw r.error;
+      if (st.data) db.settings = mergeSettings(st.data.value);
+      db.customers = cust.data.map(r => ({
+        id: r.id, company: r.name, client: { ...(r.details?.client || {}), company: r.name }, cond: r.details?.cond,
+        detectors: eq.data.filter(e => e.customer_id === r.id).map(e => ({ ...e.data, type: e.type, _id: e.id })) }));
+      persist();
+    },
+    async saveSettings() {
+      const { error } = await (await supa()).from('app_settings').upsert({ key: 'generator', value: db.settings });
+      if (error) throw error;
+    },
+    async saveCustomer(c) {
+      const { data, error } = await (await supa()).from('customers')
+        .upsert({ name: c.company, details: { client: c.client || {}, cond: c.cond || null } }, { onConflict: 'name' }).select('id').single();
+      if (error) throw error;
+      return (c.id = data.id);
+    },
+    async saveEquipment(c, entry) {
+      const client = await supa();
+      const cid = c.id || await this.saveCustomer(c);
+      const { _id, type, ...data } = entry;
+      const { data: row, error } = await (_id
+        ? client.from('equipment').update({ type, data }).eq('id', _id).select('id').single()
+        : client.from('equipment').insert({ customer_id: cid, type, data }).select('id').single());
+      if (error) throw error;
+      entry._id = row.id;
+    },
+    async nextNumber(key) {
+      const { data, error } = await (await supa()).rpc('next_cert_number', { counter_key: key });
+      if (error) throw error;
+      return data;
+    },
+    async counters() {
+      const { data, error } = await (await supa()).from('cert_counters').select('key, n');
+      if (error) throw error;
+      return Object.fromEntries(data.map(r => [r.key, r.n]));
+    },
+    // Adds a backup file (e.g. from the offline generator) to the online records. Safe to repeat.
+    async importBackup(data) {
+      const client = await supa();
+      if (data.settings) { db.settings = mergeSettings(data.settings); await this.saveSettings(); }
+      let customers = 0, units = 0;
+      for (const bc of data.customers || []) {
+        if (!bc.company?.trim()) continue;
+        let c = db.customers.find(x => x.company === bc.company);
+        if (!c) { c = { company: bc.company, detectors: [] }; db.customers.push(c); }
+        c.client = { ...(c.client || {}), ...(bc.client || {}), company: bc.company };
+        if (bc.cond) c.cond = bc.cond;
+        await this.saveCustomer(c); customers++;
+        for (const d of bc.detectors || []) {
+          const type = d.type || 'md';
+          const same = x => (x.type || 'md') === type && (d.serial ? x.serial === d.serial : !x.serial && x.assetId === d.assetId);
+          const existing = c.detectors.find(same);
+          const { _id, ...rest } = d;
+          const entry = { ...rest, type, _id: existing?._id };
+          await this.saveEquipment(c, entry); units++;
+          existing ? Object.assign(existing, entry) : c.detectors.push(entry);
+        }
+      }
+      for (const [key, n] of Object.entries(data.counters || {})) {
+        const { error } = await client.rpc('raise_cert_counter', { counter_key: key, at_least: Number(n) || 0 });
+        if (error) throw error;
+      }
+      await this.load();
+      return { customers, units };
+    },
+  };
+
+  function gateMessage(text, isError) { const m = $('#gateMsg'); m.textContent = text; m.className = isError ? 'err' : ''; }
+  async function enterAdmin() {
+    const client = await supa();
+    $('#gateFields').hidden = true; gateMessage('Loading your customers…');
+    const { data: isAdmin, error } = await client.rpc('is_admin');
+    if (error) throw error;
+    if (!isAdmin) {
+      await client.auth.signOut();
+      $('#gateFields').hidden = false;
+      return gateMessage('That account is not an admin.', true);
+    }
+    await remote.load();
+    const { data: { session } } = await client.auth.getSession();
+    $('#whoami').textContent = session.user.email; $('#whoami').hidden = false; $('#btnSignOut').hidden = false;
+    fillForm();
+    $('#gate').hidden = true;
+  }
+  async function boot() {
+    document.title = 'WFS Admin';
+    $('.topbar h1 span').textContent = 'Admin';
+    $('#gateLogo').src = LOGO;
+    $('#backupHint').innerHTML = '<b>Backup.</b> Your customers, equipment and settings are stored online. Export a backup about once a month and keep it in Google Drive. Import adds a backup file (for example from the offline generator) to your online records.';
+    fillForm();                       // last draft on this device, behind the sign-in screen
+    $('#gate').hidden = false; gateMessage('Connecting…');
+    try {
+      const client = await supa();
+      const { data: { session } } = await client.auth.getSession();
+      if (session) await enterAdmin();
+      else { $('#gateFields').hidden = false; gateMessage(''); $('#gateEmail').focus(); }
+    } catch (e) {
+      console.error(e);
+      $('#gateFields').hidden = false;
+      gateMessage('Could not reach the server. Check your internet connection and try again.', true);
+    }
+  }
+  $('#gateForm').addEventListener('submit', async () => {
+    try {
+      gateMessage('Signing in…');
+      const client = await supa();
+      const { error } = await client.auth.signInWithPassword({ email: $('#gateEmail').value.trim(), password: $('#gatePassword').value });
+      if (error) return gateMessage(error.status === 400 ? 'Wrong email or password.' : error.message, true);
+      $('#gatePassword').value = '';
+      await enterAdmin();
+    } catch (e) {
+      console.error(e);
+      $('#gateFields').hidden = false;
+      gateMessage('Could not sign in: ' + (e.message || 'check your internet connection.'), true);
+    }
+  });
+  $('#btnSignOut').addEventListener('click', async () => { await (await supa()).auth.signOut(); location.reload(); });
+
   let toastTimer;
   function toast(msg) {
     let t = $('#toast');
@@ -1240,7 +1421,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.display = 'none', 2600);
   }
 
-  fillForm();
+  if (HOSTED) boot(); else fillForm();
 })();
 </script>
 </body>

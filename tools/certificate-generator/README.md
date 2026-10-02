@@ -4,8 +4,11 @@ A single-file tool for producing Wheeler Food Safety validation certificates for
 metal detectors, X-ray inspection systems and magnets (pull test). Open `index.html` in Chrome or Edge on your computer; it works
 offline and does not need the website or any server.
 
-This folder is not part of the deployed website (the deploy workflow only
-publishes `frontend/`), and no customer data is stored in this repository.
+The same file is also published as **wheelerfs.com/admin** (the website build copies it
+there). Opened from the website it shows a sign-in screen and stores customers, equipment,
+settings and certificate numbers in Supabase, so they're the same on every device. Opened as
+a file it keeps everything in that browser and works offline. No customer data is stored in
+this repository.
 
 ## Using it
 

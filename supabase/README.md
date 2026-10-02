@@ -15,6 +15,21 @@ generator's **Publish to portal** button all use the Supabase project
    * Site URL: `https://wheelerfs.com`
    * Redirect URLs: add `https://wheelerfs.com/portal/` and `http://localhost:5173/portal/`
 
+## Updating the database
+
+When `setup.sql` changes (for example when the admin page was added), paste the
+whole file into the SQL Editor and run it again. It only adds what is missing
+and keeps all existing data.
+
+## Admin page
+
+`wheelerfs.com/admin` is the certificate generator in online mode: sign in with
+the admin email and password, and customers, equipment, settings and
+certificate numbers are stored in the `customers`, `equipment`, `app_settings`
+and `cert_counters` tables instead of one browser. To move over from the
+offline generator, export a backup there and use Settings → Import backup on
+the admin page.
+
 ## Giving a customer access
 
 In the generator: **Publish to portal** → *Who can see this customer's
