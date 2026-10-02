@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { episodes } from 'virtual:content';
+import { episodes, services } from 'virtual:content';
+import { REVIEW_URL } from '../siteInfo';
 
 const Layout = () => {
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -70,11 +71,10 @@ const Layout = () => {
           </div>
           <div>
             <strong style={{ fontSize: '1.15rem', fontWeight: 800 }}>Services</strong>
-            <div style={{ color: '#cfd8e3', marginTop: '0.5em', fontSize: '0.98rem', fontWeight: 400 }}>
-              Metal Detector Validation<br />
-              X-ray System Validation<br />
-              Magnet Validation<br />
-              Temperature Mapping
+            <div className="footer-service-links" style={{ marginTop: '0.5em', fontSize: '0.98rem', fontWeight: 400 }}>
+              {services.map((service) => (
+                <Link key={service.slug} to={`/services/${service.slug}`}>{service.title}</Link>
+              ))}
             </div>
             <div style={{ marginTop: '0.8em', fontSize: '0.98rem', fontWeight: 400 }}>
               <Link to="/blog">Blog</Link>
@@ -89,6 +89,7 @@ const Layout = () => {
               <a href="https://www.wheelerfs.com" target="_blank" rel="noopener noreferrer">www.wheelerfs.com</a><br />
               <span style={{ color: '#cfd8e3', fontSize: '0.98rem', fontWeight: 400 }}>541 W 9560 S Sandy, UT 84070</span>
             </div>
+            <a href={REVIEW_URL} className="footer-review-link" target="_blank" rel="noopener noreferrer">★ Leave us a Google review</a>
           </div>
         </div>
         <div className="footer-divider"></div>

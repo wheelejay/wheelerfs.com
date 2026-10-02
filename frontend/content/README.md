@@ -41,3 +41,19 @@ every published post and episode, with its own title, description, and link
 preview tags. It also writes `sitemap.xml`, `robots.txt`, and `404.html`.
 Submit `https://wheelerfs.com/sitemap.xml` in Google Search Console once the
 first post is live.
+
+## Service pages
+
+Each file in `services/` is a service page at `wheelerfs.com/services/<file-name>`
+(for example `services/magnet-validation.md`). Edit them the same way as blog
+posts. The header fields are:
+
+- `title`: the page heading
+- `seoTitle`: the title shown in Google results and the browser tab
+- `excerpt`: the intro sentence and Google description
+- `icon`: the icon image (in `public/icons/`)
+- `price` and `priceNote`: shown in the price box at the top
+- `order`: the order in the footer's Services list
+
+If you change a price, also update the pricing cards on the homepage
+(`src/pages/Home.jsx`) and your Google Business Profile so they match.

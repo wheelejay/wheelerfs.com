@@ -1,5 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import usePageMeta from '../usePageMeta';
+import { REVIEW_URL } from '../siteInfo';
 
 const Home = () => {
   usePageMeta({
@@ -38,24 +40,28 @@ const Home = () => {
   // Dynamic data for service cards
   const serviceCards = [
     {
+      slug: 'metal-detector-validation',
       icon: '/icons/shield.png',
       alt: 'Metal Detector Shield Icon',
       title: 'Metal Detector Validation',
       desc: 'Sensitivity testing with Fe/NFe/SS test samples and full audit-ready reports.'
     },
     {
+      slug: 'x-ray-system-validation',
       icon: '/icons/magglass.png',
       alt: 'X-ray Magnifying Glass Icon',
       title: 'X-ray System Validation',
       desc: 'Detectability testing using certified contaminants with traceable documentation.'
     },
     {
+      slug: 'magnet-validation',
       icon: '/icons/magnet.png',
       alt: 'Magnet Icon',
       title: 'Magnet Validation',
       desc: 'Visual inspection, magnetic strength testing, and capture efficiency analysis.'
     },
     {
+      slug: 'temperature-mapping',
       icon: '/icons/thermometer.png',
       alt: 'Thermometer Icon',
       title: 'Temperature Mapping',
@@ -102,14 +108,14 @@ const Home = () => {
     },
     {
       title: 'Temperature Mapping',
-      price: '$1200',
-      sub: 'First unit',
-      add: 'Request Quote',
+      price: 'Custom Quote',
+      sub: 'Priced per project',
+      add: 'Based on space size and logger count',
       features: [
         'Full comprehensive report',
-        'Validated loggers',
-        '+$75 per additional logger (up to 16 total)',
-        'Custom quotes for Oven and Freezer mapping'
+        'Validated data loggers',
+        'Coolers, freezers, warehouses, and ovens',
+        'Hot and cold spot identification'
       ]
     }
   ];
@@ -131,11 +137,12 @@ const Home = () => {
           <h3 style={{ textAlign: 'center', color: '#01426A', fontSize: '1.18rem', marginBottom: '2.2rem', fontWeight: 500 }}>Comprehensive food safety validation services to ensure your equipment meets industry standards and regulatory requirements.</h3>
           <div className="service-cards">
             {serviceCards.map(card => (
-              <div className="card service-card" key={card.title}>
+              <Link to={`/services/${card.slug}`} className="card service-card" key={card.title}>
                 <img src={card.icon} alt={card.alt} className="service-card-icon" />
                 <h3>{card.title}</h3>
                 <p>{card.desc}</p>
-              </div>
+                <span className="service-card-more">Learn more →</span>
+              </Link>
             ))}
           </div>
         </section>
@@ -169,7 +176,7 @@ const Home = () => {
                 justifyContent: 'center',
               }}>
                 <h3 style={{ color: '#01426A', fontSize: '1.55rem', fontWeight: 800, marginBottom: '0.5rem', textAlign: 'center', width: '100%' }}>{card.title}</h3>
-                <div style={{ color: '#16A34A', fontSize: '3rem', fontWeight: 800, marginBottom: '0.0rem', textAlign: 'center', width: '100%' }}>{card.price}</div>
+                <div style={{ color: '#16A34A', fontSize: card.price.startsWith('$') ? '3rem' : '1.9rem', fontWeight: 800, marginBottom: '0.0rem', textAlign: 'center', width: '100%' }}>{card.price}</div>
                 <div style={{ color: '#01426A', fontSize: '1.08rem', fontWeight: 700, textAlign: 'center', width: '100%', marginBottom: '0.08rem', marginTop: '-0.2rem' }}>{card.sub}</div>
                 <div style={{ color: '#01426A', fontSize: '0.98rem', fontWeight: 500, textAlign: 'center', width: '100%', marginBottom: '0.08rem' }}>{card.add}</div>
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none', textAlign: 'left', width: '100%', fontSize: '0.89rem' }}>
@@ -252,6 +259,15 @@ const Home = () => {
             </button>
           </form>
           {contactStatus && <p style={{ marginTop: '1rem', color: contactStatus.startsWith('Thank') ? 'green' : 'red' }}>{contactStatus}</p>}
+
+          <div className="review-cta">
+            <img src="/review-qr.svg" alt="QR code to leave a Google review" className="review-qr" width="120" height="120" />
+            <div>
+              <h3>Worked with us?</h3>
+              <p>We'd appreciate a quick Google review. It helps other Utah food manufacturers find us.</p>
+              <a href={REVIEW_URL} className="btn" target="_blank" rel="noopener noreferrer">★ Leave a Google review</a>
+            </div>
+          </div>
         </section>
       </main>
   );

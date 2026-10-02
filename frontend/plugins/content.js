@@ -44,7 +44,9 @@ function labelTableCells(html) {
   });
 }
 
-function loadCollection(root, dir, includeDrafts) {
+// Blog posts and episodes need a date and are listed newest first. Service
+// pages have no date and are listed by their `order` number instead.
+function loadCollection(root, dir, includeDrafts, { dated = true } = {}) {
   const full = path.join(root, 'content', dir);
   if (!fs.existsSync(full)) return [];
   return fs
@@ -54,27 +56,33 @@ function loadCollection(root, dir, includeDrafts) {
       const { data, body } = parseFrontmatter(fs.readFileSync(path.join(full, file), 'utf8'));
       const slug = file.replace(/\.md$/, '');
       if (!data.title) throw new Error(`content/${dir}/${file} is missing a title`);
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(data.date ?? '')))
+      if (dated && !/^\d{4}-\d{2}-\d{2}$/.test(String(data.date ?? '')))
         throw new Error(`content/${dir}/${file} needs a date like 2026-10-15`);
       return {
         slug,
         title: data.title,
-        date: data.date,
+        date: data.date || '',
         excerpt: data.excerpt || '',
         draft: data.draft === true,
         audio: data.audio || '',
         embed: data.embed || '',
+        seoTitle: data.seoTitle || '',
+        icon: data.icon || '',
+        price: data.price || '',
+        priceNote: data.priceNote || '',
+        order: Number(data.order) || 0,
         html: labelTableCells(marked.parse(body)),
       };
     })
     .filter((item) => includeDrafts || !item.draft)
-    .sort((a, b) => b.date.localeCompare(a.date));
+    .sort((a, b) => (dated ? b.date.localeCompare(a.date) : a.order - b.order));
 }
 
 function loadContent(root, includeDrafts) {
   return {
     posts: loadCollection(root, 'blog', includeDrafts),
     episodes: loadCollection(root, 'podcast', includeDrafts),
+    services: loadCollection(root, 'services', includeDrafts, { dated: false }),
   };
 }
 
@@ -102,9 +110,11 @@ function renderPage(template, { route, title, description, body = '', type = 'we
     `<meta property="og:image" content="${SITE_URL}/wheelerfslogo.png" />`,
     `<meta name="twitter:card" content="summary" />`,
   ].join('\n    ');
+  // Use replacer functions so "$" in the text (like "$650") is inserted as-is;
+  // in a replacement string, "$6" or "$2" would be treated as a special pattern.
   return template
-    .replace(/<!-- page-meta[\s\S]*?<!-- \/page-meta -->/, head)
-    .replace(/(<div id="root"[^>]*>)(<\/div>)/, `$1${body}$2`);
+    .replace(/<!-- page-meta[\s\S]*?<!-- \/page-meta -->/, () => head)
+    .replace(/(<div id="root"[^>]*>)(<\/div>)/, (_, open, close) => open + body + close);
 }
 
 const listHtml = (heading, items, base) =>
@@ -113,9 +123,15 @@ const listHtml = (heading, items, base) =>
     .map((i) => `<article><h2><a href="${base}/${i.slug}">${escapeHtml(i.title)}</a></h2><p>${escapeHtml(i.excerpt)}</p></article>`)
     .join('');
 
-function prerender(outDir, { posts, episodes }) {
+function prerender(outDir, { posts, episodes, services }) {
   const template = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
   const pages = [
+    ...services.map((s) => ({
+      route: `/services/${s.slug}`,
+      title: `${s.seoTitle || s.title} | ${SITE_NAME}`,
+      description: s.excerpt,
+      body: `<article><h1>${escapeHtml(s.title)}</h1><p>${escapeHtml(s.excerpt)}</p>${s.html}</article>`,
+    })),
     {
       route: '/blog',
       title: `Blog | ${SITE_NAME}`,
@@ -185,7 +201,9 @@ export default function contentPlugin() {
     load(id) {
       if (id !== RESOLVED_ID) return;
       const content = loadContent(config.root, config.command === 'serve');
-      return `export const posts = ${JSON.stringify(content.posts)};\nexport const episodes = ${JSON.stringify(content.episodes)};\n`;
+      return Object.entries(content)
+        .map(([name, items]) => `export const ${name} = ${JSON.stringify(items)};\n`)
+        .join('');
     },
     configureServer(server) {
       const dir = path.join(config.root, 'content');
