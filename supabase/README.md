@@ -36,6 +36,13 @@ In the generator: **Publish to portal** → *Who can see this customer's
 certificates* → add their email. They then go to `wheelerfs.com/portal`, enter
 that email, and click the link they receive.
 
+## Branded sign-in email
+
+Paste `email-templates/portal-sign-in.html` into Authentication → Emails →
+Templates, into both **Magic Link** and **Confirm signup** (a customer's very
+first sign-in uses Confirm signup). Subject for both: *Sign in to view your
+Wheeler Food Safety certificates*.
+
 ## Keys
 
 The URL and *publishable* key in the code are public by design; what they can

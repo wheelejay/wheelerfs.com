@@ -1618,7 +1618,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   async function loadRecords() {
     try {
       const { data, error } = await (await supa()).from('certificates')
-        .select('id, cert_no, validation_date, next_due, manufacturer, model, serial, asset_id, as_found, as_left, status, pdf_path, customer_id, updated_at, cert_type:data->>certType, customers(name, details)')
+        .select('id, cert_no, validation_date, next_due, manufacturer, model, serial, asset_id, as_found, as_left, status, pdf_path, customer_id, updated_at, cert_type:data->>certType, service_order:data->client->>serviceOrder, customers(name, details)')
         .order('validation_date', { ascending: false }).order('cert_no', { ascending: false });
       if (error) throw error;
       db.recordsCache = { rows: data, at: new Date().toISOString() }; persist();
@@ -1672,11 +1672,13 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
         (!q || [r.cert_no, r.customers?.name, r.serial, r.asset_id, r.model].some(v => (v || '').toLowerCase().includes(q))));
       const list = all.slice(0, 300);
       const tag = r => r.status === 'valid' ? '<span class="tag good">Valid</span>' : r.status === 'revoked' ? '<span class="tag bad">Revoked</span>' : '<span class="tag">Superseded</span>';
-      body.innerHTML = `<p class="rec-note">${all.length} certificate${all.length === 1 ? '' : 's'}${all.length > list.length ? `, showing the newest ${list.length}` : ''}. <b>Reopen</b> loads one onto the form to correct and publish again (same number and QR code).</p>` +
+      body.innerHTML = `<p class="rec-note">${all.length} certificate${all.length === 1 ? '' : 's'}${all.length > list.length ? `, showing the newest ${list.length}` : ''}. <b>Reopen</b> loads one onto the form to correct and publish again (same number and QR code). <b>Job PDF</b> combines every certificate from the same service order (or the same day, if there's no service order) behind a summary page; <b>Email</b> opens a ready-to-send email to the customer's portal contacts.</p>` +
         (list.length ? `<table class="rec-table"><tr><th>Certificate</th><th>Customer</th><th>Equipment</th><th>Status</th><th></th></tr>
           ${list.map(r => `<tr class="${r.status === 'valid' ? '' : 'muted'}"><td><b>${esc(r.cert_no)}</b><small>${esc(fmtDate(r.validation_date, true))}${r.next_due ? ' · due ' + esc(fmtDate(r.next_due, true)) : ''}</small></td>
             <td>${esc(r.customers?.name || '')}</td><td>${unitText(r)}</td><td>${tag(r)}</td>
             <td class="acts"><button type="button" class="small" data-act="pdf" data-id="${r.id}">PDF</button>
+              <button type="button" class="small" data-act="job" data-id="${r.id}" title="This certificate and the rest of its job (same service order) as one PDF">Job PDF</button>
+              <button type="button" class="small" data-act="email" data-id="${r.id}" title="Pre-written email to this customer's portal contacts">Email</button>
               <button type="button" class="small" data-act="reopen" data-id="${r.id}">Reopen</button>
               ${r.status === 'revoked' ? `<button type="button" class="small" data-act="restore" data-id="${r.id}">Restore</button>`
                 : `<button type="button" class="small" data-act="revoke" data-id="${r.id}">Revoke</button>`}
@@ -1710,6 +1712,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       if (act === 'pdf') return await downloadPdf(r);
       if (act === 'new') return startFromRow(r);
       if (act === 'reopen') return await reopen(r);
+      if (act === 'job') return await jobPdf(r, e.target);
+      if (act === 'email') return await emailCustomer(r);
       if (act === 'revoke' || act === 'restore') {
         if (act === 'revoke' && !confirm(`Revoke ${r.cert_no}?\n\nIts QR code will show "Revoked" and the customer portal will mark it revoked. You can restore it later.`)) return;
         const { error } = await (await supa()).from('certificates').update({ status: act === 'revoke' ? 'revoked' : 'valid' }).eq('id', r.id);
@@ -1767,6 +1771,118 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     fillForm(); dlgR.close();
     toast(`${r.cert_no} reopened. Make your changes, save the PDF and publish again to replace it.`);
   }
+  // ---------- job PDF and customer email ----------
+  // A job is one visit: same customer and service order (or the same validation date when there's none).
+  function jobRows(r) {
+    return recRows().filter(x => x.customer_id === r.customer_id && x.status !== 'revoked' &&
+      (r.service_order ? x.service_order === r.service_order : !x.service_order && x.validation_date === r.validation_date))
+      .sort((a, b) => a.cert_no.localeCompare(b.cert_no));
+  }
+  const jobName = r => [r.customers?.name || 'Customer', r.service_order ? 'SO ' + r.service_order : fmtDate(r.validation_date).replace(/\//g, '-')]
+    .join(' - ').replace(/[\\/:*?"<>|]/g, '');
+  const resultText = x => x.as_left === 'In Tolerance' ? 'Pass' : x.as_left || '';
+  const loadScript = (src, global) => window[global] ? Promise.resolve() : new Promise((resolve, reject) => {
+    const el = document.createElement('script'); el.src = src; el.onload = resolve;
+    el.onerror = () => reject(new Error('Could not load ' + src)); document.head.appendChild(el); });
+
+  async function jobPdf(r, btn) {
+    const rows = jobRows(r).filter(x => x.pdf_path);
+    if (!rows.length) return alert('No published PDFs for this job.');
+    const label = btn.textContent; btn.disabled = true; btn.textContent = 'Building…';
+    try {
+      await loadScript('pdf-lib.min.js', 'PDFLib');
+      const { PDFDocument, StandardFonts, rgb } = PDFLib;
+      const client = await supa();
+      const out = await PDFDocument.create();
+      out.setTitle(`Validation certificates – ${jobName(r)}`); out.setAuthor('Wheeler Food Safety Service LLC');
+      await summaryPages(out, r, rows, { StandardFonts, rgb });
+      for (const x of rows) {
+        const { data: blob, error } = await client.storage.from('certificates').download(x.pdf_path);
+        if (error) throw error;
+        const src = await PDFDocument.load(await blob.arrayBuffer());
+        (await out.copyPages(src, src.getPageIndices())).forEach(pg => out.addPage(pg));
+      }
+      saveBlob(`${jobName(r)} - Certificates.pdf`, new Blob([await out.save()], { type: 'application/pdf' }));
+      toast(`Job PDF saved: summary + ${rows.length} certificate${rows.length > 1 ? 's' : ''}. Use Email to send it.`);
+    } finally { btn.disabled = false; btn.textContent = label; }
+  }
+
+  // Branded first page(s): who, which job, and one line per certificate.
+  async function summaryPages(doc, r, rows, { StandardFonts, rgb }) {
+    const font = await doc.embedFont(StandardFonts.Helvetica), bold = await doc.embedFont(StandardFonts.HelveticaBold);
+    const logo = await doc.embedPng(LOGO);
+    const navy = rgb(0, 0.094, 0.169), green = rgb(0.086, 0.639, 0.29), muted = rgb(0.294, 0.333, 0.388), line = rgb(0.81, 0.85, 0.89);
+    const cl = r.customers?.details?.client || {};
+    const fit = (t, f, size, w) => { t = String(t ?? ''); while (t && f.widthOfTextAtSize(t, size) > w) t = t.slice(0, -2) + '…'; return t; };
+    const cols = [[50, 'Certificate', 108], [158, 'Equipment', 152], [310, 'Serial / Asset', 90], [400, 'Result', 88], [488, 'Next due', 74]];
+    const perPage = 24;
+    for (let start = 0; start < rows.length; start += perPage) {
+      const pg = doc.addPage([612, 792]);
+      const txt = (t, x, y, size = 10, f = font, color = navy) => pg.drawText(String(t ?? ''), { x, y, size, font: f, color });
+      pg.drawImage(logo, { x: 50, y: 712, width: 44 * logo.width / logo.height, height: 44 });
+      txt('WHEELER', 104, 738, 20, bold); txt('FOOD SAFETY SERVICES', 104, 722, 8.5, bold, green);
+      txt('Validation Summary', 562 - bold.widthOfTextAtSize('Validation Summary', 16), 738, 16, bold);
+      const sub = r.service_order ? `Service Order ${r.service_order}` : fmtDate(r.validation_date, true);
+      txt(sub, 562 - font.widthOfTextAtSize(sub, 10), 722, 10, font, muted);
+      pg.drawRectangle({ x: 50, y: 700, width: 512, height: 2.5, color: navy });
+      pg.drawRectangle({ x: 50, y: 700, width: 190, height: 2.5, color: green });
+      txt(r.customers?.name || '', 50, 672, 13, bold);
+      [cl.address1, cl.cityStateZip, cl.contact && 'Attn: ' + cl.contact].filter(Boolean).forEach((t, i) => txt(t, 50, 656 - i * 13, 9.5, font, muted));
+      const dates = [...new Set(rows.map(x => x.validation_date))].sort();
+      const passed = rows.filter(x => x.as_left === 'In Tolerance').length;
+      const facts = [['Validated', dates.map(d => fmtDate(d, true)).join(', ')], ['Units', `${rows.length} (${passed} passed)`],
+                     ['Next due', fmtDate(rows.map(x => x.next_due).filter(Boolean).sort()[0], true) || '—']];
+      facts.forEach(([k, v], i) => { txt(k, 360, 672 - i * 14, 9, font, muted); txt(fit(v, bold, 9.5, 140), 422, 672 - i * 14, 9.5, bold); });
+      let y = 600;
+      pg.drawRectangle({ x: 50, y: y - 5, width: 512, height: 20, color: rgb(0.945, 0.961, 0.976) });
+      cols.forEach(([x, h]) => txt(h.toUpperCase(), x + 4, y + 1, 7.5, bold, rgb(0.004, 0.259, 0.416)));
+      y -= 22;
+      for (const x of rows.slice(start, start + perPage)) {
+        const unit = [TAG[x.cert_type] || TAG.md, [x.manufacturer !== 'N/A' && x.manufacturer, x.model].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
+        const vals = [x.cert_no, unit, x.serial ? 'S/N ' + x.serial : x.asset_id || '', resultText(x), fmtDate(x.next_due)];
+        cols.forEach(([cx, , w], i) => txt(fit(vals[i], i === 0 ? bold : font, 9, w - 6), cx + 4, y, 9, i === 0 ? bold : font,
+          i === 3 ? (vals[3] === 'Pass' ? green : rgb(0.725, 0.11, 0.11)) : navy));
+        pg.drawLine({ start: { x: 50, y: y - 6 }, end: { x: 562, y: y - 6 }, thickness: 0.5, color: line });
+        y -= 20;
+      }
+      const note = 'Each certificate follows this page. Scan its QR code or visit wheelerfs.com/verify to confirm it is genuine.';
+      txt(note, 50, Math.min(y - 14, 130), 8.5, font, muted);
+      txt('Customer portal: wheelerfs.com/portal (sign in with your email, no password needed)', 50, Math.min(y - 28, 116), 8.5, font, muted);
+      pg.drawRectangle({ x: 50, y: 62, width: 512, height: 1.5, color: green });
+      txt('Wheeler Food Safety Service LLC · Utah', 50, 48, 8, bold);
+      const contact = '385-201-5609 · jordan@wheelerfs.com · wheelerfs.com';
+      txt(contact, 562 - font.widthOfTextAtSize(contact, 8), 48, 8, font, muted);
+    }
+  }
+
+  async function emailCustomer(r) {
+    const rows = jobRows(r);
+    const { data: members, error } = await (await supa()).from('customer_members').select('email').eq('customer_id', r.customer_id);
+    if (error) throw error;
+    const to = (members || []).map(m => m.email);
+    if (!to.length && !confirm(`${r.customers?.name || 'This customer'} has no portal contacts yet, so they can't sign in to the portal.\n\nAdd their email in Publish to portal → "Who can see this customer's certificates" first. Open the email anyway and type the address yourself?`)) return;
+    const cl = r.customers?.details?.client || {};
+    const first = (cl.contact || '').trim().split(/\s+/)[0];
+    const counts = {}; rows.forEach(x => { const t = (TAG[x.cert_type] || TAG.md).toLowerCase(); counts[t] = (counts[t] || 0) + 1; });
+    const what = Object.entries(counts).map(([t, n]) => `${n} ${t}${n > 1 ? 's' : ''}`).join(', ');
+    const failed = rows.filter(x => x.as_left !== 'In Tolerance');
+    const due = rows.map(x => x.next_due).filter(Boolean).sort()[0];
+    const visit = [...new Set(rows.map(x => x.validation_date))].sort().map(d => fmtDate(d, true)).join(' and ');
+    const subject = `Your validation certificates${r.service_order ? ' – Service Order ' + r.service_order : ''} – ${r.customers?.name || ''}`;
+    const body = [
+      `Hi ${first || 'there'},`, '',
+      `Attached are the validation certificates from our visit on ${visit} (${what}).` +
+        (failed.length ? ` ${failed.length} unit${failed.length > 1 ? 's were' : ' was'} not left in tolerance: ${failed.map(x => x.cert_no).join(', ')}. Please see the notes on ${failed.length > 1 ? 'those certificates' : 'that certificate'}.` : ' Everything passed.'),
+      '', 'Certificates:', ...rows.map(x => `  • ${x.cert_no}: ${[x.model, x.serial ? 'S/N ' + x.serial : x.asset_id].filter(Boolean).join(', ')} (${resultText(x)})`),
+      '', `You can also view and download all of your certificates any time at https://wheelerfs.com/portal. Sign in with ${to.length === 1 ? 'this' : 'your'} email address; no password is needed.`,
+      ...(due ? ['', `Your next validation is due ${fmtDate(due, true)}. I'll reach out before then to schedule.`] : []),
+      '', 'Thank you,', db.settings.techName || 'Jordan Wheeler', 'Wheeler Food Safety Service', '385-201-5609 · wheelerfs.com'].join('\n');
+    const a = document.createElement('a');
+    a.href = `mailto:${to.map(encodeURIComponent).join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    a.click();
+    toast('Email opened in your mail program. Attach the Job PDF before sending.');
+  }
+
   async function fullBackup() {
     const msg = $('#fullBackupMsg'); msg.textContent = 'Collecting…';
     try {
