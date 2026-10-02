@@ -1,5 +1,5 @@
 import { Route, Routes } from 'react-router-dom';
-import { posts, episodes } from 'virtual:content';
+import { posts, episodes, services } from 'virtual:content';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import ContentList from './pages/ContentList';
@@ -24,6 +24,10 @@ const App = () => (
             emptyMessage="Our first posts are on the way. Check back soon!"
           />
         }
+      />
+      <Route
+        path="services/:slug"
+        element={<ContentDetail items={services} basePath="/#services" backLabel="All services" siteLabel="Wheeler Food Safety" />}
       />
       <Route
         path="blog/:slug"

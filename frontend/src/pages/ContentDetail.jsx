@@ -9,7 +9,7 @@ const ContentDetail = ({ items, basePath, backLabel, siteLabel }) => {
   const item = items.find((i) => i.slug === slug);
 
   usePageMeta({
-    title: item ? `${item.title} | ${siteLabel}` : `Page not found | ${siteLabel}`,
+    title: item ? `${item.seoTitle || item.title} | ${siteLabel}` : `Page not found | ${siteLabel}`,
     description: item?.excerpt,
   });
 
@@ -19,11 +19,18 @@ const ContentDetail = ({ items, basePath, backLabel, siteLabel }) => {
     <main className="content-page">
       <article>
         <Link to={basePath} className="content-back">← {backLabel}</Link>
+        {item.icon && <img src={item.icon} alt="" className="service-page-icon" />}
         <h1>
           {item.title}
           {item.draft && <span className="draft-badge">Draft</span>}
         </h1>
-        <time dateTime={item.date} className="content-date">{formatDate(item.date)}</time>
+        {item.date && <time dateTime={item.date} className="content-date">{formatDate(item.date)}</time>}
+        {item.price && (
+          <p className="service-price">
+            <strong>{item.price}</strong> {item.priceNote}
+          </p>
+        )}
+        {!item.date && item.excerpt && <p className="content-intro">{item.excerpt}</p>}
 
         {item.embed && (
           <div className="episode-embed">

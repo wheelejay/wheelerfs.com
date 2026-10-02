@@ -894,3 +894,81 @@ footer.footer-dark {
     flex-direction: column;
   }
 }
+/* Service cards link to their own pages */
+a.service-card,
+a.service-card:hover {
+  color: inherit;
+  text-decoration: none;
+}
+.service-card-more {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  color: #01426A;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+a.service-card:hover .service-card-more {
+  color: #16A34A;
+}
+
+/* Footer links */
+.footer-service-links {
+  display: flex;
+  flex-direction: column;
+}
+.footer-columns .footer-service-links a {
+  color: #cfd8e3;
+  text-decoration: none;
+  line-height: 1.6;
+}
+.footer-columns .footer-service-links a:hover {
+  color: #16A34A;
+  text-decoration: underline;
+}
+.footer-columns a.footer-review-link {
+  display: inline-block;
+  margin-top: 0.8em;
+  color: #facc15;
+  font-weight: 600;
+  text-decoration: none;
+}
+.footer-columns a.footer-review-link:hover {
+  text-decoration: underline;
+}
+
+/* Google review prompt under the contact form */
+.review-cta {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  max-width: 600px;
+  margin: 2.5rem auto 0;
+  padding: 1.5rem;
+  border: 1.5px solid #e0e7ef;
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+}
+.review-cta h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1.25rem;
+}
+.review-cta p {
+  margin: 0 0 1rem;
+  color: #374151;
+}
+.review-qr {
+  flex: 0 0 auto;
+  width: 120px;
+  height: 120px;
+}
+/* On phones the QR code isn't useful (you can't scan your own screen) */
+@media (max-width: 768px) {
+  .review-cta {
+    text-align: center;
+    padding: 1.25rem 1rem;
+  }
+  .review-qr {
+    display: none;
+  }
+}

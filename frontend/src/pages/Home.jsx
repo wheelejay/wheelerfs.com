@@ -1,5 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import usePageMeta from '../usePageMeta';
+import { REVIEW_URL } from '../siteInfo';
 
 const Home = () => {
   usePageMeta({
@@ -38,24 +40,28 @@ const Home = () => {
   // Dynamic data for service cards
   const serviceCards = [
     {
+      slug: 'metal-detector-validation',
       icon: '/icons/shield.png',
       alt: 'Metal Detector Shield Icon',
       title: 'Metal Detector Validation',
       desc: 'Sensitivity testing with Fe/NFe/SS test samples and full audit-ready reports.'
     },
     {
+      slug: 'x-ray-system-validation',
       icon: '/icons/magglass.png',
       alt: 'X-ray Magnifying Glass Icon',
       title: 'X-ray System Validation',
       desc: 'Detectability testing using certified contaminants with traceable documentation.'
     },
     {
+      slug: 'magnet-validation',
       icon: '/icons/magnet.png',
       alt: 'Magnet Icon',
       title: 'Magnet Validation',
       desc: 'Visual inspection, magnetic strength testing, and capture efficiency analysis.'
     },
     {
+      slug: 'temperature-mapping',
       icon: '/icons/thermometer.png',
       alt: 'Thermometer Icon',
       title: 'Temperature Mapping',
@@ -131,11 +137,12 @@ const Home = () => {
           <h3 style={{ textAlign: 'center', color: '#01426A', fontSize: '1.18rem', marginBottom: '2.2rem', fontWeight: 500 }}>Comprehensive food safety validation services to ensure your equipment meets industry standards and regulatory requirements.</h3>
           <div className="service-cards">
             {serviceCards.map(card => (
-              <div className="card service-card" key={card.title}>
+              <Link to={`/services/${card.slug}`} className="card service-card" key={card.title}>
                 <img src={card.icon} alt={card.alt} className="service-card-icon" />
                 <h3>{card.title}</h3>
                 <p>{card.desc}</p>
-              </div>
+                <span className="service-card-more">Learn more →</span>
+              </Link>
             ))}
           </div>
         </section>
@@ -252,6 +259,15 @@ const Home = () => {
             </button>
           </form>
           {contactStatus && <p style={{ marginTop: '1rem', color: contactStatus.startsWith('Thank') ? 'green' : 'red' }}>{contactStatus}</p>}
+
+          <div className="review-cta">
+            <img src="/review-qr.svg" alt="QR code to leave a Google review" className="review-qr" width="120" height="120" />
+            <div>
+              <h3>Worked with us?</h3>
+              <p>We'd appreciate a quick Google review. It helps other Utah food manufacturers find us.</p>
+              <a href={REVIEW_URL} className="btn" target="_blank" rel="noopener noreferrer">★ Leave a Google review</a>
+            </div>
+          </div>
         </section>
       </main>
   );
