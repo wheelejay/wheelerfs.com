@@ -1,0 +1,22 @@
+# Supabase pauses free projects after about a week without activity, which
+# would break the QR verify page. This makes one harmless lookup every 3 days.
+name: Keep Supabase awake
+
+on:
+  schedule:
+    - cron: '17 15 */3 * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Look up a non-existent certificate
+        run: |
+          curl --fail --silent --show-error -o /dev/null \
+            -X POST 'https://dckhemtjpwltdpmxjouq.supabase.co/rest/v1/rpc/verify_certificate' \
+            -H 'apikey: sb_publishable_EjnwXzqk_jyHS0lVvfRbAw_zMs6S6e2' \
+            -H 'Content-Type: application/json' \
+            -d '{"code":"keepalive-ping-0000"}'

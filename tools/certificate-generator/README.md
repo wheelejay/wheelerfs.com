@@ -18,6 +18,14 @@ publishes `frontend/`), and no customer data is stored in this repository.
 5. **Print / Save PDF** → choose "Save as PDF" as the printer. Margins: None/Default, and make sure
    "Background graphics" is ticked. The file name defaults to the certificate number, customer and serial.
 6. **Save job file** downloads the certificate's data so it can be reopened and corrected later.
+7. **Publish to portal** (after saving the PDF): sign in with your Supabase admin login, choose the
+   PDF you just saved, and click Publish. The certificate's QR code starts working and the customer
+   can download it at wheelerfs.com/portal. The same window manages which emails can see each
+   customer's certificates. See `supabase/README.md` for the one-time setup.
+
+Each certificate gets its own random verification code, printed as a QR code linking to
+`wheelerfs.com/verify/?c=…` (turn it off in Settings). The portal features need an internet
+connection; everything else works offline.
 
 ## Where data lives
 

@@ -247,3 +247,51 @@
   font-size: 1.35rem;
   margin-right: 0.35rem;
 }
+
+/* Customer portal and certificate verification */
+.portal { max-width: 960px; }
+.portal-card, .verify-card {
+  background: #fff; border: 1.5px solid #e0e7ef; border-radius: 14px; padding: 1.4rem 1.6rem;
+  box-shadow: 0 2px 8px rgba(1, 66, 106, 0.04); max-width: 520px;
+}
+.portal-card h2, .verify-card h2 { margin: 0 0 0.5rem; font-size: 1.3rem; color: #00182b; }
+.portal-card label { display: block; font-weight: 600; margin: 1rem 0 0.3rem; color: #00182b; }
+.portal-card input {
+  width: 100%; box-sizing: border-box; padding: 0.7rem 0.8rem; font-size: 1rem;
+  border: 1.5px solid #cfd8e3; border-radius: 8px; margin-bottom: 1rem;
+}
+.portal-error { color: #b91c1c; }
+.link-button { background: none; border: 0; padding: 0; color: #01426A; text-decoration: underline; cursor: pointer; font: inherit; }
+.portal-bar { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; color: #4b5563; }
+.portal-group { margin-bottom: 2.2rem; }
+.portal-group h2 { font-size: 1.35rem; color: #00182b; margin: 0 0 0.7rem; }
+.portal-table-wrap { overflow-x: auto; }
+.portal-table { width: 100%; border-collapse: collapse; background: #fff; border: 1.5px solid #e0e7ef; border-radius: 10px; }
+.portal-table th { text-align: left; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #01426A; background: #f1f5f9; padding: 0.6rem 0.8rem; }
+.portal-table td { padding: 0.7rem 0.8rem; border-top: 1px solid #eef2f7; vertical-align: middle; }
+.portal-table td small { display: block; color: #4b5563; }
+.portal-table tr.muted td { color: #6b7280; }
+.btn.btn-small { padding: 0.45rem 0.9rem; font-size: 0.9rem; white-space: nowrap; }
+.badge { display: inline-block; margin-left: 0.4rem; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: #e5e7eb; color: #374151; white-space: nowrap; }
+.badge.good { background: #dcfce7; color: #15803d; }
+.badge.warn { background: #fef3c7; color: #92400e; }
+.badge.bad { background: #fee2e2; color: #b91c1c; }
+@media (max-width: 640px) {
+  .portal-table thead { display: none; }
+  .portal-table, .portal-table tbody, .portal-table tr, .portal-table td { display: block; width: 100%; box-sizing: border-box; }
+  .portal-table tr { border-top: 1.5px solid #e0e7ef; padding: 0.4rem 0; }
+  .portal-table td { border: 0; padding: 0.25rem 0.8rem; }
+  .portal-table td[data-label]::before { content: attr(data-label); display: block; font-size: 0.75rem; text-transform: uppercase; color: #6b7280; }
+}
+.verify-card { border-width: 2px; }
+.verify-card.good { border-color: #16A34A; }
+.verify-card.warn { border-color: #f59e0b; }
+.verify-card.bad { border-color: #dc2626; }
+.verify-status { font-size: 1.25rem; font-weight: 800; margin: 0 0 1rem; }
+.verify-card.good .verify-status { color: #15803d; }
+.verify-card.warn .verify-status { color: #92400e; }
+.verify-card.bad .verify-status { color: #b91c1c; }
+.verify-facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1.2rem; margin: 0 0 1rem; }
+.verify-facts dt { color: #4b5563; }
+.verify-facts dd { margin: 0; font-weight: 700; color: #00182b; }
+.verify-note { font-size: 0.95rem; color: #4b5563; margin: 0; }

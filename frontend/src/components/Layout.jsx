@@ -79,6 +79,7 @@ const Layout = () => {
             <div style={{ marginTop: '0.8em', fontSize: '0.98rem', fontWeight: 400 }}>
               <Link to="/blog">Blog</Link>
               {episodes.length > 0 && <> · <Link to="/podcast">Podcast</Link></>}
+              {' · '}<Link to="/portal">Customer portal</Link>
             </div>
           </div>
           <div>

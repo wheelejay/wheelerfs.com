@@ -96,9 +96,10 @@ const escapeHtml = (s) =>
 // Swap title/description/social tags into the built index.html and put the
 // page text inside #root so search engines see it without running JavaScript.
 // React replaces the #root contents as soon as the app loads.
-function renderPage(template, { route, title, description, body = '', type = 'website' }) {
+function renderPage(template, { route, title, description, body = '', type = 'website', noindex = false }) {
   const url = pageUrl(route);
   const head = [
+    ...(noindex ? ['<meta name="robots" content="noindex" />'] : []),
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(description)}" />`,
     `<link rel="canonical" href="${url}" />`,
@@ -172,6 +173,18 @@ function prerender(outDir, { posts, episodes, services }) {
     fs.writeFileSync(path.join(dir, 'index.html'), renderPage(template, page));
   }
 
+  // Customer portal and QR verification: real pages so they load with a 200,
+  // but kept out of search results and the sitemap.
+  const privatePages = [
+    { route: '/portal', title: `Customer portal | ${SITE_NAME}`, description: 'Download your validation certificates.', noindex: true },
+    { route: '/verify', title: `Verify a certificate | ${SITE_NAME}`, description: 'Confirm a Wheeler Food Safety certificate is genuine.', noindex: true },
+  ];
+  for (const page of privatePages) {
+    const dir = path.join(outDir, page.route);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'index.html'), renderPage(template, page));
+  }
+
   // GitHub Pages serves 404.html for unknown URLs; the app shows its Not Found page.
   fs.writeFileSync(
     path.join(outDir, '404.html'),
@@ -185,7 +198,7 @@ function prerender(outDir, { posts, episodes, services }) {
     path.join(outDir, 'sitemap.xml'),
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`,
   );
-  fs.writeFileSync(path.join(outDir, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${SITE_URL}/sitemap.xml\n`);
+  fs.writeFileSync(path.join(outDir, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /portal/\nDisallow: /verify/\nSitemap: ${SITE_URL}/sitemap.xml\n`);
 }
 
 export default function contentPlugin() {
