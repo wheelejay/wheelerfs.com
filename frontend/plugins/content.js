@@ -189,7 +189,11 @@ function prerender(outDir, { posts, episodes, services }) {
   // (Supabase) mode when served from the website. It has its own sign-in screen.
   const adminDir = path.join(outDir, 'admin');
   fs.mkdirSync(adminDir, { recursive: true });
-  fs.copyFileSync(path.resolve(outDir, '..', '..', 'tools', 'certificate-generator', 'index.html'), path.join(adminDir, 'index.html'));
+  const generatorDir = path.resolve(outDir, '..', '..', 'tools', 'certificate-generator');
+  fs.copyFileSync(path.join(generatorDir, 'index.html'), path.join(adminDir, 'index.html'));
+  // offline copy of the admin page, plus the Supabase library served from this site so it can be cached
+  fs.copyFileSync(path.join(generatorDir, 'sw.js'), path.join(adminDir, 'sw.js'));
+  fs.copyFileSync(path.resolve(outDir, '..', 'node_modules', '@supabase', 'supabase-js', 'dist', 'umd', 'supabase.js'), path.join(adminDir, 'supabase.js'));
 
   // GitHub Pages serves 404.html for unknown URLs; the app shows its Not Found page.
   fs.writeFileSync(

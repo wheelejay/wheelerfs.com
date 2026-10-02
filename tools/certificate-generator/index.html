@@ -168,6 +168,12 @@
   #gateMsg { font-size: 13px; color: var(--muted); margin: 6px 0 0; min-height: 18px; }
   #gateMsg.err { color: #b91c1c; }
   .topbar .who { font-size: 12px; opacity: .8; }
+  .topbar .sync { font-size: 12px; padding: 5px 10px; border-radius: 999px; }
+  .topbar .sync::before { content: "●"; margin-right: 6px; }
+  .topbar .sync.ok::before { color: #4ade80; }
+  .topbar .sync.pending::before { color: #fbbf24; }
+  .topbar .sync.offline { background: #92400e; border-color: #f59e0b; }
+  .topbar .sync.offline::before { color: #fbbf24; }
 
   /* ---------- print: certificate only ---------- */
   @page { size: Letter; margin: 0; }
@@ -191,6 +197,7 @@
   <button id="btnOpenJob">Open job file</button>
   <input type="file" id="fileJob" accept=".json,application/json" hidden>
   <span class="spacer"></span>
+  <button class="sync" id="syncStatus" hidden title="Click to sync now"></button>
   <span class="who" id="whoami" hidden></span>
   <button id="btnSignOut" hidden>Sign out</button>
   <button id="btnSettings">Settings</button>
@@ -419,7 +426,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   // row level security decides what it can do). See supabase/setup.sql.
   const SUPABASE_URL = 'https://dckhemtjpwltdpmxjouq.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_EjnwXzqk_jyHS0lVvfRbAw_zMs6S6e2';
-  const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js';
+  const SUPABASE_JS = HOSTED ? 'supabase.js' : 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js';
   const VERIFY_URL = 'https://wheelerfs.com/verify/?c=';
 
   // ---------- certificate types ----------
@@ -574,10 +581,21 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   async function takeCertNo() {
     const d = dateKey(cert.valDate);
     const k = cert.type === 'md' ? d : `${cert.type}:${d}`;   // metal detectors keep the original counter keys
+    const no = n => `${TYPES[cert.type].prefix}-${d}-${String(n).padStart(2, '0')}`;
     let n;
-    if (HOSTED) n = await remote.nextNumber(k);               // shared counter: no duplicates across devices
-    else { db.counters[k] = (db.counters[k] || 0) + 1; persist(); n = db.counters[k]; }
-    return `${TYPES[cert.type].prefix}-${d}-${String(n).padStart(2, '0')}`;
+    if (HOSTED) {
+      try {
+        n = await remote.nextNumber(k);                       // shared counter: no duplicates across devices
+      } catch (e) {
+        if (!isNetworkError(e)) throw e;
+        // offline: continue from the last number this device knew; checked against the server when it syncs
+        n = (db.counters[k] || 0) + 1;
+        queue({ kind: 'counter', key: k, n, certNo: no(n) });
+        toast('Offline: number taken on this device. It will be checked when you sync.');
+      }
+      db.counters[k] = Math.max(db.counters[k] || 0, n); persist();
+    } else { db.counters[k] = (db.counters[k] || 0) + 1; persist(); n = db.counters[k]; }
+    return no(n);
   }
   const unitId = () => cert.equip.serial || cert.equip.assetId;
   const equipModel = () => cert.type === 'mg' ? [cert.equip.magnetType, cert.equip.element].filter(Boolean).join(' ') : cert.equip.model;
@@ -761,8 +779,9 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     if (!c) { c = { company: cert.client.company, detectors: [] }; db.customers.push(c); }
     c.client = { ...cert.client, serviceOrder: '', po: '' };
     c.cond = { criteria: cert.cond.criteria, location: cert.cond.location };
-    if (HOSTED) try { await remote.saveCustomer(c); } catch (e) { return fail('Could not save the customer.', e); }
-    persist(); refreshCustomerSelect(); toast('Customer saved');
+    persist(); refreshCustomerSelect();
+    if (HOSTED) { queue({ kind: 'customer', company: c.company }); toast(await flush() ? 'Customer saved' : 'Customer saved on this device; it will sync when you\'re online'); }
+    else toast('Customer saved');
   });
   $('#selEquip').addEventListener('change', e => {
     const d = currentCustomer()?.detectors[e.target.value]; if (!d) return;
@@ -772,7 +791,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
                      techDate: cert.techDate, reviewerName: cert.reviewerName, issueDate: cert.issueDate };
       cert = Object.assign(blankCert(type), structuredClone(keep));
     }
-    const { type: _t, _id, product, program, beltSpeed, tubes, points, testLabels, checkLabels, ...equip } = d;
+    const { type: _t, _id, _key, product, program, beltSpeed, tubes, points, testLabels, checkLabels, ...equip } = d;
     Object.assign(cert.equip, structuredClone(equip));
     // this unit's own test points / checks; rows with the same name keep what was already entered
     if (testLabels && type !== 'mg') {
@@ -800,10 +819,14 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     entry.checkLabels = cert.checkItems.map(ch => ch.label).filter(Boolean);
     const same = d => (d.type || 'md') === cert.type && (cert.equip.serial ? d.serial === cert.equip.serial : !d.serial && d.assetId === cert.equip.assetId);
     const i = c.detectors.findIndex(same);
-    if (i >= 0) entry._id = c.detectors[i]._id;
-    if (HOSTED) try { await remote.saveEquipment(c, entry); } catch (e) { return fail('Could not save the equipment.', e); }
+    if (i >= 0) Object.assign(entry, { _id: c.detectors[i]._id, _key: c.detectors[i]._key });
+    entry._key ||= entry._id || 'local-' + newVerifyCode();   // stable id even before it reaches the server
     i >= 0 ? (c.detectors[i] = entry) : c.detectors.push(entry);
-    persist(); refreshEquipSelect(); toast('Equipment saved to ' + c.company);
+    persist(); refreshEquipSelect();
+    if (HOSTED) {
+      queue({ kind: 'customer', company: c.company }, { kind: 'equipment', company: c.company, key: entry._key });
+      toast(await flush() ? 'Equipment saved to ' + c.company : 'Equipment saved on this device; it will sync when you\'re online');
+    } else toast('Equipment saved to ' + c.company);
   });
 
   // ---------- quick buttons ----------
@@ -877,7 +900,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   // settings are saved in this browser, and online too in website mode
   function saveSettings() {
     persist();
-    if (HOSTED) remote.saveSettings().catch(e => fail('Could not save your settings online.', e));
+    if (HOSTED) { queue({ kind: 'settings' }); flush(); }
   }
   function showSig() {
     $('#sigPreview').innerHTML = db.settings.signature ? `<img src="${db.settings.signature}" alt="Signature">` : '<span class="hint">No signature saved</span>';
@@ -906,6 +929,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       const data = JSON.parse(await f.text());
       if (data.type !== 'wfs-certgen-backup') throw new Error();
       if (HOSTED) {
+        if (offline) return alert('Importing needs an internet connection.');
         if (!confirm('Add the customers and equipment from this backup to your online records, and use its settings?\n\nExisting customers and units with the same name or serial are updated, nothing is deleted.')) return;
         toast('Importing…');
         try { var n = await remote.importBackup(data); } catch (err) { return fail('The import stopped partway. You can safely run it again.', err); }
@@ -1280,7 +1304,10 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       $('#filePdf').value = '';
       toast(`${cert.certNo} published. The QR code now works.`);
       showPortal();
-    } catch (e) { fail('Publishing failed. Nothing is lost; you can try again.', e); }
+    } catch (e) {
+      if (isNetworkError(e)) alert("You're offline, so this can't be published yet. The certificate stays here; publish it when you're back online.");
+      else fail('Publishing failed. Nothing is lost; you can try again.', e);
+    }
     finally { btn.disabled = false; btn.textContent = 'Publish'; }
   });
 
@@ -1296,7 +1323,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       if (st.data) db.settings = mergeSettings(st.data.value);
       db.customers = cust.data.map(r => ({
         id: r.id, company: r.name, client: { ...(r.details?.client || {}), company: r.name }, cond: r.details?.cond,
-        detectors: eq.data.filter(e => e.customer_id === r.id).map(e => ({ ...e.data, type: e.type, _id: e.id })) }));
+        detectors: eq.data.filter(e => e.customer_id === r.id).map(e => ({ ...e.data, type: e.type, _id: e.id, _key: e.id })) }));
+      db.counters = await this.counters();
       persist();
     },
     async saveSettings() {
@@ -1312,7 +1340,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     async saveEquipment(c, entry) {
       const client = await supa();
       const cid = c.id || await this.saveCustomer(c);
-      const { _id, type, ...data } = entry;
+      const { _id, _key, type, ...data } = entry;
       const { data: row, error } = await (_id
         ? client.from('equipment').update({ type, data }).eq('id', _id).select('id').single()
         : client.from('equipment').insert({ customer_id: cid, type, data }).select('id').single());
@@ -1345,7 +1373,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
           const type = d.type || 'md';
           const same = x => (x.type || 'md') === type && (d.serial ? x.serial === d.serial : !x.serial && x.assetId === d.assetId);
           const existing = c.detectors.find(same);
-          const { _id, ...rest } = d;
+          const { _id, _key, ...rest } = d;
           const entry = { ...rest, type, _id: existing?._id };
           await this.saveEquipment(c, entry); units++;
           existing ? Object.assign(existing, entry) : c.detectors.push(entry);
@@ -1371,12 +1399,102 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       $('#gateFields').hidden = false;
       return gateMessage('That account is not an admin.', true);
     }
-    await remote.load();
     const { data: { session } } = await client.auth.getSession();
-    $('#whoami').textContent = session.user.email; $('#whoami').hidden = false; $('#btnSignOut').hidden = false;
+    await flush(true);                // send changes made offline before reading the server's copy
+    if (!db.outbox.length) await remote.load();
+    db.cachedFor = session.user.email; persist();
+    showUser(session.user.email);
     fillForm();
     $('#gate').hidden = true;
+    syncStatus();
   }
+  function showUser(email) { $('#whoami').textContent = email; $('#whoami').hidden = false; $('#btnSignOut').hidden = false; }
+  // No connection, but this device was signed in before: work from its saved copy.
+  function enterOffline() {
+    offline = true;
+    showUser(db.cachedFor);
+    fillForm();
+    $('#gate').hidden = true;
+    syncStatus();
+  }
+
+  // ---------- offline changes: saved on the device, sent when there's a connection ----------
+  let offline = false, flushing = null;
+  db.outbox ||= [];
+  const isNetworkError = e => !navigator.onLine || e?.name === 'AuthRetryableFetchError' ||
+    /failed to fetch|networkerror|load failed|fetch failed|network request failed|timed? ?out|could not load/i.test(e?.message || String(e || ''));
+  function queue(...ops) {
+    for (const op of ops) {   // one pending entry per thing; numbers are all kept
+      const same = o => o.kind === op.kind && (op.kind === 'settings' || (op.kind === 'customer' && o.company === op.company) ||
+                                               (op.kind === 'equipment' && o.key === op.key));
+      if (op.kind === 'counter' || !db.outbox.some(same)) db.outbox.push(op);
+    }
+    persist(); syncStatus();
+  }
+  // Sends waiting changes in order. Returns true when nothing is left waiting.
+  function flush(quiet) {
+    if (!HOSTED) return Promise.resolve(true);
+    if (!flushing) flushing = sendWaiting(quiet).finally(() => { flushing = null; });
+    return flushing;
+  }
+  async function sendWaiting(quiet) {
+      syncStatus('syncing');
+      try {
+        while (db.outbox.length) {
+          const op = db.outbox[0];
+          try { await sendOp(op); }
+          catch (e) {
+            if (isNetworkError(e)) { offline = true; return false; }
+            console.error(e);
+            if (!quiet) alert(`Couldn't sync a change (${op.kind}${op.company ? ', ' + op.company : ''}): ${e.message || e}. It was kept on this device only.`);
+          }
+          db.outbox.shift(); persist();
+        }
+        offline = false;
+        return true;
+      } finally { syncStatus(); }
+  }
+  async function sendOp(op) {
+    const c = op.company && db.customers.find(x => x.company === op.company);
+    if (op.kind === 'settings') return remote.saveSettings();
+    if (op.kind === 'customer') return c && remote.saveCustomer(c);
+    if (op.kind === 'equipment') { const entry = c?.detectors.find(d => d._key === op.key); return entry && remote.saveEquipment(c, entry); }
+    if (op.kind === 'counter') {
+      const client = await supa();
+      const { data, error } = await client.from('cert_counters').select('n').eq('key', op.key).maybeSingle();
+      if (error) throw error;
+      if ((data?.n || 0) >= op.n)
+        alert(`Heads up: ${op.certNo} was given out on this device while it was offline, and another device has used that number too. Give one of those certificates a new number with Auto before publishing.`);
+      const r = await client.rpc('raise_cert_counter', { counter_key: op.key, at_least: op.n });
+      if (r.error) throw r.error;
+    }
+  }
+  function syncStatus(state) {
+    const el = $('#syncStatus'); if (!HOSTED || $('#gate').hidden === false) return;
+    const n = db.outbox.length;
+    el.hidden = false;
+    el.className = 'sync ' + (state === 'syncing' ? 'pending' : offline ? 'offline' : n ? 'pending' : 'ok');
+    el.textContent = state === 'syncing' ? 'Syncing…' : offline ? `Offline${n ? ` · ${n} change${n > 1 ? 's' : ''} waiting` : ''}`
+      : n ? `${n} change${n > 1 ? 's' : ''} waiting` : 'Online · saved';
+  }
+  // Back online: refresh the sign-in if needed, send waiting changes, then pick up changes from other devices.
+  async function resync() {
+    if (!HOSTED || $('#gate').hidden === false) return;
+    try {
+      const client = await supa();
+      const { data: { session } } = await client.auth.getSession();
+      if (!session) { offline = !navigator.onLine; return syncStatus(); }
+      if (!await flush()) return;
+      await remote.load();
+      offline = false;
+      refreshCustomerSelect(); render();
+    } catch (e) { if (isNetworkError(e)) offline = true; else console.error(e); }
+    syncStatus();
+  }
+  $('#syncStatus').addEventListener('click', resync);
+  window.addEventListener('online', () => setTimeout(resync, 1500));
+  window.addEventListener('offline', () => { offline = true; syncStatus(); });
+  setInterval(() => { if (db.outbox.length || offline) resync(); }, 60000);
   async function boot() {
     document.title = 'WFS Admin';
     $('.topbar h1 span').textContent = 'Admin';
@@ -1384,15 +1502,21 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     $('#backupHint').innerHTML = '<b>Backup.</b> Your customers, equipment and settings are stored online. Export a backup about once a month and keep it in Google Drive. Import adds a backup file (for example from the offline generator) to your online records.';
     fillForm();                       // last draft on this device, behind the sign-in screen
     $('#gate').hidden = false; gateMessage('Connecting…');
+    // keep a copy of this page on the device so it opens without a connection
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(e => console.warn('offline copy unavailable', e));
     try {
       const client = await supa();
-      const { data: { session } } = await client.auth.getSession();
-      if (session) await enterAdmin();
-      else { $('#gateFields').hidden = false; gateMessage(''); $('#gateEmail').focus(); }
+      const { data: { session }, error } = await client.auth.getSession();
+      if (session) return await enterAdmin();
+      // the saved sign-in couldn't be renewed without a connection: work offline from this device's copy
+      if (db.cachedFor && (!navigator.onLine || (error && isNetworkError(error)))) return enterOffline();
+      $('#gateFields').hidden = false; gateMessage(''); $('#gateEmail').focus();
     } catch (e) {
       console.error(e);
+      if (isNetworkError(e) && db.cachedFor) return enterOffline();
       $('#gateFields').hidden = false;
-      gateMessage('Could not reach the server. Check your internet connection and try again.', true);
+      gateMessage(db.cachedFor ? 'Could not reach the server. Check your internet connection and try again.'
+        : "You're offline. Sign in once with internet on this device, and after that it works offline.", true);
     }
   }
   $('#gateForm').addEventListener('submit', async () => {
@@ -1400,7 +1524,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       gateMessage('Signing in…');
       const client = await supa();
       const { error } = await client.auth.signInWithPassword({ email: $('#gateEmail').value.trim(), password: $('#gatePassword').value });
-      if (error) return gateMessage(error.status === 400 ? 'Wrong email or password.' : error.message, true);
+      if (error) return gateMessage(isNetworkError(error) ? "You're offline. Signing in needs a connection the first time on each device."
+        : error.status === 400 ? 'Wrong email or password.' : error.message, true);
       $('#gatePassword').value = '';
       await enterAdmin();
     } catch (e) {
@@ -1409,7 +1534,12 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       gateMessage('Could not sign in: ' + (e.message || 'check your internet connection.'), true);
     }
   });
-  $('#btnSignOut').addEventListener('click', async () => { await (await supa()).auth.signOut(); location.reload(); });
+  $('#btnSignOut').addEventListener('click', async () => {
+    if (db.outbox.length && !confirm(`${db.outbox.length} change(s) haven't synced yet and will be lost if you sign out. Sign out anyway?`)) return;
+    try { await (await supa()).auth.signOut(); } catch (e) { console.warn(e); }
+    db.outbox = []; db.customers = []; db.cachedFor = ''; persist();   // nothing left on the device for the next person
+    location.reload();
+  });
 
   let toastTimer;
   function toast(msg) {
