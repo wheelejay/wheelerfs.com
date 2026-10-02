@@ -10,6 +10,13 @@ settings and certificate numbers in Supabase, so they're the same on every devic
 a file it keeps everything in that browser and works offline. No customer data is stored in
 this repository.
 
+**Offline on the admin page:** after signing in once with a connection, the page keeps a copy
+of itself on the device (`sw.js`), so it opens with no signal. Customers, equipment, settings
+and certificate numbers changed while offline are saved on the device and sent automatically
+when the connection returns (the status button in the top bar shows what's waiting; click it to
+sync now). Numbers taken offline continue from the device's last known number and are checked
+against the server on sync. Publishing needs a connection.
+
 ## Using it
 
 1. Pick the **Certificate type** at the top, then fill in the form on the left; the certificate
