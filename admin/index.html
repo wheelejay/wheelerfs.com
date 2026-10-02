@@ -1,0 +1,1428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>WFS Certificate Generator</title>
+<style>
+  :root {
+    --navy: #00182b; --blue: #01426A; --green: #16A34A; --line: #cfd8e3;
+    --tint: #f1f5f9; --muted: #4b5563; --ink: #1f2937; --amber: #92400e;
+    --app-bg: #e9eef4; --panel: #ffffff; --field: #f7fafc;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--app-bg); color: var(--ink); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 14px; }
+
+  /* ---------- app chrome ---------- */
+  .topbar { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    padding: 10px 16px; background: var(--navy); color: #fff; }
+  .topbar h1 { font-size: 16px; margin: 0 12px 0 0; letter-spacing: .02em; }
+  .topbar h1 span { color: #4ade80; font-weight: 600; }
+  .topbar .spacer { flex: 1; }
+  button, .btn { font: inherit; font-size: 13px; border: 1px solid transparent; border-radius: 6px; padding: 7px 12px;
+    cursor: pointer; background: #fff; color: var(--navy); }
+  button:hover { filter: brightness(.95); }
+  .topbar button { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.25); }
+  .topbar button.primary { background: var(--green); border-color: var(--green); font-weight: 700; }
+  button.small { padding: 4px 8px; font-size: 12px; background: var(--tint); border-color: var(--line); }
+
+  .layout { display: grid; grid-template-columns: minmax(340px, 460px) 1fr; gap: 16px; padding: 16px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .form { background: var(--panel); border-radius: 10px; padding: 4px 16px 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  fieldset { border: 0; border-top: 1px solid var(--line); margin: 0; padding: 12px 0 6px; }
+  fieldset:first-of-type { border-top: 0; }
+  legend { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--blue); padding: 0; margin-bottom: 8px; float: left; width: 100%; }
+  legend + * { clear: both; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
+  .row.three { grid-template-columns: .7fr 1.3fr 1.1fr; }
+  .row.full { grid-template-columns: 1fr; }
+  label { display: block; font-size: 12px; color: var(--muted); }
+  label > input, label > select, label > textarea { margin-top: 3px; }
+  input, select, textarea { width: 100%; font: inherit; font-size: 14px; padding: 6px 8px; border: 1px solid var(--line);
+    border-radius: 6px; background: var(--field); color: var(--navy); }
+  input:focus, select:focus, textarea:focus { outline: 2px solid #93c5fd; border-color: #60a5fa; background: #fff; }
+  textarea { min-height: 90px; resize: vertical; }
+  .inline { display: flex; gap: 6px; align-items: end; }
+  .inline > label { flex: 1; }
+  .saved { display: flex; gap: 6px; margin-bottom: 8px; }
+  .saved select { flex: 1; }
+  .hint { font-size: 11.5px; color: var(--muted); margin: 4px 0 8px; }
+  .grid-results { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .grid-results th { font-size: 11px; color: var(--muted); font-weight: 600; text-align: left; padding: 2px 4px; }
+  .grid-results td { padding: 2px 4px; }
+  .grid-results select { padding: 4px; }
+  .std-table input { padding: 4px 6px; }
+  .warnings { margin: 10px 0 0; padding: 8px 10px; border-radius: 6px; background: #fffbeb; border: 1px solid #fcd34d; color: var(--amber); font-size: 12.5px; }
+  .warnings:empty { display: none; }
+  .warnings ul { margin: 4px 0 0 18px; padding: 0; }
+
+  .preview-wrap { position: sticky; top: 64px; }
+  .preview-scale { transform-origin: top left; }
+  .preview-holder { overflow: hidden; border-radius: 4px; box-shadow: 0 4px 18px rgba(0,24,43,.18); background: #fff; }
+
+  dialog { border: 0; border-radius: 10px; padding: 0; max-width: 640px; width: calc(100% - 32px); box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+  dialog .dlg { padding: 18px 20px; }
+  dialog h2 { margin: 0 0 10px; font-size: 17px; color: var(--navy); }
+  dialog .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  dialog .actions .primary { background: var(--green); color: #fff; font-weight: 700; }
+  .sig-preview { height: 44px; border: 1px dashed var(--line); border-radius: 6px; display: flex; align-items: center; justify-content: center; margin-top: 6px; background: #fff; }
+  .sig-preview img { max-height: 40px; }
+
+  /* ---------- certificate (Letter page) ---------- */
+  .page { width: 8.5in; height: 11in; padding: 0.42in 0.5in 0.35in; position: relative; overflow: hidden; background: #fff;
+    display: flex; flex-direction: column; color: var(--ink); font-size: 8.6pt; line-height: 1.35;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page .wm { position: absolute; inset: 0; background: center 55% / 4.6in no-repeat; opacity: .035; pointer-events: none; }
+  .page header { display: flex; align-items: center; gap: 14px; padding-bottom: 10px; border-bottom: 3px solid var(--navy); }
+  .page header img { height: 62px; }
+  .brand b { display: block; font-size: 19pt; letter-spacing: .06em; color: var(--navy); line-height: 1; }
+  .brand span { display: block; font-size: 8.5pt; letter-spacing: .2em; color: var(--green); font-weight: 700; margin-top: 3px; }
+  .brand small { display: block; color: var(--muted); font-size: 7.5pt; margin-top: 4px; }
+  .doc { margin-left: auto; text-align: right; }
+  .doc h1 { margin: 0; font-size: 15pt; color: var(--navy); letter-spacing: .02em; }
+  .doc .no { font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 10pt; color: var(--blue); font-weight: 700; margin-top: 2px; }
+  .doc .meta { color: var(--muted); font-size: 7.5pt; margin-top: 2px; }
+  .accent { height: 3px; background: var(--green); width: 38%; margin-bottom: 10px; }
+
+  .status { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 2px 0 10px; }
+  .chip { border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; background: #fff; }
+  .chip label { display: block; font-size: 6.8pt; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .chip strong { font-size: 10.5pt; color: var(--navy); }
+  .chip.pass { border-color: var(--green); background: #f0fdf4; } .chip.pass strong { color: #15803d; }
+  .chip.warn { border-color: #f59e0b; background: #fffbeb; } .chip.warn strong { color: var(--amber); }
+  .chip.fail { border-color: #dc2626; background: #fef2f2; } .chip.fail strong { color: #b91c1c; }
+
+  .page h2 { font-size: 7.6pt; text-transform: uppercase; letter-spacing: .12em; color: #fff; background: var(--navy);
+    margin: 0; padding: 3px 8px; border-radius: 4px 4px 0 0; }
+  .page h2 em { font-style: normal; font-weight: 400; opacity: .8; text-transform: none; letter-spacing: 0; }
+  .card { border: 1px solid var(--line); border-top: 0; border-radius: 0 0 4px 4px; margin-bottom: 9px; background: rgba(255,255,255,.92); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .page dl { display: grid; grid-template-columns: 34% 66%; margin: 0; }
+  .page dt, .page dd { margin: 0; padding: 3px 8px; border-bottom: 1px solid #eef2f7; }
+  .page dt { color: var(--muted); font-size: 7.6pt; }
+  .page dd { font-weight: 600; color: var(--navy); white-space: pre-line; }
+  .page dl > :nth-last-child(-n+2) { border-bottom: 0; }
+  .page table { width: 100%; border-collapse: collapse; }
+  .page th, .page td { padding: 3.5px 8px; border-bottom: 1px solid #eef2f7; text-align: left; }
+  .page th { background: var(--tint); color: var(--blue); font-size: 7.2pt; text-transform: uppercase; letter-spacing: .05em; }
+  .page tr:last-child td { border-bottom: 0; }
+  .page td.c, .page th.c { text-align: center; }
+  .p { color: #15803d; font-weight: 700; } .p::before { content: "\2713  "; }
+  .f { color: #b91c1c; font-weight: 700; } .f::before { content: "\2717  "; }
+  .na { color: var(--muted); }
+  .empty { color: #9ca3af; font-weight: 400; }
+  .notes { padding: 6px 9px; white-space: pre-line; min-height: 52px; }
+  .fine { font-size: 6.9pt; color: var(--muted); padding: 6px 9px; line-height: 1.4; border-top: 1px solid var(--line) !important; border-radius: 4px !important; }
+  .fine p { margin: 0 0 3px; }
+  .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: end; margin-top: auto; padding-top: 6px; }
+  .sig { font-size: 7.6pt; color: var(--muted); }
+  .sig .line { height: 34px; border-bottom: 1px solid var(--navy); margin-bottom: 3px; display: flex; align-items: flex-end; }
+  .sig .line img { max-height: 32px; max-width: 70%; }
+  .sig b { color: var(--navy); }
+  .sign.with-qr { grid-template-columns: 1fr 1fr 0.95in; }
+  .qr { text-align: center; font-size: 6.2pt; color: var(--muted); line-height: 1.25; }
+  .qr svg { display: block; width: 0.82in; height: 0.82in; margin: 0 auto 2px; }
+  .portal-status { font-size: 13px; padding: 8px 10px; border-radius: 6px; background: var(--tint); margin-bottom: 10px; }
+  .portal-status.ok { background: #f0fdf4; color: #15803d; }
+  .portal-section { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+  .portal-section h3 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--blue); }
+  .member-list { list-style: none; margin: 6px 0; padding: 0; font-size: 13px; }
+  .member-list li { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #eef2f7; }
+  .check { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink); margin-top: 8px; }
+  .check input { width: auto; }
+  .published-badge { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; color: #15803d; }
+  .page footer { margin-top: 8px; padding-top: 5px; border-top: 2px solid var(--green); display: flex; justify-content: space-between;
+    font-size: 7pt; color: var(--muted); gap: 8px; }
+  .page footer b { color: var(--navy); }
+
+
+  /* ---------- editable test point / check rows ---------- */
+  .grid-results input.row-label { min-width: 150px; padding: 4px 6px; font-size: 13px; }
+  .grid-results button.small { padding: 3px 7px; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+  /* ---------- magnet pull-force grid ---------- */
+  .mag-grid input { width: 64px; padding: 4px 5px; font-size: 13px; }
+  .mag-grid td:first-child { font-weight: 700; color: var(--blue); text-align: center; }
+  .mag-min { font-weight: 700; font-size: 13px; white-space: nowrap; }
+  .mag-min.good { color: #15803d; } .mag-min.bad { color: #b91c1c; }
+  .page .mag-table th, .page .mag-table td { padding: 2.5px 6px; }
+  .page .mag-table td.low { color: #b91c1c; font-weight: 700; }
+  .page .mag-table tr.overall td { background: var(--tint); font-weight: 700; color: var(--navy); border-top: 1px solid var(--line); }
+  .page .mag-split { display: grid; grid-template-columns: 1fr 1fr; }
+  .page .mag-split .mag-table:first-child { border-right: 1px solid var(--line); }
+  .page .mag-split .mag-table th, .page .mag-split .mag-table td { padding: 2.5px 3px; }
+  .page .content { display: flex; flex-direction: column; position: relative; }
+
+  /* ---------- website (admin) mode ---------- */
+  #gate { position: fixed; inset: 0; z-index: 100; background: var(--app-bg); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  #gate[hidden] { display: none; }
+  #gate .box { background: #fff; border-radius: 12px; box-shadow: 0 6px 30px rgba(0,24,43,.15); padding: 26px 28px; width: 100%; max-width: 380px; }
+  #gate .box img { height: 54px; display: block; margin-bottom: 10px; }
+  #gate h2 { margin: 0 0 4px; color: var(--navy); font-size: 20px; }
+  #gate label { margin-top: 10px; }
+  #gate .primary { margin-top: 14px; width: 100%; background: var(--green); color: #fff; font-weight: 700; padding: 9px; }
+  #gateMsg { font-size: 13px; color: var(--muted); margin: 6px 0 0; min-height: 18px; }
+  #gateMsg.err { color: #b91c1c; }
+  .topbar .who { font-size: 12px; opacity: .8; }
+
+  /* ---------- print: certificate only ---------- */
+  @page { size: Letter; margin: 0; }
+  @media print {
+    body { background: #fff; }
+    .topbar, .form, dialog, #toast, #gate { display: none !important; }
+    .layout { display: block; padding: 0; }
+    .preview-wrap { position: static; }
+    .preview-holder { box-shadow: none; border-radius: 0; overflow: visible; width: auto !important; height: auto !important; }
+    .preview-scale { transform: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Wheeler FS <span>Certificate Generator</span></h1>
+  <button id="btnNew" title="Start a blank certificate">New</button>
+  <button id="btnNext" title="Keep client, type, conditions and standards; clear the equipment and results">Next unit, same visit</button>
+  <button id="btnSaveJob" title="Download this certificate's data as a file you can reopen later">Save job file</button>
+  <button id="btnOpenJob">Open job file</button>
+  <input type="file" id="fileJob" accept=".json,application/json" hidden>
+  <span class="spacer"></span>
+  <span class="who" id="whoami" hidden></span>
+  <button id="btnSignOut" hidden>Sign out</button>
+  <button id="btnSettings">Settings</button>
+  <button id="btnPortal" title="Upload the saved PDF to the customer portal">Publish to portal</button>
+  <button id="btnPrint" class="primary">Print / Save PDF</button>
+</div>
+
+<div id="gate" hidden>
+  <form class="box" id="gateForm" onsubmit="return false">
+    <img id="gateLogo" alt="">
+    <h2>Wheeler FS Admin</h2>
+    <p class="hint">Certificates, customers and equipment. Sign in with your admin login.</p>
+    <div id="gateFields">
+      <label>Email<input id="gateEmail" type="email" autocomplete="username"></label>
+      <label>Password<input id="gatePassword" type="password" autocomplete="current-password"></label>
+      <button type="submit" class="primary" id="gateSignIn">Sign in</button>
+    </div>
+    <p id="gateMsg"></p>
+  </form>
+</div>
+
+<div class="layout">
+  <form class="form" id="form" autocomplete="off" onsubmit="return false">
+
+    <fieldset>
+      <legend>Certificate</legend>
+      <div class="row full" style="margin-bottom:8px">
+        <label>Certificate type
+          <select id="selType">
+            <option value="md">Metal detector</option>
+            <option value="xr">X-ray inspection system</option>
+            <option value="mg">Magnet (pull test)</option>
+          </select></label>
+      </div>
+      <div class="row">
+        <div class="inline">
+          <label>Certificate No.<input data-k="certNo"></label>
+          <button type="button" class="small" id="btnAutoNo" title="Fill the next number for this type and validation date">Auto</button>
+        </div>
+        <label>Validation date<input type="date" data-k="valDate"></label>
+      </div>
+      <div class="row three" style="margin-top:8px">
+        <label>Interval (months)<input type="number" min="1" max="24" data-k="intervalMonths"></label>
+        <label>As found
+          <select data-k="asFound">
+            <option>In Tolerance</option><option>Adjustment Required</option><option>Out of Tolerance</option>
+          </select></label>
+        <label>As left
+          <select data-k="asLeft">
+            <option>In Tolerance</option><option>Out of Tolerance</option><option>Removed from Service</option>
+          </select></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Client</legend>
+      <div class="saved">
+        <select id="selCustomer"><option value="">Saved customers…</option></select>
+        <button type="button" class="small" id="btnSaveCustomer">Save customer</button>
+      </div>
+      <div class="row full"><label>Company<input data-k="client.company"></label></div>
+      <div class="row" style="margin-top:8px">
+        <label>Street address<input data-k="client.address1"></label>
+        <label>City, State ZIP<input data-k="client.cityStateZip"></label>
+        <label>Site contact<input data-k="client.contact"></label>
+        <label>Service order #<input data-k="client.serviceOrder"></label>
+      </div>
+      <div class="row full" style="margin-top:8px"><label>Client PO #<input data-k="client.po" placeholder="e.g. Verbal authorization – Dan Smith"></label></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Equipment</legend>
+      <div class="saved">
+        <select id="selEquip"><option value="">This customer's equipment…</option></select>
+        <button type="button" class="small" id="btnSaveEquip">Save equipment</button>
+      </div>
+      <div id="equipFields"></div>
+      <datalist id="dlMfr"><option>Thermo Scientific</option><option>Mettler Toledo Safeline</option><option>Loma Systems</option><option>Fortress Technology</option><option>Eriez</option><option>CEIA</option><option>Anritsu</option><option>Ishida</option><option>Eagle</option></datalist>
+      <datalist id="dlReject"><option>Air blast</option><option>Pusher</option><option>Retracting band</option><option>Diverter / flap</option><option>Stop on detect</option><option>Drop-flap (gravity)</option></datalist>
+      <datalist id="dlMagMfr"><option>Eriez</option><option>Bunting</option><option>Industrial Magnetics (IMI)</option><option>Puritan Magnetics</option><option>Goudsmit</option><option>Jaykrishna</option><option>N/A</option></datalist>
+      <datalist id="dlMagType"><option>Grate magnet</option><option>Drawer magnet</option><option>Plate magnet</option><option>Bullet / in-line magnet</option><option>Liquid trap magnet</option><option>Hump magnet</option><option>Magnetic rod</option></datalist>
+    </fieldset>
+
+    <fieldset>
+      <legend>Test conditions</legend>
+      <div id="condFields"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Reference standards</legend>
+      <div id="stdFields"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend id="resLegend">Results</legend>
+      <div id="resFields"></div>
+      <datalist id="dlTests"></datalist>
+    </fieldset>
+
+    <fieldset>
+      <legend id="chkLegend">Checks</legend>
+      <table class="grid-results"><tbody id="chkRows"></tbody></table>
+      <datalist id="dlChecks"></datalist>
+      <div class="btn-row"><button type="button" class="small" id="btnAddCheck">+ Add check</button>
+        <button type="button" class="small" id="btnChecksPass">Set all to Pass</button></div>
+      <p class="hint">Rename a row by typing over it, ✕ removes it. Save your usual list in Settings → "Use current … as default"; saved equipment also remembers its own list.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Findings &amp; corrective action</legend>
+      <div class="row full"><label>What you found and what you did<textarea data-k="findings"></textarea></label></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Sign-off</legend>
+      <div class="row">
+        <label>Technician<input data-k="techName"></label>
+        <label>Date performed<input type="date" data-k="techDate"></label>
+        <label>Reviewed &amp; issued by<input data-k="reviewerName"></label>
+        <label>Date issued<input type="date" data-k="issueDate"></label>
+      </div>
+      <p class="hint">Upload your signature once in Settings to have it printed on both lines; otherwise sign in ink.</p>
+    </fieldset>
+
+    <div class="warnings" id="warnings"></div>
+  </form>
+
+  <div class="preview-wrap">
+    <div class="preview-holder" id="previewHolder">
+      <div class="preview-scale" id="previewScale"><div id="cert"></div></div>
+    </div>
+  </div>
+</div>
+
+<dialog id="dlgSettings">
+  <div class="dlg">
+    <h2>Settings</h2>
+    <div class="row">
+      <label>Default technician<input id="setTech"></label>
+      <label>Reviewer title<input id="setReviewerTitle"></label>
+      <label>Default interval (months)<input type="number" id="setInterval" min="1" max="24"></label>
+      <label>Default QA procedure<input id="setProcedure"></label>
+    </div>
+    <div class="row full" style="margin-top:8px">
+      <label>Default acceptance criteria (metal detector &amp; X-ray)<input id="setCriteria"></label>
+    </div>
+    <label class="check"><input type="checkbox" id="setQr"> Print a verification QR code on certificates (links to wheelerfs.com/verify)</label>
+    <p class="hint" style="margin-top:12px"><b>Default test standards:</b> the standards, test points and checks currently on the form become the default for new certificates of the same type (for magnets this also saves the pull tester, acceptance limit and points per tube).</p>
+    <button type="button" class="small" id="btnSetStdDefault">Use current standards, test points &amp; checks as default</button>
+
+    <p class="hint" style="margin-top:14px"><b>Signature image</b> (PNG with transparent or white background works best).</p>
+    <div class="inline">
+      <input type="file" id="fileSig" accept="image/*">
+      <button type="button" class="small" id="btnClearSig">Remove</button>
+    </div>
+    <div class="sig-preview" id="sigPreview"><span class="hint">No signature saved</span></div>
+
+    <p class="hint" style="margin-top:14px" id="backupHint"><b>Backup.</b> Customers, equipment and settings are stored only in this browser on this computer. Export a backup now and then, and use Import to move them to another computer.</p>
+    <div class="inline">
+      <button type="button" class="small" id="btnExport">Export backup</button>
+      <button type="button" class="small" id="btnImport">Import backup</button>
+      <input type="file" id="fileImport" accept=".json,application/json" hidden>
+    </div>
+    <div class="actions">
+      <button type="button" id="btnSettingsClose" class="primary">Done</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgPortal">
+  <div class="dlg">
+    <h2>Customer portal</h2>
+    <div id="portalSignedOut">
+      <p class="hint">Sign in with your Supabase admin login (the email and password you created under Authentication → Users).</p>
+      <div class="row">
+        <label>Email<input id="adminEmail" type="email" autocomplete="username"></label>
+        <label>Password<input id="adminPassword" type="password" autocomplete="current-password"></label>
+      </div>
+      <div class="actions" style="justify-content:flex-start"><button type="button" class="primary" id="btnAdminSignIn">Sign in</button></div>
+    </div>
+    <div id="portalSignedIn" hidden>
+      <div class="portal-status ok" id="portalWho"></div>
+
+      <div class="portal-section">
+        <h3>Publish this certificate</h3>
+        <div id="publishSummary" class="hint"></div>
+        <label>The PDF you saved with "Print / Save PDF"<input type="file" id="filePdf" accept="application/pdf,.pdf"></label>
+        <label class="check"><input type="checkbox" id="chkSupersede" checked> Mark this unit's older certificates as superseded</label>
+        <div class="actions" style="justify-content:flex-start"><button type="button" class="primary" id="btnPublish">Publish</button></div>
+      </div>
+
+      <div class="portal-section">
+        <h3>Who can see this customer's certificates</h3>
+        <p class="hint">People sign in at <b>wheelerfs.com/portal</b> with the email listed here. Nobody else can see this company's certificates.</p>
+        <ul class="member-list" id="memberList"></ul>
+        <div class="inline">
+          <label>Add email<input id="memberEmail" type="email" placeholder="qa.manager@customer.com"></label>
+          <button type="button" class="small" id="btnAddMember">Add</button>
+        </div>
+      </div>
+      <div class="actions" style="justify-content:space-between">
+        <button type="button" class="small" id="btnAdminSignOut">Sign out</button>
+        <button type="button" id="btnPortalClose">Close</button>
+      </div>
+    </div>
+    <div class="actions" id="portalCloseOut"><button type="button" id="btnPortalClose2">Close</button></div>
+  </div>
+</dialog>
+
+<script>
+/* qrcode-generator 2.0.4, (c) Kazuhiko Arase, MIT license: https://github.com/kazuhikoarase/qrcode-generator */
+var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,h=null,i=[],v={},_=function(a,f){r=n*4+17,t=(function(e){for(var u=new Array(e),o=0;o<e;o+=1){u[o]=new Array(e);for(var d=0;d<e;d+=1)u[o][d]=null}return u})(r),B(0,0),B(r-7,0),B(0,r-7),E(),T(),m(a,f),n>=7&&N(a),h==null&&(h=nr(n,s,i)),U(h,f)},B=function(a,f){for(var e=-1;e<=7;e+=1)if(!(a+e<=-1||r<=a+e))for(var u=-1;u<=7;u+=1)f+u<=-1||r<=f+u||(0<=e&&e<=6&&(u==0||u==6)||0<=u&&u<=6&&(e==0||e==6)||2<=e&&e<=4&&2<=u&&u<=4?t[a+e][f+u]=!0:t[a+e][f+u]=!1)},y=function(){for(var a=0,f=0,e=0;e<8;e+=1){_(!0,e);var u=k.getLostPoint(v);(e==0||a>u)&&(a=u,f=e)}return f},T=function(){for(var a=8;a<r-8;a+=1)t[a][6]==null&&(t[a][6]=a%2==0);for(var f=8;f<r-8;f+=1)t[6][f]==null&&(t[6][f]=f%2==0)},E=function(){for(var a=k.getPatternPosition(n),f=0;f<a.length;f+=1)for(var e=0;e<a.length;e+=1){var u=a[f],o=a[e];if(t[u][o]==null)for(var d=-2;d<=2;d+=1)for(var c=-2;c<=2;c+=1)d==-2||d==2||c==-2||c==2||d==0&&c==0?t[u+d][o+c]=!0:t[u+d][o+c]=!1}},N=function(a){for(var f=k.getBCHTypeNumber(n),e=0;e<18;e+=1){var u=!a&&(f>>e&1)==1;t[Math.floor(e/3)][e%3+r-8-3]=u}for(var e=0;e<18;e+=1){var u=!a&&(f>>e&1)==1;t[e%3+r-8-3][Math.floor(e/3)]=u}},m=function(a,f){for(var e=s<<3|f,u=k.getBCHTypeInfo(e),o=0;o<15;o+=1){var d=!a&&(u>>o&1)==1;o<6?t[o][8]=d:o<8?t[o+1][8]=d:t[r-15+o][8]=d}for(var o=0;o<15;o+=1){var d=!a&&(u>>o&1)==1;o<8?t[8][r-o-1]=d:o<9?t[8][15-o-1+1]=d:t[8][15-o-1]=d}t[r-8][8]=!a},U=function(a,f){for(var e=-1,u=r-1,o=7,d=0,c=k.getMaskFunction(f),p=r-1;p>0;p-=2)for(p==6&&(p-=1);;){for(var b=0;b<2;b+=1)if(t[u][p-b]==null){var C=!1;d<a.length&&(C=(a[d]>>>o&1)==1);var A=c(u,p-b);A&&(C=!C),t[u][p-b]=C,o-=1,o==-1&&(d+=1,o=7)}if(u+=e,u<0||r<=u){u-=e,e=-e;break}}},H=function(a,f){for(var e=0,u=0,o=0,d=new Array(f.length),c=new Array(f.length),p=0;p<f.length;p+=1){var b=f[p].dataCount,C=f[p].totalCount-b;u=Math.max(u,b),o=Math.max(o,C),d[p]=new Array(b);for(var A=0;A<d[p].length;A+=1)d[p][A]=255&a.getBuffer()[A+e];e+=b;var R=k.getErrorCorrectPolynomial(C),I=K(d[p],R.getLength()-1),S=I.mod(R);c[p]=new Array(R.getLength()-1);for(var A=0;A<c[p].length;A+=1){var X=A+S.getLength()-c[p].length;c[p][A]=X>=0?S.getAt(X):0}}for(var Z=0,A=0;A<f.length;A+=1)Z+=f[A].totalCount;for(var J=new Array(Z),Q=0,A=0;A<u;A+=1)for(var p=0;p<f.length;p+=1)A<d[p].length&&(J[Q]=d[p][A],Q+=1);for(var A=0;A<o;A+=1)for(var p=0;p<f.length;p+=1)A<c[p].length&&(J[Q]=c[p][A],Q+=1);return J},nr=function(a,f,e){for(var u=Y.getRSBlocks(a,f),o=G(),d=0;d<e.length;d+=1){var c=e[d];o.put(c.getMode(),4),o.put(c.getLength(),k.getLengthInBits(c.getMode(),a)),c.write(o)}for(var p=0,d=0;d<u.length;d+=1)p+=u[d].dataCount;if(o.getLengthInBits()>p*8)throw"code length overflow. ("+o.getLengthInBits()+">"+p*8+")";for(o.getLengthInBits()+4<=p*8&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=p*8||(o.put(g,8),o.getLengthInBits()>=p*8));)o.put(l,8);return H(o,u)};v.addData=function(a,f){f=f||"Byte";var e=null;switch(f){case"Numeric":e=$(a);break;case"Alphanumeric":e=W(a);break;case"Byte":e=V(a);break;case"Kanji":e=q(a);break;default:throw"mode:"+f}i.push(e),h=null},v.isDark=function(a,f){if(a<0||r<=a||f<0||r<=f)throw a+","+f;return t[a][f]},v.getModuleCount=function(){return r},v.make=function(){if(n<1){for(var a=1;a<40;a++){for(var f=Y.getRSBlocks(a,s),e=G(),u=0;u<i.length;u++){var o=i[u];e.put(o.getMode(),4),e.put(o.getLength(),k.getLengthInBits(o.getMode(),a)),o.write(e)}for(var d=0,u=0;u<f.length;u++)d+=f[u].dataCount;if(e.getLengthInBits()<=d*8)break}n=a}_(!1,y())},v.createTableTag=function(a,f){a=a||2,f=typeof f>"u"?a*4:f;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+f+"px;",e+='">',e+="<tbody>";for(var u=0;u<v.getModuleCount();u+=1){e+="<tr>";for(var o=0;o<v.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+a+"px;",e+=" height: "+a+"px;",e+=" background-color: ",e+=v.isDark(u,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>",e},v.createSvgTag=function(a,f,e,u){var o={};typeof arguments[0]=="object"&&(o=arguments[0],a=o.cellSize,f=o.margin,e=o.alt,u=o.title),a=a||2,f=typeof f>"u"?a*4:f,e=typeof e=="string"?{text:e}:e||{},e.text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,u=typeof u=="string"?{text:u}:u||{},u.text=u.text||null,u.id=u.text?u.id||"qrcode-title":null;var d=v.getModuleCount()*a+f*2,c,p,b,C,A="",R;for(R="l"+a+",0 0,"+a+" -"+a+",0 0,-"+a+"z ",A+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',A+=o.scalable?"":' width="'+d+'px" height="'+d+'px"',A+=' viewBox="0 0 '+d+" "+d+'" ',A+=' preserveAspectRatio="xMinYMin meet"',A+=u.text||e.text?' role="img" aria-labelledby="'+F([u.id,e.id].join(" ").trim())+'"':"",A+=">",A+=u.text?'<title id="'+F(u.id)+'">'+F(u.text)+"</title>":"",A+=e.text?'<description id="'+F(e.id)+'">'+F(e.text)+"</description>":"",A+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',A+='<path d="',b=0;b<v.getModuleCount();b+=1)for(C=b*a+f,c=0;c<v.getModuleCount();c+=1)v.isDark(b,c)&&(p=c*a+f,A+="M"+p+","+C+R);return A+='" stroke="transparent" fill="black"/>',A+="</svg>",A},v.createDataURL=function(a,f){a=a||2,f=typeof f>"u"?a*4:f;var e=v.getModuleCount()*a+f*2,u=f,o=e-f;return er(e,e,function(d,c){if(u<=d&&d<o&&u<=c&&c<o){var p=Math.floor((d-u)/a),b=Math.floor((c-u)/a);return v.isDark(b,p)?0:1}else return 1})},v.createImgTag=function(a,f,e){a=a||2,f=typeof f>"u"?a*4:f;var u=v.getModuleCount()*a+f*2,o="";return o+="<img",o+=' src="',o+=v.createDataURL(a,f),o+='"',o+=' width="',o+=u,o+='"',o+=' height="',o+=u,o+='"',e&&(o+=' alt="',o+=F(e),o+='"'),o+="/>",o};var F=function(a){for(var f="",e=0;e<a.length;e+=1){var u=a.charAt(e);switch(u){case"<":f+="&lt;";break;case">":f+="&gt;";break;case"&":f+="&amp;";break;case'"':f+="&quot;";break;default:f+=u;break}}return f},ar=function(a){var f=1;a=typeof a>"u"?f*2:a;var e=v.getModuleCount()*f+a*2,u=a,o=e-a,d,c,p,b,C,A={"\u2588\u2588":"\u2588","\u2588 ":"\u2580"," \u2588":"\u2584","  ":" "},R={"\u2588\u2588":"\u2580","\u2588 ":"\u2580"," \u2588":" ","  ":" "},I="";for(d=0;d<e;d+=2){for(p=Math.floor((d-u)/f),b=Math.floor((d+1-u)/f),c=0;c<e;c+=1)C="\u2588",u<=c&&c<o&&u<=d&&d<o&&v.isDark(p,Math.floor((c-u)/f))&&(C=" "),u<=c&&c<o&&u<=d+1&&d+1<o&&v.isDark(b,Math.floor((c-u)/f))?C+=" ":C+="\u2588",I+=a<1&&d+1>=o?R[C]:A[C];I+=`
+`}return e%2&&a>0?I.substring(0,I.length-e-1)+Array(e+1).join("\u2580"):I.substring(0,I.length-1)};return v.createASCII=function(a,f){if(a=a||1,a<2)return ar(f);a-=1,f=typeof f>"u"?a*2:f;var e=v.getModuleCount()*a+f*2,u=f,o=e-f,d,c,p,b,C=Array(a+1).join("\u2588\u2588"),A=Array(a+1).join("  "),R="",I="";for(d=0;d<e;d+=1){for(p=Math.floor((d-u)/a),I="",c=0;c<e;c+=1)b=1,u<=c&&c<o&&u<=d&&d<o&&v.isDark(p,Math.floor((c-u)/a))&&(b=0),I+=b?C:A;for(p=0;p<a;p+=1)R+=I+`
+`}return R.substring(0,R.length-1)},v.renderTo2dContext=function(a,f){f=f||2;for(var e=v.getModuleCount(),u=0;u<e;u++)for(var o=0;o<e;o++)a.fillStyle=v.isDark(u,o)?"black":"white",a.fillRect(o*f,u*f,f,f)},v};P.stringToBytesFuncs={default:function(x){for(var w=[],g=0;g<x.length;g+=1){var l=x.charCodeAt(g);w.push(l&255)}return w}},P.stringToBytes=P.stringToBytesFuncs.default,P.createStringToBytes=function(x,w){var g=(function(){for(var n=rr(x),s=function(){var T=n.read();if(T==-1)throw"eof";return T},t=0,r={};;){var h=n.read();if(h==-1)break;var i=s(),v=s(),_=s(),B=String.fromCharCode(h<<8|i),y=v<<8|_;r[B]=y,t+=1}if(t!=w)throw t+" != "+w;return r})(),l=63;return function(n){for(var s=[],t=0;t<n.length;t+=1){var r=n.charCodeAt(t);if(r<128)s.push(r);else{var h=g[n.charAt(t)];typeof h=="number"?(h&255)==h?s.push(h):(s.push(h>>>8),s.push(h&255)):s.push(l)}}return s}};var D={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},O={L:1,M:0,Q:3,H:2},L={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},k=(function(){var x=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],w=1335,g=7973,l=21522,n={},s=function(t){for(var r=0;t!=0;)r+=1,t>>>=1;return r};return n.getBCHTypeInfo=function(t){for(var r=t<<10;s(r)-s(w)>=0;)r^=w<<s(r)-s(w);return(t<<10|r)^l},n.getBCHTypeNumber=function(t){for(var r=t<<12;s(r)-s(g)>=0;)r^=g<<s(r)-s(g);return t<<12|r},n.getPatternPosition=function(t){return x[t-1]},n.getMaskFunction=function(t){switch(t){case L.PATTERN000:return function(r,h){return(r+h)%2==0};case L.PATTERN001:return function(r,h){return r%2==0};case L.PATTERN010:return function(r,h){return h%3==0};case L.PATTERN011:return function(r,h){return(r+h)%3==0};case L.PATTERN100:return function(r,h){return(Math.floor(r/2)+Math.floor(h/3))%2==0};case L.PATTERN101:return function(r,h){return r*h%2+r*h%3==0};case L.PATTERN110:return function(r,h){return(r*h%2+r*h%3)%2==0};case L.PATTERN111:return function(r,h){return(r*h%3+(r+h)%2)%2==0};default:throw"bad maskPattern:"+t}},n.getErrorCorrectPolynomial=function(t){for(var r=K([1],0),h=0;h<t;h+=1)r=r.multiply(K([1,M.gexp(h)],0));return r},n.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case D.MODE_NUMBER:return 10;case D.MODE_ALPHA_NUM:return 9;case D.MODE_8BIT_BYTE:return 8;case D.MODE_KANJI:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case D.MODE_NUMBER:return 12;case D.MODE_ALPHA_NUM:return 11;case D.MODE_8BIT_BYTE:return 16;case D.MODE_KANJI:return 10;default:throw"mode:"+t}else if(r<41)switch(t){case D.MODE_NUMBER:return 14;case D.MODE_ALPHA_NUM:return 13;case D.MODE_8BIT_BYTE:return 16;case D.MODE_KANJI:return 12;default:throw"mode:"+t}else throw"type:"+r},n.getLostPoint=function(t){for(var r=t.getModuleCount(),h=0,i=0;i<r;i+=1)for(var v=0;v<r;v+=1){for(var _=0,B=t.isDark(i,v),y=-1;y<=1;y+=1)if(!(i+y<0||r<=i+y))for(var T=-1;T<=1;T+=1)v+T<0||r<=v+T||y==0&&T==0||B==t.isDark(i+y,v+T)&&(_+=1);_>5&&(h+=3+_-5)}for(var i=0;i<r-1;i+=1)for(var v=0;v<r-1;v+=1){var E=0;t.isDark(i,v)&&(E+=1),t.isDark(i+1,v)&&(E+=1),t.isDark(i,v+1)&&(E+=1),t.isDark(i+1,v+1)&&(E+=1),(E==0||E==4)&&(h+=3)}for(var i=0;i<r;i+=1)for(var v=0;v<r-6;v+=1)t.isDark(i,v)&&!t.isDark(i,v+1)&&t.isDark(i,v+2)&&t.isDark(i,v+3)&&t.isDark(i,v+4)&&!t.isDark(i,v+5)&&t.isDark(i,v+6)&&(h+=40);for(var v=0;v<r;v+=1)for(var i=0;i<r-6;i+=1)t.isDark(i,v)&&!t.isDark(i+1,v)&&t.isDark(i+2,v)&&t.isDark(i+3,v)&&t.isDark(i+4,v)&&!t.isDark(i+5,v)&&t.isDark(i+6,v)&&(h+=40);for(var N=0,v=0;v<r;v+=1)for(var i=0;i<r;i+=1)t.isDark(i,v)&&(N+=1);var m=Math.abs(100*N/r/r-50)/5;return h+=m*10,h},n})(),M=(function(){for(var x=new Array(256),w=new Array(256),g=0;g<8;g+=1)x[g]=1<<g;for(var g=8;g<256;g+=1)x[g]=x[g-4]^x[g-5]^x[g-6]^x[g-8];for(var g=0;g<255;g+=1)w[x[g]]=g;var l={};return l.glog=function(n){if(n<1)throw"glog("+n+")";return w[n]},l.gexp=function(n){for(;n<0;)n+=255;for(;n>=256;)n-=255;return x[n]},l})();function K(x,w){if(typeof x.length>"u")throw x.length+"/"+w;var g=(function(){for(var n=0;n<x.length&&x[n]==0;)n+=1;for(var s=new Array(x.length-n+w),t=0;t<x.length-n;t+=1)s[t]=x[t+n];return s})(),l={};return l.getAt=function(n){return g[n]},l.getLength=function(){return g.length},l.multiply=function(n){for(var s=new Array(l.getLength()+n.getLength()-1),t=0;t<l.getLength();t+=1)for(var r=0;r<n.getLength();r+=1)s[t+r]^=M.gexp(M.glog(l.getAt(t))+M.glog(n.getAt(r)));return K(s,0)},l.mod=function(n){if(l.getLength()-n.getLength()<0)return l;for(var s=M.glog(l.getAt(0))-M.glog(n.getAt(0)),t=new Array(l.getLength()),r=0;r<l.getLength();r+=1)t[r]=l.getAt(r);for(var r=0;r<n.getLength();r+=1)t[r]^=M.gexp(M.glog(n.getAt(r))+s);return K(t,0).mod(n)},l}var Y=(function(){var x=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],w=function(n,s){var t={};return t.totalCount=n,t.dataCount=s,t},g={},l=function(n,s){switch(s){case O.L:return x[(n-1)*4+0];case O.M:return x[(n-1)*4+1];case O.Q:return x[(n-1)*4+2];case O.H:return x[(n-1)*4+3];default:return}};return g.getRSBlocks=function(n,s){var t=l(n,s);if(typeof t>"u")throw"bad rs block @ typeNumber:"+n+"/errorCorrectionLevel:"+s;for(var r=t.length/3,h=[],i=0;i<r;i+=1)for(var v=t[i*3+0],_=t[i*3+1],B=t[i*3+2],y=0;y<v;y+=1)h.push(w(_,B));return h},g})(),G=function(){var x=[],w=0,g={};return g.getBuffer=function(){return x},g.getAt=function(l){var n=Math.floor(l/8);return(x[n]>>>7-l%8&1)==1},g.put=function(l,n){for(var s=0;s<n;s+=1)g.putBit((l>>>n-s-1&1)==1)},g.getLengthInBits=function(){return w},g.putBit=function(l){var n=Math.floor(w/8);x.length<=n&&x.push(0),l&&(x[n]|=128>>>w%8),w+=1},g},$=function(x){var w=D.MODE_NUMBER,g=x,l={};l.getMode=function(){return w},l.getLength=function(t){return g.length},l.write=function(t){for(var r=g,h=0;h+2<r.length;)t.put(n(r.substring(h,h+3)),10),h+=3;h<r.length&&(r.length-h==1?t.put(n(r.substring(h,h+1)),4):r.length-h==2&&t.put(n(r.substring(h,h+2)),7))};var n=function(t){for(var r=0,h=0;h<t.length;h+=1)r=r*10+s(t.charAt(h));return r},s=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-48;throw"illegal char :"+t};return l},W=function(x){var w=D.MODE_ALPHA_NUM,g=x,l={};l.getMode=function(){return w},l.getLength=function(s){return g.length},l.write=function(s){for(var t=g,r=0;r+1<t.length;)s.put(n(t.charAt(r))*45+n(t.charAt(r+1)),11),r+=2;r<t.length&&s.put(n(t.charAt(r)),6)};var n=function(s){if("0"<=s&&s<="9")return s.charCodeAt(0)-48;if("A"<=s&&s<="Z")return s.charCodeAt(0)-65+10;switch(s){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+s}};return l},V=function(x){var w=D.MODE_8BIT_BYTE,g=x,l=P.stringToBytes(x),n={};return n.getMode=function(){return w},n.getLength=function(s){return l.length},n.write=function(s){for(var t=0;t<l.length;t+=1)s.put(l[t],8)},n},q=function(x){var w=D.MODE_KANJI,g=x,l=P.stringToBytesFuncs.SJIS;if(!l)throw"sjis not supported.";(function(t,r){var h=l(t);if(h.length!=2||(h[0]<<8|h[1])!=r)throw"sjis not supported."})("\u53CB",38726);var n=l(x),s={};return s.getMode=function(){return w},s.getLength=function(t){return~~(n.length/2)},s.write=function(t){for(var r=n,h=0;h+1<r.length;){var i=(255&r[h])<<8|255&r[h+1];if(33088<=i&&i<=40956)i-=33088;else if(57408<=i&&i<=60351)i-=49472;else throw"illegal char at "+(h+1)+"/"+i;i=(i>>>8&255)*192+(i&255),t.put(i,13),h+=2}if(h<r.length)throw"illegal char at "+(h+1)},s},j=function(){var x=[],w={};return w.writeByte=function(g){x.push(g&255)},w.writeShort=function(g){w.writeByte(g),w.writeByte(g>>>8)},w.writeBytes=function(g,l,n){l=l||0,n=n||g.length;for(var s=0;s<n;s+=1)w.writeByte(g[s+l])},w.writeString=function(g){for(var l=0;l<g.length;l+=1)w.writeByte(g.charCodeAt(l))},w.toByteArray=function(){return x},w.toString=function(){var g="";g+="[";for(var l=0;l<x.length;l+=1)l>0&&(g+=","),g+=x[l];return g+="]",g},w},z=function(){var x=0,w=0,g=0,l="",n={},s=function(r){l+=String.fromCharCode(t(r&63))},t=function(r){if(!(r<0)){if(r<26)return 65+r;if(r<52)return 97+(r-26);if(r<62)return 48+(r-52);if(r==62)return 43;if(r==63)return 47}throw"n:"+r};return n.writeByte=function(r){for(x=x<<8|r&255,w+=8,g+=1;w>=6;)s(x>>>w-6),w-=6},n.flush=function(){if(w>0&&(s(x<<6-w),x=0,w=0),g%3!=0)for(var r=3-g%3,h=0;h<r;h+=1)l+="="},n.toString=function(){return l},n},rr=function(x){var w=x,g=0,l=0,n=0,s={};s.read=function(){for(;n<8;){if(g>=w.length){if(n==0)return-1;throw"unexpected end of file./"+n}var r=w.charAt(g);if(g+=1,r=="=")return n=0,-1;if(r.match(/^\s$/))continue;l=l<<6|t(r.charCodeAt(0)),n+=6}var h=l>>>n-8&255;return n-=8,h};var t=function(r){if(65<=r&&r<=90)return r-65;if(97<=r&&r<=122)return r-97+26;if(48<=r&&r<=57)return r-48+52;if(r==43)return 62;if(r==47)return 63;throw"c:"+r};return s},tr=function(x,w){var g=x,l=w,n=new Array(x*w),s={};s.setPixel=function(i,v,_){n[v*g+i]=_},s.write=function(i){i.writeString("GIF87a"),i.writeShort(g),i.writeShort(l),i.writeByte(128),i.writeByte(0),i.writeByte(0),i.writeByte(0),i.writeByte(0),i.writeByte(0),i.writeByte(255),i.writeByte(255),i.writeByte(255),i.writeString(","),i.writeShort(0),i.writeShort(0),i.writeShort(g),i.writeShort(l),i.writeByte(0);var v=2,_=r(v);i.writeByte(v);for(var B=0;_.length-B>255;)i.writeByte(255),i.writeBytes(_,B,255),B+=255;i.writeByte(_.length-B),i.writeBytes(_,B,_.length-B),i.writeByte(0),i.writeString(";")};var t=function(i){var v=i,_=0,B=0,y={};return y.write=function(T,E){if(T>>>E)throw"length over";for(;_+E>=8;)v.writeByte(255&(T<<_|B)),E-=8-_,T>>>=8-_,B=0,_=0;B=T<<_|B,_=_+E},y.flush=function(){_>0&&v.writeByte(B)},y},r=function(i){for(var v=1<<i,_=(1<<i)+1,B=i+1,y=h(),T=0;T<v;T+=1)y.add(String.fromCharCode(T));y.add(String.fromCharCode(v)),y.add(String.fromCharCode(_));var E=j(),N=t(E);N.write(v,B);var m=0,U=String.fromCharCode(n[m]);for(m+=1;m<n.length;){var H=String.fromCharCode(n[m]);m+=1,y.contains(U+H)?U=U+H:(N.write(y.indexOf(U),B),y.size()<4095&&(y.size()==1<<B&&(B+=1),y.add(U+H)),U=H)}return N.write(y.indexOf(U),B),N.write(_,B),N.flush(),E.toByteArray()},h=function(){var i={},v=0,_={};return _.add=function(B){if(_.contains(B))throw"dup key:"+B;i[B]=v,v+=1},_.size=function(){return v},_.indexOf=function(B){return i[B]},_.contains=function(B){return typeof i[B]<"u"},_};return s},er=function(x,w,g){for(var l=tr(x,w),n=0;n<w;n+=1)for(var s=0;s<x;s+=1)l.setPixel(s,n,g(s,n));var t=j();l.write(t);for(var r=z(),h=t.toByteArray(),i=0;i<h.length;i+=1)r.writeByte(h[i]);return r.flush(),"data:image/gif;base64,"+r};return P})();(function(){qrcode.stringToBytesFuncs["UTF-8"]=function(P){function D(O){for(var L=[],k=0;k<O.length;k++){var M=O.charCodeAt(k);M<128?L.push(M):M<2048?L.push(192|M>>6,128|M&63):M<55296||M>=57344?L.push(224|M>>12,128|M>>6&63,128|M&63):(k++,M=65536+((M&1023)<<10|O.charCodeAt(k)&1023),L.push(240|M>>18,128|M>>12&63,128|M>>6&63,128|M&63))}return L}return D(P)}})(),(function(P){typeof define=="function"&&define.amd?define([],P):typeof exports=="object"&&(module.exports=P())})(function(){return qrcode});
+
+</script>
+<script>
+(() => {
+  const LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK8AAADcCAMAAAAx+gEoAAAAYFBMVEUaZU2eo6xcZHIpll0WK0FyeYa5vMINNTy8wcbc3+J6go4OQT40wmpAvG4BGDb8/PwlpVwACycqqmEts2ROVmXn6eosN0oRJTkmiViFi5U8RlgABR3FyMzV19pCS1wTVkX+pnhRAAAAIHRSTlP//////////////////////////////////////////3Fe9GAAAAwmSURBVHja1Z1pl7OgDoBx6Tr3auNGrdr+/3953cANNETs28uXzsyZU5+mSUhCABYeMao8OV0PeWdm/y1TJ+EAwBOn+j/gLU8ZQNCMFjn9ad7UeQcdbNAjZ6fyZ3nPLi/GtC1xEbxtCtkab+W8gjnsIOTrb/F2JhZoB9RCvv0Mb3ny12CF8bnnX+BtTKwIMAOCV179Y96zuy3aiZD3erg9vFWeBXhYOx6O7TCxAExpO+I9Ho5RTSwjwQpkn2p8FN5bI9pg36iNjxReMIKJcdhLKz1cejCvfhajCTkz9XDMyMQsiXZifGYejn3JxNY93NU2b+O9iiNopfHdLPKe3QscBmsWXjDELGbTxPaGF+ygWYyGzN0t42P/wsRWPdy9pPHeviraMXKyYnzs4FmMRFzojY/ZChQtE4PGw7F/bGKrHk5hfOyfm5hZeMGOi2YOCS/YkdGMVm4B58QESvCW96/pAf+wp+d5T8YIHo5928TYM4qjKHo84jj2PgYJlNPz1nrgf8/EWBw/5IjjJzcwvmbmY843XS33WtpavFHUCTm6oJ8ORZCcWVYE38WNhvF4eNHjYiCuImGvLzqwZ+w9BHD92ojaizwTz/JNXmAtbqsQgw57MYPf5L2MKFsBi5/5b/Iy6Rmi2vl6EjhmP8nLpUij1u1+JC9ewN/k/cS94kZ/7SPhL+r+EOEF/E3eZ+fLHtK+gPXO+Cd5ea+wUfQnDTDu3Fr8/EFe4R0ij4+nj5bY41Z5YWOgHvUneJ9TFWmHVd46AM11w8nzO87fM8HLlh4uuljkBXerfuhigD9f4oVsu2IV7OVlFnmd7eJlBkj3O+eNrPNCltrljY/lLfLQkj4oeL3YMILY5r0g6sgJEHl7fxbZ4wVXJPtal3bHzTgrvEIfLkyMJ6PKt0/982LvfIHgrXPRfvxHE7Jt8UJiYFH75TuExB6NN+idmbM/yMDydmkzkfdlYlE7eC9DiBE9Wl6S/oq5orQVrut4/UlIROa99HPFCYJv6AOL20yfbG/SmfkWecdz2TOy689Ka9a2Ll8784UQb/g6mpcWP8yngaK3trO99NgmbzYbfpIahOM0/d0Rr/MqTJshYkT5UxUcL18Kry7OPcEv8gKvdgTje/Xhzx6vA8HxvMwe70K8QFvssM3rK/U3nTsH8N27S5nvLPMG3Cmbcb1eSzmuzly60Dq5lBCvYXjrmdi/XP6aF1p+AZpsmWCEqPhXDHK8Ps+WHbIVGuUXjxVeg2cOxQhzAWN4hyUNK/L1R7We3C4vHMEbjGo9N26DV8S/fzPehw1eH/Id0/Qqr7S3dnkg9uLIhnwnU0plw59NefmzHV7TbKDlfePXm0/mVV8j+dpev5g2spXW/QOKFy1fmX2KentS7NaHI3ll9lmQij7f5hWltDr7FHnoG6zxgn35CqkSq2oI/2CTF97SLfCRqA14o6/yjsU7qPLPyleKt418KZUUW/4XyTurVFbGGmxfvnVeBkFX34fut/bX5qXIprUTOdXhw0qEfH3v2Q+PbfP6mX7wXrwVn4USDm+HPwxafNYRxHHXmfZYiXcEr1929R316MV5Fx9OhmpVO27df91u6e2sEXnHG015H5N6CSq/kLyIXTHpID39v1dcyxvp5Nv1zPFINHtF27wcsfFoZF4r656ngqgPg3zt8I6TtpV1ZXWqpNSHSJNv2uHNx4IDrYBPQPUPcRz3+TzC3jYXisvZe1x134Kxf+j/xuX6Bfts+jOu8A/TbQPzj8yVe2duCVB5zeaLbH0oamaQvZPkPRu62prkfe6rp7616xeIRW384jcwBS+l/+H9pf4z2Uo7jde7pkos8Lf65eDyfDz0+QUa+Fu8n9qjPvTxWQsMv8PLRnsCNLyP+AO/wvsc4XqRot8IHQR/g5dPqCZy/ESTFnH+E7yiCapzBFMp+rVGeKIFP/Z+wZ+1uivr/Is63seT8kU4icN5xTTRN2Iwhafr+pi7Sqr/r3n5ID4lbrPwJxuvtxutD+cdtog0W4XU/3OJ4r7PaFODj+YdZWSxflFbhhabfeFH844mirU1+M4mEZvLxrxgMMzF2y+p6LS81oUYN19I3leSJK77dpP2VY5EMTJj8W5MXp849jARD7gG+dBarqGJIWOZP265EYZ7RxovsgfpMhLvhgphV/MkL3Czg09cgxbwh9GePKR8DXmvCuVSm73ZjrGNkVB5F6Vfp1wkxjKdjC+GWNp80ax+pu/raSvY8+4Oma5HpovNbn7isO4fhv6S63k8rv04938XpyhNy3rdt5Oe5l51tTt2de2hVNU5a17T1hbIFG1/on49bYuQvE9z3FogCmA4GfPKHhNnId65ksjymJl8xdEaCmDImXF3JLwWFqdZHpDppMeNpasGBofl5vHOdS7MQbyTgJvJDaZ/FFzVkrrDzDuHxGqWbDEZtHfmfyPzHbvOeum7ZI650+a3qcUJ8c6+KvhEG+XnpSic1WZI4DdWcXMBTy1OVK4Xbe6j/R8fEm54hrlvYoTWN7mFr7M44eDuhabyECEyB3XJfi5fN2QhJcEYL9ALoSg6puoAIuozSYQGL5dwKn/ufmteQru33FbER+JVLFv43XJEm81fzKV7y6b+phENozX4VpJRTB+Vr67tiBXLJwV3OZUw0mYb4cGqYXpWrgr1CoHwaSrcxTpe7YiYeafe2MZcKd7N0uQqMNwXOddruez4bs+zoVT8hJGlYrJ31c1S/vg0GLb5fa3jNhMVo20AkC0xW81oDAOswH0XaiExakd9iUznnnIloAksOQ5X83WVLS9pd9v0Gdf1Wog4c0cNXLjLHbeFLvJm1P1Mk3wvWS3yRMOJMP9dJvZY3E4HGXWDELyGhC9fr/L0LlitwSpc0M9/jLwlBDKnayupTptlqX5dcBduZzJM3xGynXTzpufH3z5/6tNVeHG4um+7m5nYru2v2Folq4Hj6KMN/Tc9g/xojNQ8b1649uLnZRduP0UxW/t1t4BZsBO3CwGYeWesrYGeJsb/zaxuGqOkrThcUZZgaz1jRw6FZzgV21UPZnNP6T7pruHKgJCZd/L+A+kO20uZnT3RwI2OLVThos75kLw7Le5epSVep4ylO4SvbL3LzSi/vwMZ914gtZ0NXY/+TlxspqIwtTv60CLJe9uPiwM2l+7QPT8+n/YOu3ExwGCOO66rMfoOPOXz3cIYN9/ETZTnFdOitHlNcR1YhQsm3yDbvVP+ikq+tLhOYfQNsr1b5ZfnjSVgFXea2bK1NUtcGpdigVW4iNMDc+1526STP+alHi1wQcN9rZxnTsvsccBFQjur4bzCS5uViwShEjRlWCQhs/PiaXFlsS3hgoibbZxvfyKFEbCQ8OzIBRUuoay45E1fgW9Fh9NxDgtE3OUSDFPssrAFXOzGTRD3MxAjdwWwcOdUZVDt+WHE40UNgJW4QFFeNW9KzOUKNTAZV3myKFPuYCNK2FUA03Hv6PtQqNm9yugSRa8dkD78yn0z1GxZYdCYzjXcJL92P05+GPAVJ91XanafD/VUrsK1gpvdTO9Lcg+R8BVjyj74lfn9Ti6xILEm4RLlecAvKfdnUYHBPQ539b4vqkrogJG4vKTeT0YE9tXAFqS7df/byaKEkbhZtee+urs1t4bFve27D5A6Nc+BkbibZ9Nv3l/oEK/7mQJjcS3ct1j6+6O1CnVpj2JBjsAbVq+9wBWmMgfB9kn6uPs3U3cf8A2F61u6f7N1E3vcGk66b9z+BOR9rA4t5YCX4+Qc7KiuCa+6XR/BgWqQwKmuES9ZiVGTBP5ybIP7j/ODLl5bFrPs8Ibn7ABgCHIDBLP7sA/QCRNdMOYl+wndyoSZLhB4w8pm6wxwx/DxhPvc7ZkduOY30JvzhqWdIwIMDY3O22wb208Mr2v4JV4Lng2CUxp+j3eviIvXmfZcKm8tYroW18KlPpXOS3cU8C7Df8EblpS+VoLPtcW73BGLGASfa4/X1O4gc/Y9by9vrRQu+ngF4Hka/mtetFLAXlWwxRum9wDTx+BYeJQV3jpqczeIC26F1hZvPX2sxZn1BFGFv8W7osYQJKW1p9jjDVNHUWnzbSmufd7G8DhY97gH8i4MD/gpDX+Zt5k/JLEdj3swbxhek5YYILnaf/MDeGvn1hC/nSPe+hDe2rm5zjFv/D/wEJOGX2QdNAAAAABJRU5ErkJggg==";
+  // Opened from wheelerfs.com/admin: customers, equipment, settings and certificate
+  // numbers are stored in Supabase. Opened as a file on this computer: everything
+  // stays in this browser and works offline.
+  const HOSTED = location.protocol !== 'file:';
+  const STORE = HOSTED ? 'wfs-admin-v1' : 'wfs-certgen-v1';
+  // Supabase project (the publishable key is public by design; the database's
+  // row level security decides what it can do). See supabase/setup.sql.
+  const SUPABASE_URL = 'https://dckhemtjpwltdpmxjouq.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_EjnwXzqk_jyHS0lVvfRbAw_zMs6S6e2';
+  const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js';
+  const VERIFY_URL = 'https://wheelerfs.com/verify/?c=';
+
+  // ---------- certificate types ----------
+  const TYPES = {
+    md: { label: 'Metal detector', prefix: 'WFS-MD', title: 'Metal Detector Performance Verification', noun: 'metal detector' },
+    xr: { label: 'X-ray', prefix: 'WFS-XR', title: 'X-ray Inspection System Performance Verification', noun: 'x-ray inspection system' },
+    mg: { label: 'Magnet', prefix: 'WFS-MG', title: 'Magnet Pull-Force Validation', noun: 'magnet' },
+  };
+  const RESULT_OPTS = ['', '3/3', '2/3', '1/3', '0/3', 'N/A'];
+  const CHECK_OPTS = ['', 'Pass', 'Fail', 'N/A'];
+  const POINTS = [['baseline', 'Baseline (no product)'], ['leading', 'Leading edge (in product)'],
+                  ['center', 'Center (in product)'], ['trailing', 'Trailing edge (in product)']];
+  const CHECKS = {
+    md: [['rejectConfirm', 'Reject confirmation'], ['binFull', 'Reject bin full / door interlock'],
+         ['airPressure', 'Air pressure fail alarm'], ['fault', 'Fault / detector-fail alarm'],
+         ['binLocked', 'Reject bin locked / secured']],
+    xr: [['rejectConfirm', 'Reject confirmation'], ['binFull', 'Reject bin full / door interlock'],
+         ['airPressure', 'Air pressure fail alarm'], ['fault', 'Fault / system-fail alarm'],
+         ['binLocked', 'Reject bin locked / secured'], ['xraySafety', 'Safety interlocks & X-ray-on lamps']],
+    mg: [['intact', 'Tubes / elements physically intact'], ['covers', 'Sanitary covers & welds sound (no cracks)'],
+         ['clean', 'Magnet clean, free of build-up'], ['housing', 'Housing, seals & gaskets in good condition'],
+         ['installed', 'Correctly installed & seated in line']],
+  };
+  const labels = list => list.map(([, label]) => label);
+  const DEFAULT_LAYOUTS = { md: { tests: labels(POINTS), checks: labels(CHECKS.md) },
+                            xr: { tests: labels(POINTS), checks: labels(CHECKS.xr) },
+                            mg: { tests: [], checks: labels(CHECKS.mg) } };
+  const TEST_SUGGESTIONS = [...labels(POINTS), 'Top of aperture', 'Bottom of aperture', 'Left side of aperture', 'Right side of aperture',
+    'Product in reverse orientation', 'Worst-case orientation', 'Maximum belt speed', 'Minimum belt speed', 'Two products back-to-back',
+    'Thickest part of product', 'Product edge / corner'];
+  const CHECK_SUGGESTIONS = {
+    md: [...labels(CHECKS.md), 'Belt stop on detect', 'Reject timing at line speed', 'Stack light / audible alarm', 'Speed change compensation',
+         'Correct product program selected', 'Settings password-protected', 'Metal-free zone clear', 'Encoder / speed sensor working', 'Emergency stop'],
+    xr: [...labels(CHECKS.xr), 'Belt stop on detect', 'Reject timing at line speed', 'Stack light / audible alarm', 'Lead curtains intact',
+         'Image calibration / learn current', 'Correct product program selected', 'Settings password-protected', 'Emergency stop'],
+    mg: [...labels(CHECKS.mg), 'Magnet cleaned before testing', 'No ferrous fines left after cleaning', 'Easy-clean mechanism works', 'Identification label legible'],
+  };
+  const XR_EXTRA = ['Glass', 'Ceramic', 'Calcified bone', 'Dense plastic', 'Rubber', 'Stone', 'Other'];
+  const MAX_TUBES = 24, MAX_POINTS = 8;
+  const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+
+  // ---------- persistent store (customers, settings, counters, draft) ----------
+  const stdSet = () => [{ type: 'Ferrous', size: '', cert: '', condition: 'Intact' },
+                        { type: 'Non-Ferrous', size: '', cert: '', condition: 'Intact' },
+                        { type: 'Stainless 316', size: '', cert: '', condition: 'Intact' }];
+  const defaults = {
+    settings: { techName: 'Jordan Wheeler', reviewerTitle: 'Owner / Authorized Signatory', intervalMonths: 6,
+                procedure: '', criteria: "Client HACCP / food safety plan specification", signature: '', showQr: true,
+                standards: stdSet(), standardsXr: stdSet(),
+                magnet: { sphereSize: '6.0', sphereCert: '', pullerModel: '', pullerSerial: '', pullerCalDue: '', limit: '2.50', points: 4 },
+                layouts: structuredClone(DEFAULT_LAYOUTS) },
+    customers: [], counters: {}, draft: null
+  };
+  let db;
+  try { db = Object.assign(structuredClone(defaults), JSON.parse(localStorage.getItem(STORE) || '{}')); }
+  catch { db = structuredClone(defaults); }
+  // fills in anything an older or partial settings object is missing
+  function mergeSettings(v) {
+    const out = Object.assign(structuredClone(defaults.settings), v);
+    out.magnet = Object.assign(structuredClone(defaults.settings.magnet), v?.magnet);
+    out.layouts = Object.assign(structuredClone(DEFAULT_LAYOUTS), v?.layouts);
+    return out;
+  }
+  db.settings = mergeSettings(db.settings);
+  const persist = () => { try { localStorage.setItem(STORE, JSON.stringify(db)); } catch {} };
+
+  // 20 random URL-safe characters (120 bits): the unguessable part of the QR link.
+  function newVerifyCode() {
+    const abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    return Array.from(crypto.getRandomValues(new Uint8Array(20)), b => abc[b & 63]).join('');
+  }
+  const grid = (rows, cols, old = []) => Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => old[r]?.[c] ?? ''));
+
+  function blankCert(type = 'md') {
+    const s = db.settings, m = s.magnet, L = s.layouts[type] || DEFAULT_LAYOUTS[type];
+    const standards = structuredClone(type === 'xr' ? s.standardsXr : s.standards);
+    return {
+      type, certNo: '', verifyCode: newVerifyCode(), publishedAt: '', valDate: today(), intervalMonths: s.intervalMonths,
+      asFound: 'In Tolerance', asLeft: 'In Tolerance',
+      client: { company: '', address1: '', cityStateZip: '', contact: '', serviceOrder: '', po: '' },
+      equip: { manufacturer: '', model: '', serial: '', assetId: '', aperture: '', rejectDevice: '',
+               magnetType: '', element: '', tubeDiameter: '' },
+      cond: { location: 'On-site', product: '', program: '', beltSpeed: '', criteria: s.criteria, procedure: s.procedure },
+      standards,
+      tests: (type === 'mg' ? [] : L.tests).map(label => ({ label, res: standards.map(() => '') })),
+      checkItems: L.checks.map(label => ({ label, value: '' })),
+      magnet: { sphereSize: m.sphereSize, sphereCert: m.sphereCert, pullerModel: m.pullerModel, pullerSerial: m.pullerSerial,
+                pullerCalDue: m.pullerCalDue, limit: m.limit, tubes: 8, points: m.points, pulls: grid(8, m.points) },
+      findings: '', techName: s.techName, techDate: today(), reviewerName: s.techName, issueDate: today()
+    };
+  }
+  // Brings drafts and job files from older versions up to the current shape.
+  function normalize(c) {
+    const type = TYPES[c?.type] ? c.type : 'md';
+    const base = blankCert(type);
+    const out = { ...base, ...c, type };
+    for (const k of ['client', 'equip', 'cond', 'magnet']) out[k] = { ...base[k], ...(c?.[k] || {}) };
+    if (!Array.isArray(out.standards) || !out.standards.length) out.standards = base.standards;
+    // certificates saved before rows were editable kept results/checks under fixed keys
+    if (!Array.isArray(c?.tests)) out.tests = c?.results && type !== 'mg' ? POINTS.map(([k, label]) => ({ label, res: c.results[k] || [] })) : base.tests;
+    out.tests = out.tests.map(t => ({ label: t.label ?? '', res: out.standards.map((_, i) => t.res?.[i] ?? '') }));
+    if (!Array.isArray(c?.checkItems)) out.checkItems = c?.checks ? CHECKS[type].map(([k, label]) => ({ label, value: c.checks[k] || '' })) : base.checkItems;
+    delete out.results; delete out.checks;
+    const m = out.magnet;
+    m.tubes = clamp(m.tubes, 1, MAX_TUBES); m.points = clamp(m.points, 1, MAX_POINTS);
+    m.pulls = grid(m.tubes, m.points, m.pulls);
+    if (!out.verifyCode) out.verifyCode = newVerifyCode();
+    return out;
+  }
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Math.round(Number(v)) || lo));
+  let cert = normalize(db.draft || blankCert());
+
+  // ---------- helpers ----------
+  const $ = s => document.querySelector(s);
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const get = (o, p) => p.split('.').reduce((a, k) => a?.[k], o);
+  const set = (o, p, v) => { const ks = p.split('.'); const last = ks.pop(); ks.reduce((a, k) => a[k], o)[last] = v; };
+  const show = v => (v ?? '') === '' ? '<span class="empty">—</span>' : esc(v);
+  function fmtDate(iso, long) {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return long ? dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : `${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}/${y}`;
+  }
+  function addMonths(iso, n) {
+    if (!iso || !n) return '';
+    const [y, m, d] = iso.split('-').map(Number);
+    const t = new Date(y, m - 1 + Number(n), 1);
+    const last = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate();
+    t.setDate(Math.min(d, last));
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+  }
+  const rowResult = r => r.some(v => !v) ? '' : r.every(v => v === '3/3' || v === 'N/A') ? 'PASS' : 'FAIL';
+  const num = v => (v === '' || v == null || isNaN(Number(v))) ? null : Number(v);
+  const lbs = v => v == null ? '' : v.toFixed(2);
+  // Per-tube minimum and average; a tube fails if ANY reading is below the limit.
+  function tubeStats(row, limit) {
+    const vals = row.map(num);
+    if (vals.some(v => v === null)) return { complete: false, min: null, avg: null, result: '' };
+    const min = Math.min(...vals), avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+    return { complete: true, min, avg, result: limit == null ? '' : min >= limit ? 'PASS' : 'FAIL' };
+  }
+  const magnetStats = () => {
+    const limit = num(cert.magnet.limit);
+    const tubes = cert.magnet.pulls.map(r => tubeStats(r, limit));
+    const overall = limit == null || tubes.some(t => !t.complete) ? '' : tubes.every(t => t.result === 'PASS') ? 'PASS' : 'FAIL';
+    return { limit, tubes, overall };
+  };
+  const dateKey = iso => (iso || today()).slice(2).replace(/-/g, '');
+  // takes the next sequence number for this type and date, e.g. WFS-XR-260109-02
+  async function takeCertNo() {
+    const d = dateKey(cert.valDate);
+    const k = cert.type === 'md' ? d : `${cert.type}:${d}`;   // metal detectors keep the original counter keys
+    let n;
+    if (HOSTED) n = await remote.nextNumber(k);               // shared counter: no duplicates across devices
+    else { db.counters[k] = (db.counters[k] || 0) + 1; persist(); n = db.counters[k]; }
+    return `${TYPES[cert.type].prefix}-${d}-${String(n).padStart(2, '0')}`;
+  }
+  const unitId = () => cert.equip.serial || cert.equip.assetId;
+  const equipModel = () => cert.type === 'mg' ? [cert.equip.magnetType, cert.equip.element].filter(Boolean).join(' ') : cert.equip.model;
+
+  // ---------- form building ----------
+  const opts = (list, v) => list.map(o => `<option value="${esc(o)}"${o === v ? ' selected' : ''}>${esc(o) || '—'}</option>`).join('');
+  const field = (label, k, attrs = '') => `<label>${label}<input data-k="${k}" ${attrs}></label>`;
+  function buildTypeFields() {
+    const t = cert.type;
+    $('#selType').value = t;
+    $('#equipFields').innerHTML = t === 'mg' ? `<div class="row">
+        ${field('Magnet type', 'equip.magnetType', 'list="dlMagType" placeholder="e.g. Grate magnet"')}
+        ${field('Manufacturer', 'equip.manufacturer', 'list="dlMagMfr"')}
+        ${field('Model / element', 'equip.element', 'placeholder="e.g. RE5HP"')}
+        ${field('Serial #', 'equip.serial', 'placeholder="if marked"')}
+        ${field('Asset ID / Location', 'equip.assetId', 'placeholder="e.g. Production"')}
+        ${field('Tube diameter', 'equip.tubeDiameter', 'placeholder="e.g. 1 inch"')}</div>`
+      : `<div class="row">
+        ${field('Manufacturer', 'equip.manufacturer', 'list="dlMfr"')}
+        ${field('Model', 'equip.model')}
+        ${field('Serial #', 'equip.serial')}
+        ${field('Asset ID / Line', 'equip.assetId')}
+        ${field(t === 'xr' ? 'System type' : 'Aperture / Type', 'equip.aperture', `placeholder="${t === 'xr' ? 'e.g. Conveyor, packaged product' : 'e.g. 400 × 150 mm conveyor'}"`)}
+        ${field('Reject device', 'equip.rejectDevice', 'list="dlReject"')}</div>`;
+
+    $('#condFields').innerHTML = `<div class="row">
+        <label>Location<select data-k="cond.location">${opts(['On-site', 'In-house'], cert.cond.location)}</select></label>
+        ${t === 'mg' ? field('Product / line', 'cond.product')
+          : field('Product tested', 'cond.product') + field('Product / program #', 'cond.program') + field('Belt speed', 'cond.beltSpeed', 'placeholder="e.g. 30 m/min"')}
+      </div>
+      <div class="row full" style="margin-top:8px">
+        ${t === 'mg' ? field('Minimum acceptable pull per test point (lbs)', 'magnet.limit', 'type="number" step="0.01" min="0"')
+                     : field('Acceptance criteria', 'cond.criteria')}
+        ${field('QA procedure reference', 'cond.procedure', 'placeholder="e.g. WFS-QP-01 Rev 2"')}
+      </div>`;
+
+    $('#stdFields').innerHTML = t === 'mg' ? `<div class="row">
+        ${field('Ferrous test sphere (mm)', 'magnet.sphereSize', 'inputmode="decimal"')}
+        ${field('Sphere cert #', 'magnet.sphereCert')}
+        ${field('Pull tester model', 'magnet.pullerModel')}
+        ${field('Pull tester serial #', 'magnet.pullerSerial')}
+        ${field('Pull tester calibration due', 'magnet.pullerCalDue', 'type="date"')}</div>
+        <p class="hint">Unlike test spheres, the pull tester's calibration does expire; you'll be warned if it's past due.</p>`
+      : `<table class="grid-results std-table">
+        <tr><th>Type</th><th style="width:20%">Size (mm)</th><th style="width:28%">Cert #</th><th style="width:22%">Condition</th>${t === 'xr' ? '<th></th>' : ''}</tr>
+        ${cert.standards.map((s, i) => `<tr>
+          <td>${i < 3 ? esc(s.type) : `<select data-k="standards.${i}.type">${opts(XR_EXTRA, s.type)}</select>`}</td>
+          <td><input data-k="standards.${i}.size" inputmode="decimal"></td>
+          <td><input data-k="standards.${i}.cert"></td>
+          <td><select data-k="standards.${i}.condition">${opts(['Intact', 'Replaced'], s.condition)}</select></td>
+          ${t === 'xr' ? `<td>${i >= 3 ? `<button type="button" class="small" data-remove-std="${i}" title="Remove">✕</button>` : ''}</td>` : ''}</tr>`).join('')}
+        </table>
+        ${t === 'xr' ? '<div style="margin-top:6px"><button type="button" class="small" id="btnAddStd">+ Add contaminant (glass, bone, …)</button></div>' : ''}
+        <p class="hint">Your usual test pieces are remembered between certificates (Settings → set as default).</p>`;
+
+    if (t === 'mg') {
+      const m = cert.magnet;
+      $('#resLegend').textContent = 'Pull-force readings (lbs)';
+      $('#resFields').innerHTML = `<div class="row" style="margin-bottom:8px">
+          <label>Number of tubes<input type="number" min="1" max="${MAX_TUBES}" id="magTubes" value="${m.tubes}"></label>
+          <label>Test points per tube<input type="number" min="1" max="${MAX_POINTS}" id="magPoints" value="${m.points}"></label></div>
+        <div style="overflow-x:auto"><table class="grid-results mag-grid">
+          <tr><th>Tube</th>${Array.from({ length: m.points }, (_, j) => `<th>P${j + 1}</th>`).join('')}<th>Min</th></tr>
+          ${m.pulls.map((row, i) => `<tr><td>${i + 1}</td>${row.map((_, j) =>
+            `<td><input data-k="magnet.pulls.${i}.${j}" type="number" step="0.01" min="0" inputmode="decimal"></td>`).join('')}
+            <td class="mag-min" id="magMin${i}"></td></tr>`).join('')}
+        </table></div>
+        <p class="hint">A tube passes only if every reading meets the minimum. Tab moves across each row.</p>`;
+    } else {
+      $('#resLegend').textContent = 'Results (passes out of 3)';
+      $('#resFields').innerHTML = `<table class="grid-results">
+          <tr><th>Test point</th>${cert.standards.map(s => `<th>${esc(shortStd(s.type))}</th>`).join('')}<th></th></tr>
+          ${cert.tests.map((tp, r) => `<tr><td><input class="row-label" data-k="tests.${r}.label" list="dlTests" placeholder="Name this test point"></td>
+            ${cert.standards.map((_, i) => `<td><select data-k="tests.${r}.res.${i}">${opts(RESULT_OPTS, tp.res[i])}</select></td>`).join('')}
+            <td><button type="button" class="small" data-remove-test="${r}" title="Remove this test point">✕</button></td></tr>`).join('')}
+        </table>
+        <div class="btn-row"><button type="button" class="small" id="btnAddTest">+ Add test point</button>
+          <button type="button" class="small" id="btnAllPass">Set all to 3/3</button></div>`;
+      $('#dlTests').innerHTML = TEST_SUGGESTIONS.map(o => `<option>${esc(o)}</option>`).join('');
+    }
+    $('#chkLegend').textContent = t === 'mg' ? 'Physical inspection' : 'Fail-safe & system checks';
+    $('#chkRows').innerHTML = cert.checkItems.map((ch, r) => `<tr><td><input class="row-label" data-k="checkItems.${r}.label" list="dlChecks" placeholder="Name this check"></td>
+      <td style="width:28%"><select data-k="checkItems.${r}.value">${opts(CHECK_OPTS, ch.value)}</select></td>
+      <td style="width:34px"><button type="button" class="small" data-remove-check="${r}" title="Remove this check">✕</button></td></tr>`).join('')
+      || '<tr><td class="hint">No checks. Use + Add check.</td></tr>';
+    $('#dlChecks').innerHTML = CHECK_SUGGESTIONS[t].map(o => `<option>${esc(o)}</option>`).join('');
+    $('#btnNext').textContent = 'Next unit, same visit';
+  }
+  const shortStd = t => ({ 'Ferrous': 'Fe', 'Non-Ferrous': 'Non-Fe', 'Stainless 316': 'SS' }[t] || t);
+
+  function fillForm() {
+    buildTypeFields();
+    document.querySelectorAll('[data-k]').forEach(el => { el.value = get(cert, el.dataset.k) ?? ''; });
+    refreshCustomerSelect();
+    render();
+  }
+  $('#form').addEventListener('input', e => {
+    const k = e.target.dataset.k; if (!k) return;
+    if (k === 'valDate') {   // performed/issued dates follow the validation date unless you changed them
+      for (const d of ['techDate', 'issueDate']) if (!cert[d] || cert[d] === cert.valDate) { cert[d] = e.target.value; $(`[data-k="${d}"]`).value = e.target.value; }
+    }
+    set(cert, k, e.target.value);
+    if (/^standards\.\d+\.type$/.test(k)) return fillForm();   // column headings follow the standard type
+    render();
+  });
+  $('#form').addEventListener('change', e => {
+    if (e.target.id === 'magTubes' || e.target.id === 'magPoints') {
+      const m = cert.magnet;
+      m.tubes = clamp($('#magTubes').value, 1, MAX_TUBES); m.points = clamp($('#magPoints').value, 1, MAX_POINTS);
+      m.pulls = grid(m.tubes, m.points, m.pulls);
+      fillForm();
+    }
+  });
+  $('#form').addEventListener('click', e => {
+    if (e.target.id === 'btnAllPass') { cert.tests.forEach(tp => tp.res = cert.standards.map(() => '3/3')); fillForm(); }
+    if (e.target.id === 'btnAddTest') {
+      cert.tests.push({ label: '', res: cert.standards.map(() => '') });
+      fillForm(); $(`[data-k="tests.${cert.tests.length - 1}.label"]`).focus();
+    }
+    if (e.target.id === 'btnAddCheck') {
+      cert.checkItems.push({ label: '', value: '' });
+      fillForm(); $(`[data-k="checkItems.${cert.checkItems.length - 1}.label"]`).focus();
+    }
+    const rt = e.target.dataset.removeTest;
+    if (rt !== undefined) {
+      if (cert.tests.length === 1) return alert('A certificate needs at least one test point.');
+      cert.tests.splice(Number(rt), 1); fillForm();
+    }
+    const rc = e.target.dataset.removeCheck;
+    if (rc !== undefined) { cert.checkItems.splice(Number(rc), 1); fillForm(); }
+    if (e.target.id === 'btnAddStd') {
+      cert.standards.push({ type: 'Glass', size: '', cert: '', condition: 'Intact' });
+      cert.tests.forEach(tp => tp.res.push(''));
+      fillForm();
+    }
+    const rm = e.target.dataset.removeStd;
+    if (rm !== undefined) {
+      cert.standards.splice(Number(rm), 1);
+      cert.tests.forEach(tp => tp.res.splice(Number(rm), 1));
+      fillForm();
+    }
+  });
+  $('#selType').addEventListener('change', e => {
+    const type = e.target.value;
+    if (type === cert.type) return;
+    // keep who/when; reset everything that depends on the equipment type
+    const keep = { client: cert.client, valDate: cert.valDate, intervalMonths: cert.intervalMonths, asFound: cert.asFound,
+                   asLeft: cert.asLeft, techName: cert.techName, techDate: cert.techDate, reviewerName: cert.reviewerName,
+                   issueDate: cert.issueDate, findings: cert.findings };
+    cert = Object.assign(blankCert(type), structuredClone(keep));
+    fillForm(); toast(TYPES[type].label + ' certificate. Click Auto for a ' + TYPES[type].prefix + ' number.');
+  });
+
+  // ---------- saved customers & equipment ----------
+  function refreshCustomerSelect() {
+    const names = db.customers.map(c => c.company).sort((a, b) => a.localeCompare(b));
+    $('#selCustomer').innerHTML = '<option value="">Saved customers…</option>' + names.map(n => `<option${n === cert.client.company ? ' selected' : ''}>${esc(n)}</option>`).join('');
+    refreshEquipSelect();
+  }
+  const currentCustomer = () => db.customers.find(c => c.company === cert.client.company);
+  function equipLabel(d) {
+    const t = TYPES[d.type || 'md'].label;
+    const model = d.type === 'mg' ? [d.magnetType, d.element].filter(Boolean).join(' ') : d.model;
+    return `[${t}] ` + [d.assetId, model, d.serial && 'S/N ' + d.serial].filter(Boolean).join(' · ');
+  }
+  function refreshEquipSelect() {
+    const c = currentCustomer();
+    const list = c?.detectors || [];
+    $('#selEquip').innerHTML = `<option value="">${c ? (list.length ? "This customer's equipment…" : 'No saved equipment yet') : 'Pick a saved customer first'}</option>` +
+      list.map((d, i) => `<option value="${i}">${esc(equipLabel(d))}</option>`).join('');
+  }
+  $('#selCustomer').addEventListener('change', e => {
+    const c = db.customers.find(x => x.company === e.target.value); if (!c) return;
+    Object.assign(cert.client, structuredClone(c.client));
+    if (c.cond) Object.assign(cert.cond, structuredClone(c.cond));
+    fillForm();
+  });
+  $('#btnSaveCustomer').addEventListener('click', async () => {
+    if (!cert.client.company.trim()) return alert('Enter the company name first.');
+    let c = currentCustomer();
+    if (!c) { c = { company: cert.client.company, detectors: [] }; db.customers.push(c); }
+    c.client = { ...cert.client, serviceOrder: '', po: '' };
+    c.cond = { criteria: cert.cond.criteria, location: cert.cond.location };
+    if (HOSTED) try { await remote.saveCustomer(c); } catch (e) { return fail('Could not save the customer.', e); }
+    persist(); refreshCustomerSelect(); toast('Customer saved');
+  });
+  $('#selEquip').addEventListener('change', e => {
+    const d = currentCustomer()?.detectors[e.target.value]; if (!d) return;
+    const type = d.type || 'md';
+    if (type !== cert.type) {
+      const keep = { client: cert.client, valDate: cert.valDate, intervalMonths: cert.intervalMonths, techName: cert.techName,
+                     techDate: cert.techDate, reviewerName: cert.reviewerName, issueDate: cert.issueDate };
+      cert = Object.assign(blankCert(type), structuredClone(keep));
+    }
+    const { type: _t, _id, product, program, beltSpeed, tubes, points, testLabels, checkLabels, ...equip } = d;
+    Object.assign(cert.equip, structuredClone(equip));
+    // this unit's own test points / checks; rows with the same name keep what was already entered
+    if (testLabels && type !== 'mg') {
+      const prev = new Map(cert.tests.map(tp => [tp.label, tp]));
+      cert.tests = testLabels.map(label => prev.get(label) || { label, res: cert.standards.map(() => '') });
+    }
+    if (checkLabels) {
+      const prev = new Map(cert.checkItems.map(ch => [ch.label, ch]));
+      cert.checkItems = checkLabels.map(label => prev.get(label) || { label, value: '' });
+    }
+    if (product !== undefined) Object.assign(cert.cond, { product, program: program || '', beltSpeed: beltSpeed || '' });
+    if (type === 'mg' && tubes) {
+      cert.magnet.tubes = clamp(tubes, 1, MAX_TUBES); cert.magnet.points = clamp(points || cert.magnet.points, 1, MAX_POINTS);
+      cert.magnet.pulls = grid(cert.magnet.tubes, cert.magnet.points, cert.magnet.pulls);
+    }
+    fillForm();
+  });
+  $('#btnSaveEquip').addEventListener('click', async () => {
+    const c = currentCustomer();
+    if (!c) return alert('Save the customer first, then save their equipment.');
+    if (!unitId()) return alert('Enter a serial # or asset ID first.');
+    const entry = { type: cert.type, ...cert.equip, product: cert.cond.product, program: cert.cond.program, beltSpeed: cert.cond.beltSpeed };
+    if (cert.type === 'mg') Object.assign(entry, { tubes: cert.magnet.tubes, points: cert.magnet.points });
+    else entry.testLabels = cert.tests.map(tp => tp.label).filter(Boolean);
+    entry.checkLabels = cert.checkItems.map(ch => ch.label).filter(Boolean);
+    const same = d => (d.type || 'md') === cert.type && (cert.equip.serial ? d.serial === cert.equip.serial : !d.serial && d.assetId === cert.equip.assetId);
+    const i = c.detectors.findIndex(same);
+    if (i >= 0) entry._id = c.detectors[i]._id;
+    if (HOSTED) try { await remote.saveEquipment(c, entry); } catch (e) { return fail('Could not save the equipment.', e); }
+    i >= 0 ? (c.detectors[i] = entry) : c.detectors.push(entry);
+    persist(); refreshEquipSelect(); toast('Equipment saved to ' + c.company);
+  });
+
+  // ---------- quick buttons ----------
+  $('#btnChecksPass').addEventListener('click', () => { cert.checkItems.forEach(ch => ch.value = 'Pass'); fillForm(); });
+  $('#btnAutoNo').addEventListener('click', async () => {
+    try { cert.certNo = await takeCertNo(); } catch (e) { return fail('Could not get the next certificate number.', e); }
+    cert.verifyCode = newVerifyCode(); cert.publishedAt = '';   // new number = new certificate
+    fillForm();
+  });
+  $('#btnNew').addEventListener('click', () => {
+    if (!confirm('Start a blank certificate? Unsaved changes on this one will be lost.')) return;
+    cert = blankCert(cert.type); fillForm();
+  });
+  $('#btnNext').addEventListener('click', async () => {
+    const keep = { client: cert.client, cond: { ...cert.cond, product: '', program: '', beltSpeed: '' }, standards: cert.standards,
+                   valDate: cert.valDate, intervalMonths: cert.intervalMonths, techName: cert.techName, techDate: cert.techDate,
+                   reviewerName: cert.reviewerName, issueDate: cert.issueDate };
+    const m = cert.magnet, prevTests = cert.tests, prevChecks = cert.checkItems;
+    cert = Object.assign(blankCert(cert.type), structuredClone(keep));
+    cert.tests = prevTests.map(tp => ({ label: tp.label, res: cert.standards.map(() => '') }));
+    cert.checkItems = prevChecks.map(ch => ({ label: ch.label, value: '' }));
+    Object.assign(cert.magnet, { sphereSize: m.sphereSize, sphereCert: m.sphereCert, pullerModel: m.pullerModel,
+      pullerSerial: m.pullerSerial, pullerCalDue: m.pullerCalDue, limit: m.limit, points: m.points, tubes: m.tubes, pulls: grid(m.tubes, m.points) });
+    try { cert.certNo = await takeCertNo(); } catch (e) { fail('Could not get the next certificate number; click Auto to try again.', e); }
+    fillForm(); toast('Ready for the next unit');
+  });
+
+  // ---------- job files ----------
+  const download = (name, data) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  const fileBase = () => [cert.certNo || 'certificate', cert.client.company,
+    cert.equip.serial ? 'SN ' + cert.equip.serial : cert.equip.assetId].filter(Boolean).join(' - ').replace(/[\\/:*?"<>|]/g, '');
+  $('#btnSaveJob').addEventListener('click', () => download(fileBase() + '.json', { type: 'wfs-certificate', version: 2, cert }));
+  $('#btnOpenJob').addEventListener('click', () => $('#fileJob').click());
+  $('#fileJob').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      if (data.type !== 'wfs-certificate') throw new Error();
+      cert = normalize(data.cert); fillForm(); toast('Job opened');
+    } catch { alert('That file is not a certificate job file.'); }
+  });
+
+  // ---------- settings ----------
+  const dlg = $('#dlgSettings');
+  $('#btnSettings').addEventListener('click', () => {
+    const s = db.settings;
+    $('#setTech').value = s.techName; $('#setReviewerTitle').value = s.reviewerTitle;
+    $('#setInterval').value = s.intervalMonths; $('#setProcedure').value = s.procedure; $('#setCriteria').value = s.criteria;
+    $('#setQr').checked = s.showQr;
+    showSig(); dlg.showModal();
+  });
+  $('#btnSettingsClose').addEventListener('click', () => {
+    const s = db.settings;
+    s.techName = $('#setTech').value; s.reviewerTitle = $('#setReviewerTitle').value;
+    s.intervalMonths = Number($('#setInterval').value) || 6; s.procedure = $('#setProcedure').value; s.criteria = $('#setCriteria').value;
+    s.showQr = $('#setQr').checked;
+    saveSettings(); dlg.close(); render();
+  });
+  $('#btnSetStdDefault').addEventListener('click', () => {
+    const s = db.settings, m = cert.magnet;
+    if (cert.type === 'mg') Object.assign(s.magnet, { sphereSize: m.sphereSize, sphereCert: m.sphereCert, pullerModel: m.pullerModel,
+      pullerSerial: m.pullerSerial, pullerCalDue: m.pullerCalDue, limit: m.limit, points: m.points });
+    else s[cert.type === 'xr' ? 'standardsXr' : 'standards'] = structuredClone(cert.standards);
+    s.layouts[cert.type] = { tests: cert.tests.map(tp => tp.label).filter(Boolean), checks: cert.checkItems.map(ch => ch.label).filter(Boolean) };
+    saveSettings(); toast(`Default ${TYPES[cert.type].label.toLowerCase()} standards, test points & checks saved`);
+  });
+  // settings are saved in this browser, and online too in website mode
+  function saveSettings() {
+    persist();
+    if (HOSTED) remote.saveSettings().catch(e => fail('Could not save your settings online.', e));
+  }
+  function showSig() {
+    $('#sigPreview').innerHTML = db.settings.signature ? `<img src="${db.settings.signature}" alt="Signature">` : '<span class="hint">No signature saved</span>';
+  }
+  $('#fileSig').addEventListener('change', e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    const img = new Image();
+    img.onload = () => {   // downscale so the stored image stays small
+      const h = Math.min(160, img.height), w = Math.round(img.width * h / img.height);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      db.settings.signature = c.toDataURL('image/png'); saveSettings(); showSig(); render();
+    };
+    img.src = URL.createObjectURL(f);
+  });
+  $('#btnClearSig').addEventListener('click', () => { db.settings.signature = ''; saveSettings(); showSig(); render(); });
+  $('#btnExport').addEventListener('click', async () => {
+    const { draft, ...rest } = db;
+    if (HOSTED) try { rest.counters = await remote.counters(); } catch (e) { return fail('Could not read the certificate counters.', e); }
+    download(`WFS certificate generator backup ${today()}.json`, { type: 'wfs-certgen-backup', version: 2, ...rest });
+  });
+  $('#btnImport').addEventListener('click', () => $('#fileImport').click());
+  $('#fileImport').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      if (data.type !== 'wfs-certgen-backup') throw new Error();
+      if (HOSTED) {
+        if (!confirm('Add the customers and equipment from this backup to your online records, and use its settings?\n\nExisting customers and units with the same name or serial are updated, nothing is deleted.')) return;
+        toast('Importing…');
+        try { var n = await remote.importBackup(data); } catch (err) { return fail('The import stopped partway. You can safely run it again.', err); }
+        dlg.close(); fillForm(); toast(`Imported ${n.customers} customers and ${n.units} units`);
+        return;
+      }
+      if (!confirm('Replace the customers, equipment and settings in this browser with the backup?')) return;
+      db.settings = mergeSettings(data.settings);
+      db.customers = data.customers || []; db.counters = data.counters || {};
+      persist(); dlg.close(); fillForm(); toast('Backup imported');
+    } catch { alert('That file is not a certificate generator backup.'); }
+  });
+
+  // ---------- checks before printing ----------
+  function warnings() {
+    const w = [], t = cert.type;
+    const need = [['certNo', 'Certificate No.'], ['valDate', 'Validation date'], ['client.company', 'Company'],
+                  ['techName', 'Technician'], ['issueDate', 'Date issued'],
+                  ...(t === 'mg' ? [['equip.magnetType', 'Magnet type']]
+                                 : [['equip.manufacturer', 'Manufacturer'], ['equip.model', 'Model'], ['equip.serial', 'Serial #']])];
+    const missing = need.filter(([k]) => !String(get(cert, k) ?? '').trim()).map(([, l]) => l);
+    if (t === 'mg' && !unitId()) missing.push('Serial # or Asset ID / Location');
+    if (missing.length) w.push('Missing: ' + missing.join(', '));
+    let failed = false;
+    if (t === 'mg') {
+      const m = cert.magnet, st = magnetStats();
+      if (!m.sphereSize || !m.sphereCert) w.push('Test sphere needs a size and cert #');
+      if (!m.pullerSerial) w.push('Pull tester serial # is blank');
+      if (!m.pullerCalDue) w.push('Pull tester calibration due date is blank');
+      else if (cert.valDate && m.pullerCalDue < cert.valDate) w.push('The pull tester calibration was past due on the validation date');
+      if (st.limit == null) w.push('Set the minimum acceptable pull');
+      if (st.tubes.some(x => !x.complete)) w.push('Some pull-force readings are blank');
+      failed = st.overall === 'FAIL';
+      if (failed) w.push('One or more tubes are below the minimum pull' + (cert.asLeft === 'In Tolerance' ? ', but As Left says In Tolerance' : ''));
+    } else {
+      cert.standards.forEach(s => { if (!s.size || !s.cert) w.push(`${s.type} standard needs a size and cert #`); });
+      const res = cert.tests.map(tp => rowResult(tp.res));
+      if (!cert.tests.length) w.push('Add at least one test point');
+      if (cert.tests.some(tp => !tp.label.trim())) w.push('A test point has no name');
+      if (res.includes('')) w.push('Some results are blank');
+      failed = res.includes('FAIL');
+      if (failed && cert.asLeft === 'In Tolerance') w.push('A result row is FAIL but As Left says In Tolerance');
+    }
+    if (cert.asFound === 'In Tolerance' && /adjust|repair|replac|correct/i.test(cert.findings)) w.push('Findings mention an adjustment but As Found says In Tolerance');
+    if (cert.asFound !== 'In Tolerance' && !cert.findings.trim()) w.push('As Found was not In Tolerance: describe what you found and did under Findings');
+    if (cert.checkItems.some(ch => !ch.label.trim())) w.push((t === 'mg' ? 'An inspection item' : 'A check') + ' has no name');
+    if (cert.checkItems.some(ch => !ch.value)) w.push((t === 'mg' ? 'Some inspection items' : 'Some checks') + ' have no result');
+    if (cert.checkItems.some(ch => ch.value === 'Fail') && cert.asLeft === 'In Tolerance')
+      w.push((t === 'mg' ? 'A physical inspection item' : 'A fail-safe check') + ' failed but As Left says In Tolerance');
+    return w;
+  }
+
+  // ---------- certificate rendering ----------
+  function chipClass(v) { return v === 'In Tolerance' ? 'pass' : v === 'Adjustment Required' ? 'warn' : 'fail'; }
+  const cell = v => v === 'Pass' ? '<span class="p">Pass</span>' : v === 'Fail' ? '<span class="f">Fail</span>' :
+    v === 'N/A' ? '<span class="na">N/A</span>' : '<span class="empty">—</span>';
+  const verdict = r => r === 'PASS' ? '<span class="p">Pass</span>' : r === 'FAIL' ? '<span class="f">Fail</span>' : show('');
+  const dl = rows => `<dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${show(v)}</dd>`).join('')}</dl>`;
+
+  function equipmentCard(c) {
+    if (c.type === 'mg') return dl([['Magnet Type', c.equip.magnetType], ['Manufacturer', c.equip.manufacturer],
+      ['Model / Element', c.equip.element], ['Serial #', c.equip.serial], ['Asset ID / Location', c.equip.assetId],
+      ['Tubes', [c.magnet.tubes, c.equip.tubeDiameter && `× ${c.equip.tubeDiameter} dia.`].filter(Boolean).join(' ')]]);
+    return dl([['Manufacturer', c.equip.manufacturer],
+      ['Model / Serial', [c.equip.model, c.equip.serial && 'S/N ' + c.equip.serial].filter(Boolean).join(' · ')],
+      ['Asset ID / Line', c.equip.assetId], [c.type === 'xr' ? 'System Type' : 'Aperture / Type', c.equip.aperture],
+      ['Reject Device', c.equip.rejectDevice]]);
+  }
+  function conditionsCard(c) {
+    if (c.type === 'mg') {
+      const lim = num(c.magnet.limit);
+      return dl([['Location', c.cond.location], ['Product / Line', c.cond.product],
+        ['Acceptance Criteria', lim == null ? '' : `Every test point ≥ ${lim.toFixed(2)} lbs`],
+        ['Test Points', `${c.magnet.points} per tube`], ['Method', 'Pull test, ferrous sphere at each point']]);
+    }
+    return dl([['Location', c.cond.location], ['Product Tested', c.cond.product], ['Product / Program #', c.cond.program],
+      ['Belt Speed', c.cond.beltSpeed], ['Acceptance Criteria', c.cond.criteria]]);
+  }
+  function standardsCard(c) {
+    if (c.type === 'mg') {
+      const m = c.magnet;
+      return `<table><tr><th>Standard</th><th>ID / Size</th><th>Cert / Cal.</th></tr>
+        <tr><td>Ferrous test sphere</td><td>${m.sphereSize ? esc(m.sphereSize) + ' mm' : show('')}</td><td>${show(m.sphereCert)}</td></tr>
+        <tr><td>Pull tester${m.pullerModel ? ' · ' + esc(m.pullerModel) : ''}</td><td>${m.pullerSerial ? 'S/N ' + esc(m.pullerSerial) : show('')}</td>
+          <td>${m.pullerCalDue ? 'Cal. due ' + esc(fmtDate(m.pullerCalDue)) : show('')}</td></tr></table>`;
+    }
+    return `<table><tr><th>Type</th><th>Size</th><th>Cert #</th><th>Condition</th></tr>
+      ${c.standards.map(st => `<tr><td>${esc(st.type)}</td><td>${st.size ? esc(st.size) + ' mm' : show('')}</td>
+        <td>${show(st.cert)}</td><td>${show(st.condition)}</td></tr>`).join('')}</table>`;
+  }
+  function resultsBlock(c) {
+    if (c.type === 'mg') {
+      const st = magnetStats(), m = c.magnet;
+      const head = `<tr><th class="c">Tube</th>${Array.from({ length: m.points }, (_, j) => `<th class="c">P${j + 1}</th>`).join('')}
+          <th class="c">Min</th><th class="c">Avg</th><th class="c">Result</th></tr>`;
+      const rows = (from, to) => m.pulls.slice(from, to).map((row, n) => { const i = from + n, t = st.tubes[i];
+          return `<tr><td class="c">${i + 1}</td>${row.map(v => { const n = num(v);
+            return `<td class="c${n != null && st.limit != null && n < st.limit ? ' low' : ''}">${n == null ? show('') : lbs(n)}</td>`; }).join('')}
+            <td class="c"><b>${t.complete ? lbs(t.min) : show('')}</b></td><td class="c">${t.complete ? lbs(t.avg) : show('')}</td>
+            <td class="c">${verdict(t.result)}</td></tr>`; }).join('');
+      const half = Math.ceil(m.tubes / 2);
+      const tables = m.tubes > 12
+        ? `<div class="mag-split"><table class="mag-table">${head}${rows(0, half)}</table><table class="mag-table">${head}${rows(half, m.tubes)}</table></div>`
+        : `<table class="mag-table">${head}${rows(0, m.tubes)}</table>`;
+      return `<h2>Pull-Force Validation Results <em>— lbs, ${m.points} test point${m.points > 1 ? 's' : ''} per tube</em></h2>
+      <div class="card">${tables}
+        <table class="mag-table"><tr class="overall"><td>Overall validation result${st.limit != null ? ` (minimum ≥ ${st.limit.toFixed(2)} lbs at every point)` : ''}</td>
+          <td class="c" style="width:16%">${verdict(st.overall)}</td></tr></table>
+      </div>`;
+    }
+    const sizeLabel = st => ({ 'Ferrous': 'Ferrous', 'Non-Ferrous': 'Non-Ferrous', 'Stainless 316': 'SS 316' }[st.type] || st.type) + (st.size ? ` ${esc(st.size)} mm` : '');
+    return `<h2>Detection &amp; Rejection Results <em>— 3 passes per test point</em></h2>
+      <div class="card"><table>
+        <tr><th>Test Point</th>${c.standards.map(st => `<th class="c">${sizeLabel(st)}</th>`).join('')}<th class="c">Result</th></tr>
+        ${c.tests.map(tp => `<tr><td>${show(tp.label)}</td>${tp.res.map(v => `<td class="c">${show(v)}</td>`).join('')}
+          <td class="c">${verdict(rowResult(tp.res))}</td></tr>`).join('')}
+      </table></div>`;
+  }
+
+  function render() {
+    const c = cert, s = db.settings, T = TYPES[c.type];
+    const due = addMonths(c.valDate, c.intervalMonths);
+    const sig = s.signature ? `<img src="${s.signature}" alt="">` : '';
+    const addr = [c.client.address1, c.client.cityStateZip].filter(Boolean).join('\n');
+    $('#cert').innerHTML = `
+    <div class="page type-${c.type}">
+      <div class="wm" style="background-image:url(${LOGO})"></div>
+      <div class="content">
+      <header>
+        <img src="${LOGO}" alt="">
+        <div class="brand"><b>WHEELER</b><span>FOOD SAFETY SERVICES</span>
+          <small>Independent &amp; Audit-Ready Equipment Validation · A Meldrum Company</small></div>
+        <div class="doc"><h1>Certificate of Validation</h1>
+          <div class="no">No. ${show(c.certNo)}</div>
+          <div class="meta">${T.title} · Page 1 of 1</div></div>
+      </header>
+      <div class="accent"></div>
+
+      <div class="status">
+        <div class="chip"><label>Validation Date</label><strong>${show(fmtDate(c.valDate, true))}</strong></div>
+        <div class="chip"><label>Next Validation Due</label><strong>${show(fmtDate(due, true))}</strong></div>
+        <div class="chip ${chipClass(c.asFound)}"><label>As Found</label><strong>${esc(c.asFound)}</strong></div>
+        <div class="chip ${chipClass(c.asLeft)}"><label>As Left</label><strong>${esc(c.asLeft)}${c.asLeft === 'In Tolerance' ? ' · PASS' : ''}</strong></div>
+      </div>
+
+      <div class="cols">
+        <div><h2>Client</h2><div class="card">${dl([['Company', c.client.company], ['Site Address', addr],
+          ['Site Contact', c.client.contact], ['Service Order', c.client.serviceOrder], ['Client PO #', c.client.po]])}</div></div>
+        <div><h2>Equipment</h2><div class="card">${equipmentCard(c)}</div></div>
+      </div>
+
+      <div class="cols">
+        <div><h2>Test Conditions</h2><div class="card">${conditionsCard(c)}</div></div>
+        <div><h2>Reference Standards (Traceable)</h2><div class="card">${standardsCard(c)}</div></div>
+      </div>
+
+      ${resultsBlock(c)}
+
+      <div class="cols">
+        <div><h2>${c.type === 'mg' ? 'Physical Inspection' : 'Fail-Safe &amp; System Checks'}</h2><div class="card"><table>
+          ${c.checkItems.map(ch => `<tr><td>${show(ch.label)}</td><td class="c">${cell(ch.value)}</td></tr>`).join('')
+            || '<tr><td><span class="empty">No checks recorded.</span></td></tr>'}
+        </table></div></div>
+        <div><h2>Findings &amp; Corrective Action</h2><div class="card notes">${c.findings.trim() ? esc(c.findings.trim()) : '<span class="empty">No findings.</span>'}</div></div>
+      </div>
+
+      <div class="card fine">
+        <p>This ${T.noun} was validated in accordance with the Wheeler Food Safety Service LLC Quality Assurance Manual${c.cond.procedure ? ` (${esc(c.cond.procedure)})` : ''} against manufacturer specifications, ${c.type === 'mg' ? 'the acceptance criteria stated above' : "the client's stated sensitivity requirements"}, and applicable food safety requirements. Records of work performed and traceability of all test standards are maintained by Wheeler Food Safety Service LLC.</p>
+        <p>Results apply only to the equipment identified above at the time of service. Wear, environmental conditions and product variability may affect performance before the due date; the due date does not imply continued compliance. Routine ${c.type === 'mg' ? 'inspection and cleaning' : 'operator verification'} per the client's food safety plan remains required. This certificate may not be reproduced except in full without written approval of Wheeler Food Safety Service LLC.</p>
+      </div>
+
+      <div class="sign${s.showQr ? ' with-qr' : ''}">
+        <div class="sig"><div class="line">${sig}</div><b>${show(c.techName)}</b>, Validation Technician<br>Performed ${show(fmtDate(c.techDate))}</div>
+        <div class="sig"><div class="line">${sig}</div><b>${show(c.reviewerName)}</b>, ${esc(s.reviewerTitle)}<br>Reviewed &amp; issued ${show(fmtDate(c.issueDate))}</div>
+        ${s.showQr ? `<div class="qr">${qrSvg(VERIFY_URL + c.verifyCode)}Scan to verify<br>wheelerfs.com/verify</div>` : ''}
+      </div>
+
+      <footer>
+        <span><b>Wheeler Food Safety Service LLC</b> · Utah</span>
+        <span>385-201-5609 · jordan@wheelerfs.com · wheelerfs.com</span>
+        <span>${esc(c.certNo)}${c.certNo ? ' · ' : ''}Rev 0</span>
+      </footer>
+      </div>
+    </div>`;
+    fitPage();
+
+    if (c.type === 'mg') {   // live minimums next to the reading grid
+      const st = magnetStats();
+      st.tubes.forEach((t, i) => { const el = $('#magMin' + i); if (el) { el.textContent = t.complete ? lbs(t.min) : ''; el.className = 'mag-min ' + (t.result === 'FAIL' ? 'bad' : t.result === 'PASS' ? 'good' : ''); } });
+    }
+    const w = warnings();
+    $('#warnings').innerHTML = w.length ? `<b>Check before printing:</b><ul>${w.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+    db.draft = cert; persist();
+    fitPreview();
+  }
+
+  // Shrinks the certificate just enough to stay on one Letter page (long magnet
+  // grids, extra X-ray contaminants); short certificates are left at full size.
+  function fitPage() {
+    const page = $('#cert .page'), content = page.querySelector('.content');
+    const cs = getComputedStyle(page);
+    const avail = page.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    let k = 1;
+    content.style.zoom = 1; content.style.minHeight = '0';
+    for (let i = 0; i < 6; i++) {
+      const used = page.scrollHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      if (used <= avail + 0.5) break;
+      k = Math.max(0.6, k * avail / used - 0.004);
+      content.style.zoom = k;
+    }
+    content.style.minHeight = (avail / k) + 'px';   // keeps the signatures at the bottom of the page
+  }
+
+  function qrSvg(text) {
+    const q = qrcode(0, 'M'); q.addData(text); q.make();
+    return q.createSvgTag({ cellSize: 2, margin: 0, scalable: true });
+  }
+
+  // scale the Letter page to fit the preview column
+  function fitPreview() {
+    const holder = $('#previewHolder'), scale = $('#previewScale');
+    const pageW = 816, pageH = 1056;
+    const avail = holder.parentElement.clientWidth;
+    const k = Math.min(1, avail / pageW);
+    scale.style.transform = `scale(${k})`;
+    holder.style.width = pageW * k + 'px'; holder.style.height = pageH * k + 'px';
+  }
+  window.addEventListener('resize', fitPreview);
+
+  // ---------- print ----------
+  $('#btnPrint').addEventListener('click', () => {
+    const w = warnings();
+    if (w.length && !confirm('Before printing, check:\n\n• ' + w.join('\n• ') + '\n\nPrint anyway?')) return;
+    const prev = document.title;
+    document.title = fileBase();   // becomes the default PDF file name
+    window.print();
+    document.title = prev;
+    if (db.settings.showQr && !cert.publishedAt) setTimeout(() => toast('Saved? Use "Publish to portal" so the QR code works.'), 400);
+  });
+
+  // ---------- customer portal (Supabase) ----------
+  let sb = null;
+  async function supa() {
+    if (sb) return sb;
+    if (!window.supabase) {
+      await new Promise((resolve, reject) => {
+        const el = document.createElement('script');
+        el.src = SUPABASE_JS; el.onload = resolve;
+        el.onerror = () => reject(new Error('Could not load the portal library. Check your internet connection.'));
+        document.head.appendChild(el);
+      });
+    }
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, storageKey: 'wfs-certgen-auth' } });
+    return sb;
+  }
+  const dlgP = $('#dlgPortal');
+  const fail = (msg, err) => { console.error(err); alert(msg + (err?.message ? '\n\n' + err.message : '')); };
+
+  async function showPortal() {
+    let client;
+    try { client = await supa(); } catch (e) { return fail('The portal is unavailable right now.', e); }
+    const { data: { session } } = await client.auth.getSession();
+    $('#portalSignedOut').hidden = !!session;
+    $('#portalCloseOut').hidden = !!session;
+    $('#portalSignedIn').hidden = !session;
+    if (session) {
+      $('#portalWho').textContent = 'Signed in as ' + session.user.email;
+      $('#publishSummary').innerHTML = cert.certNo
+        ? `<b>${esc(cert.certNo)}</b> · ${esc(cert.client.company || 'no company')} · ${esc(TYPES[cert.type].label)} · ${esc([equipModel(), cert.equip.serial ? 'S/N ' + cert.equip.serial : cert.equip.assetId].filter(Boolean).join(' '))}` +
+          (cert.publishedAt ? `<span class="published-badge">✓ published ${esc(new Date(cert.publishedAt).toLocaleString())}. Publishing again replaces it.</span>` : '')
+        : 'Give this certificate a number first.';
+      await loadMembers();
+    }
+    if (!dlgP.open) dlgP.showModal();
+  }
+  $('#btnPortal').addEventListener('click', showPortal);
+  $('#btnPortalClose').addEventListener('click', () => dlgP.close());
+  $('#btnPortalClose2').addEventListener('click', () => dlgP.close());
+
+  $('#btnAdminSignIn').addEventListener('click', async () => {
+    const client = await supa();
+    const { error } = await client.auth.signInWithPassword({ email: $('#adminEmail').value.trim(), password: $('#adminPassword').value });
+    if (error) return fail('Sign-in failed.', error);
+    $('#adminPassword').value = '';
+    showPortal();
+  });
+  $('#btnAdminSignOut').addEventListener('click', async () => { await (await supa()).auth.signOut(); HOSTED ? location.reload() : showPortal(); });
+
+  // Finds the customer row by company name, creating it the first time.
+  async function customerId(create) {
+    const client = await supa();
+    const name = cert.client.company.trim();
+    if (!name) return null;
+    const { data, error } = await client.from('customers').select('id').eq('name', name).maybeSingle();
+    if (error) throw error;
+    if (data || !create) return data?.id || null;
+    const ins = await client.from('customers').insert({ name }).select('id').single();
+    if (ins.error) throw ins.error;
+    return ins.data.id;
+  }
+
+  async function loadMembers() {
+    const list = $('#memberList');
+    let cid;
+    try { cid = await customerId(false); } catch (e) { list.innerHTML = '<li>Could not load access list.</li>'; return console.error(e); }
+    if (!cid) { list.innerHTML = `<li class="hint">${cert.client.company.trim() ? 'This customer isn\'t in the portal yet. Publishing or adding an email creates it.' : 'Enter the company name on the form first.'}</li>`; return; }
+    const { data, error } = await (await supa()).from('customer_members').select('email').eq('customer_id', cid).order('email');
+    if (error) { list.innerHTML = '<li>Could not load access list.</li>'; return console.error(error); }
+    list.innerHTML = data.length ? data.map(m => `<li>${esc(m.email)} <button type="button" class="small" data-remove="${esc(m.email)}">Remove</button></li>`).join('')
+      : '<li class="hint">No one has access yet.</li>';
+  }
+  $('#btnAddMember').addEventListener('click', async () => {
+    const email = $('#memberEmail').value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return alert('Enter a valid email address.');
+    try {
+      const cid = await customerId(true);
+      if (!cid) return alert('Enter the company name on the form first.');
+      const { error } = await (await supa()).from('customer_members').upsert({ customer_id: cid, email }, { ignoreDuplicates: true });
+      if (error) throw error;
+      $('#memberEmail').value = ''; loadMembers(); toast(email + ' can now sign in at wheelerfs.com/portal');
+    } catch (e) { fail('Could not add that email.', e); }
+  });
+  $('#memberList').addEventListener('click', async e => {
+    const email = e.target.dataset.remove; if (!email) return;
+    if (!confirm(`Remove ${email}'s access to ${cert.client.company}?`)) return;
+    try {
+      const cid = await customerId(false);
+      const { error } = await (await supa()).from('customer_members').delete().eq('customer_id', cid).eq('email', email);
+      if (error) throw error;
+      loadMembers();
+    } catch (err) { fail('Could not remove that email.', err); }
+  });
+
+  $('#btnPublish').addEventListener('click', async () => {
+    const file = $('#filePdf').files[0];
+    const problems = [];
+    if (!cert.certNo) problems.push('The certificate has no number.');
+    if (!cert.client.company.trim()) problems.push('The company name is blank.');
+    if (!cert.valDate) problems.push('The validation date is blank.');
+    if (!file) problems.push('Choose the PDF you saved.');
+    else if (file.type && file.type !== 'application/pdf') problems.push('That file is not a PDF.');
+    else if (file.size > 5 * 1024 * 1024) problems.push('That PDF is larger than 5 MB.');
+    if (problems.length) return alert(problems.join('\n'));
+    if (!file.name.includes(cert.certNo) &&
+        !confirm(`The file "${file.name}" doesn't include ${cert.certNo} in its name. Is it really this certificate?`)) return;
+
+    const btn = $('#btnPublish'); btn.disabled = true; btn.textContent = 'Publishing…';
+    try {
+      const client = await supa();
+      const cid = await customerId(true);
+      const path = `${cid}/${cert.certNo}.pdf`;
+      const up = await client.storage.from('certificates').upload(path, file, { upsert: true, contentType: 'application/pdf' });
+      if (up.error) throw up.error;
+      const row = {
+        customer_id: cid, cert_no: cert.certNo, verify_code: cert.verifyCode,
+        validation_date: cert.valDate, next_due: addMonths(cert.valDate, cert.intervalMonths) || null,
+        manufacturer: cert.equip.manufacturer, model: equipModel(), serial: cert.equip.serial, asset_id: cert.equip.assetId,
+        as_found: cert.asFound, as_left: cert.asLeft, status: 'valid', pdf_path: path, data: { ...cert, certType: cert.type }
+      };
+      const ins = await client.from('certificates').upsert(row, { onConflict: 'cert_no' });
+      if (ins.error) throw ins.error;
+      // Older certificates for the same unit: matched by serial, or by asset ID + type when there's no serial.
+      if ($('#chkSupersede').checked && unitId()) {
+        let q = client.from('certificates').update({ status: 'superseded' })
+          .eq('customer_id', cid).eq('status', 'valid').neq('cert_no', cert.certNo).lte('validation_date', cert.valDate);
+        q = cert.equip.serial ? q.eq('serial', cert.equip.serial)
+                              : q.eq('asset_id', cert.equip.assetId).eq('data->>certType', cert.type);
+        const old = await q;
+        if (old.error) throw old.error;
+      }
+      cert.publishedAt = new Date().toISOString(); render();
+      $('#filePdf').value = '';
+      toast(`${cert.certNo} published. The QR code now works.`);
+      showPortal();
+    } catch (e) { fail('Publishing failed. Nothing is lost; you can try again.', e); }
+    finally { btn.disabled = false; btn.textContent = 'Publish'; }
+  });
+
+  // ---------- website mode: records stored in Supabase ----------
+  const remote = {
+    async load() {
+      const client = await supa();
+      const [cust, eq, st] = await Promise.all([
+        client.from('customers').select('id, name, details').order('name'),
+        client.from('equipment').select('id, customer_id, type, data').order('created_at'),
+        client.from('app_settings').select('value').eq('key', 'generator').maybeSingle()]);
+      for (const r of [cust, eq, st]) if (r.error) throw r.error;
+      if (st.data) db.settings = mergeSettings(st.data.value);
+      db.customers = cust.data.map(r => ({
+        id: r.id, company: r.name, client: { ...(r.details?.client || {}), company: r.name }, cond: r.details?.cond,
+        detectors: eq.data.filter(e => e.customer_id === r.id).map(e => ({ ...e.data, type: e.type, _id: e.id })) }));
+      persist();
+    },
+    async saveSettings() {
+      const { error } = await (await supa()).from('app_settings').upsert({ key: 'generator', value: db.settings });
+      if (error) throw error;
+    },
+    async saveCustomer(c) {
+      const { data, error } = await (await supa()).from('customers')
+        .upsert({ name: c.company, details: { client: c.client || {}, cond: c.cond || null } }, { onConflict: 'name' }).select('id').single();
+      if (error) throw error;
+      return (c.id = data.id);
+    },
+    async saveEquipment(c, entry) {
+      const client = await supa();
+      const cid = c.id || await this.saveCustomer(c);
+      const { _id, type, ...data } = entry;
+      const { data: row, error } = await (_id
+        ? client.from('equipment').update({ type, data }).eq('id', _id).select('id').single()
+        : client.from('equipment').insert({ customer_id: cid, type, data }).select('id').single());
+      if (error) throw error;
+      entry._id = row.id;
+    },
+    async nextNumber(key) {
+      const { data, error } = await (await supa()).rpc('next_cert_number', { counter_key: key });
+      if (error) throw error;
+      return data;
+    },
+    async counters() {
+      const { data, error } = await (await supa()).from('cert_counters').select('key, n');
+      if (error) throw error;
+      return Object.fromEntries(data.map(r => [r.key, r.n]));
+    },
+    // Adds a backup file (e.g. from the offline generator) to the online records. Safe to repeat.
+    async importBackup(data) {
+      const client = await supa();
+      if (data.settings) { db.settings = mergeSettings(data.settings); await this.saveSettings(); }
+      let customers = 0, units = 0;
+      for (const bc of data.customers || []) {
+        if (!bc.company?.trim()) continue;
+        let c = db.customers.find(x => x.company === bc.company);
+        if (!c) { c = { company: bc.company, detectors: [] }; db.customers.push(c); }
+        c.client = { ...(c.client || {}), ...(bc.client || {}), company: bc.company };
+        if (bc.cond) c.cond = bc.cond;
+        await this.saveCustomer(c); customers++;
+        for (const d of bc.detectors || []) {
+          const type = d.type || 'md';
+          const same = x => (x.type || 'md') === type && (d.serial ? x.serial === d.serial : !x.serial && x.assetId === d.assetId);
+          const existing = c.detectors.find(same);
+          const { _id, ...rest } = d;
+          const entry = { ...rest, type, _id: existing?._id };
+          await this.saveEquipment(c, entry); units++;
+          existing ? Object.assign(existing, entry) : c.detectors.push(entry);
+        }
+      }
+      for (const [key, n] of Object.entries(data.counters || {})) {
+        const { error } = await client.rpc('raise_cert_counter', { counter_key: key, at_least: Number(n) || 0 });
+        if (error) throw error;
+      }
+      await this.load();
+      return { customers, units };
+    },
+  };
+
+  function gateMessage(text, isError) { const m = $('#gateMsg'); m.textContent = text; m.className = isError ? 'err' : ''; }
+  async function enterAdmin() {
+    const client = await supa();
+    $('#gateFields').hidden = true; gateMessage('Loading your customers…');
+    const { data: isAdmin, error } = await client.rpc('is_admin');
+    if (error) throw error;
+    if (!isAdmin) {
+      await client.auth.signOut();
+      $('#gateFields').hidden = false;
+      return gateMessage('That account is not an admin.', true);
+    }
+    await remote.load();
+    const { data: { session } } = await client.auth.getSession();
+    $('#whoami').textContent = session.user.email; $('#whoami').hidden = false; $('#btnSignOut').hidden = false;
+    fillForm();
+    $('#gate').hidden = true;
+  }
+  async function boot() {
+    document.title = 'WFS Admin';
+    $('.topbar h1 span').textContent = 'Admin';
+    $('#gateLogo').src = LOGO;
+    $('#backupHint').innerHTML = '<b>Backup.</b> Your customers, equipment and settings are stored online. Export a backup about once a month and keep it in Google Drive. Import adds a backup file (for example from the offline generator) to your online records.';
+    fillForm();                       // last draft on this device, behind the sign-in screen
+    $('#gate').hidden = false; gateMessage('Connecting…');
+    try {
+      const client = await supa();
+      const { data: { session } } = await client.auth.getSession();
+      if (session) await enterAdmin();
+      else { $('#gateFields').hidden = false; gateMessage(''); $('#gateEmail').focus(); }
+    } catch (e) {
+      console.error(e);
+      $('#gateFields').hidden = false;
+      gateMessage('Could not reach the server. Check your internet connection and try again.', true);
+    }
+  }
+  $('#gateForm').addEventListener('submit', async () => {
+    try {
+      gateMessage('Signing in…');
+      const client = await supa();
+      const { error } = await client.auth.signInWithPassword({ email: $('#gateEmail').value.trim(), password: $('#gatePassword').value });
+      if (error) return gateMessage(error.status === 400 ? 'Wrong email or password.' : error.message, true);
+      $('#gatePassword').value = '';
+      await enterAdmin();
+    } catch (e) {
+      console.error(e);
+      $('#gateFields').hidden = false;
+      gateMessage('Could not sign in: ' + (e.message || 'check your internet connection.'), true);
+    }
+  });
+  $('#btnSignOut').addEventListener('click', async () => { await (await supa()).auth.signOut(); location.reload(); });
+
+  let toastTimer;
+  function toast(msg) {
+    let t = $('#toast');
+    if (!t) { t = document.createElement('div'); t.id = 'toast';
+      t.style.cssText = 'position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#00182b;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;z-index:50;box-shadow:0 4px 14px rgba(0,0,0,.25)';
+      document.body.appendChild(t); }
+    t.textContent = msg; t.style.display = 'block';
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.display = 'none', 2600);
+  }
+
+  if (HOSTED) boot(); else fillForm();
+})();
+</script>
+</body>
+</html>
