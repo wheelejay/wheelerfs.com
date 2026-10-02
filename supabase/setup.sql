@@ -219,6 +219,35 @@ revoke all on function public.raise_cert_counter(text, integer) from public;
 grant execute on function public.next_cert_number(text) to authenticated;
 grant execute on function public.raise_cert_counter(text, integer) to authenticated;
 
+-- ---------------------------------------------------------------- quotes & invoices (admin page → Billing)
+-- One row per quote or invoice. Line items, bill-to, payments etc. live in
+-- `data`; the columns are what the lists sort and total by. Admin only.
+
+create table if not exists public.billing_docs (
+  id          uuid primary key default gen_random_uuid(),
+  number      text not null unique,                 -- Q-251024-01 / INV-260430-01
+  kind        text not null check (kind in ('quote', 'invoice')),
+  status      text not null default 'draft',
+  customer_id uuid references public.customers (id) on delete set null,
+  issue_date  date,
+  due_date    date,                                 -- invoices: from terms; quotes: valid until
+  total       numeric(12, 2) not null default 0,
+  balance     numeric(12, 2) not null default 0,
+  data        jsonb not null default '{}'::jsonb,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists billing_docs_kind_idx on public.billing_docs (kind, issue_date desc);
+
+drop trigger if exists billing_docs_touch on public.billing_docs;
+create trigger billing_docs_touch before update on public.billing_docs
+  for each row execute function public.touch_updated_at();
+
+alter table public.billing_docs enable row level security;
+drop policy if exists "billing: admin all" on public.billing_docs;
+create policy "billing: admin all" on public.billing_docs for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+
 -- ---------------------------------------------------------------- you
 
 insert into public.admins (email) values ('jordan@wheelerfs.com') on conflict do nothing;
