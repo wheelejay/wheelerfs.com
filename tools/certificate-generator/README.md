@@ -28,6 +28,15 @@ against the server on sync. Publishing needs a connection.
 * **Backup:** download a full backup (.json with customers, portal emails, equipment, settings,
   counters and every certificate's details) and a .zip of all PDFs, a folder per customer.
 
+**Billing (admin page only):** the **Certificates | Billing** switch in the top bar opens quotes
+and invoices built from the same customer list. Pick items from the price list (Quotes &
+invoices → Price list), set terms (Due on receipt / Net 15–60), tax rate or tax exempt, and
+record payments; status (sent / part paid / overdue / paid) and the unpaid totals are worked
+out automatically. Quotes convert to invoices in one click, and **Records → Certificates →
+Invoice** starts an invoice for a whole job at the first-unit / additional-unit prices.
+Print / Save PDF and Email work the same as for certificates. Payment instructions, card
+link, quote terms and the footer address are in Settings.
+
 ## Using it
 
 1. Pick the **Certificate type** at the top, then fill in the form on the left; the certificate
