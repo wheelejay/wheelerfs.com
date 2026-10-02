@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { posts, episodes, services } from 'virtual:content';
 import Layout from './components/Layout';
@@ -5,6 +6,12 @@ import Home from './pages/Home';
 import ContentList from './pages/ContentList';
 import ContentDetail from './pages/ContentDetail';
 import NotFound from './pages/NotFound';
+// Loaded on demand so the Supabase library only downloads on these pages.
+const Portal = lazy(() => import('./pages/Portal'));
+const Verify = lazy(() => import('./pages/Verify'));
+const lazyPage = (page) => (
+  <Suspense fallback={<main className="content-page"><p>Loading…</p></main>}>{page}</Suspense>
+);
 import './style.css';
 import './content.css';
 
@@ -54,6 +61,8 @@ const App = () => (
           />
         </>
       )}
+      <Route path="portal" element={lazyPage(<Portal />)} />
+      <Route path="verify" element={lazyPage(<Verify />)} />
       <Route path="*" element={<NotFound />} />
     </Route>
   </Routes>
