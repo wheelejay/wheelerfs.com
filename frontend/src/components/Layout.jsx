@@ -5,14 +5,43 @@ import { REVIEW_URL } from '../siteInfo';
 
 const Layout = () => {
   const [menuOpen, setMenuOpen] = React.useState(false);
-  const { pathname, hash } = useLocation();
+  const [servicesOpen, setServicesOpen] = React.useState(false);
+  const servicesRef = React.useRef(null);
+  const { pathname, hash, key } = useLocation();
 
-  // Scroll to the #section in the URL (e.g. /#contact), or to the top on a new page
+  // Scroll to the #section in the URL (e.g. /#contact), or to the top on a new
+  // page. The section's heading lands just below the sticky header. `key`
+  // changes on every click, so tapping the same link twice scrolls again.
   React.useEffect(() => {
-    const target = hash && document.getElementById(hash.slice(1));
-    if (target) target.scrollIntoView();
-    else window.scrollTo(0, 0);
-  }, [pathname, hash]);
+    setMenuOpen(false);
+    setServicesOpen(false);
+    const section = hash && document.getElementById(hash.slice(1));
+    if (!section) {
+      window.scrollTo(0, 0);
+      return;
+    }
+    const target = section.querySelector('h2') || section;
+    const headerHeight = document.querySelector('header')?.offsetHeight ?? 0;
+    const top = target.getBoundingClientRect().top + window.scrollY - headerHeight - 24;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }, [pathname, hash, key]);
+
+  // Close the Services dropdown when clicking outside it or pressing Escape
+  React.useEffect(() => {
+    if (!servicesOpen) return;
+    const onPointerDown = (e) => {
+      if (!servicesRef.current?.contains(e.target)) setServicesOpen(false);
+    };
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setServicesOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [servicesOpen]);
 
   // Hamburger menu toggle
   const handleHamburgerClick = () => {
@@ -20,6 +49,7 @@ const Layout = () => {
   };
   const handleNavLinkClick = () => {
     setMenuOpen(false);
+    setServicesOpen(false);
   };
 
   return (
@@ -46,7 +76,27 @@ const Layout = () => {
               id="nav-links"
               className={menuOpen ? 'active' : ''}
             >
-              <li><Link to="/#services" onClick={handleNavLinkClick}>Services</Link></li>
+              <li className={`nav-dropdown${servicesOpen ? ' open' : ''}`} ref={servicesRef}>
+                <button
+                  type="button"
+                  className="nav-dropdown-toggle"
+                  aria-expanded={servicesOpen ? 'true' : 'false'}
+                  aria-controls="services-menu"
+                  onClick={() => setServicesOpen((open) => !open)}
+                >
+                  Services <span className="nav-caret" aria-hidden="true">▾</span>
+                </button>
+                <ul id="services-menu" className="nav-submenu">
+                  {services.map((service) => (
+                    <li key={service.slug}>
+                      <Link to={`/services/${service.slug}`} onClick={handleNavLinkClick}>{service.title}</Link>
+                    </li>
+                  ))}
+                  <li className="nav-submenu-all">
+                    <Link to="/#services" onClick={handleNavLinkClick}>All services overview</Link>
+                  </li>
+                </ul>
+              </li>
               <li><Link to="/#pricing" onClick={handleNavLinkClick}>Pricing</Link></li>
               <li><Link to="/#why-us" onClick={handleNavLinkClick}>Why Us</Link></li>
               <li><Link to="/blog" onClick={handleNavLinkClick}>Blog</Link></li>
