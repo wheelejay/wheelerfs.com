@@ -1,0 +1,42 @@
+<!-- Paste into Supabase → Authentication → Emails → Templates:
+     both "Magic Link" and "Confirm signup" (a customer's first sign-in uses Confirm signup).
+     Subject for both:  Sign in to view your Wheeler Food Safety certificates -->
+<div style="margin:0;padding:24px 12px;background:#f1f5f9;font-family:Helvetica,Arial,sans-serif;color:#1f2937">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden">
+    <tr>
+      <td style="background:#00182b;padding:18px 24px">
+        <div style="font-size:22px;font-weight:bold;letter-spacing:2px;color:#ffffff">WHEELER</div>
+        <div style="font-size:11px;font-weight:bold;letter-spacing:3px;color:#4ade80">FOOD SAFETY SERVICES</div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px">
+        <h1 style="margin:0 0 12px;font-size:20px;color:#00182b">Your certificates are ready to view</h1>
+        <p style="margin:0 0 18px;font-size:15px;line-height:1.5">
+          Click the button below to sign in to the Wheeler Food Safety customer portal, where you can view and
+          download your validation certificates and see when each unit is next due.
+        </p>
+        <p style="margin:0 0 22px">
+          <a href="{{ .ConfirmationURL }}"
+             style="display:inline-block;background:#16A34A;color:#ffffff;text-decoration:none;font-weight:bold;font-size:15px;padding:12px 22px;border-radius:6px">
+            View my certificates
+          </a>
+        </p>
+        <p style="margin:0 0 6px;font-size:13px;color:#4b5563;line-height:1.5">
+          This link signs you in once and expires in one hour. No password is needed; next time, go to
+          <a href="https://wheelerfs.com/portal" style="color:#01426A">wheelerfs.com/portal</a> and enter your email again.
+        </p>
+        <p style="margin:0;font-size:13px;color:#4b5563;line-height:1.5">
+          If you didn't ask to sign in, you can ignore this email.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:14px 24px;border-top:2px solid #16A34A;font-size:12px;color:#4b5563">
+        Wheeler Food Safety Service LLC · 385-201-5609 ·
+        <a href="mailto:jordan@wheelerfs.com" style="color:#01426A">jordan@wheelerfs.com</a> ·
+        <a href="https://wheelerfs.com" style="color:#01426A">wheelerfs.com</a>
+      </td>
+    </tr>
+  </table>
+</div>

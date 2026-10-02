@@ -195,6 +195,7 @@ function prerender(outDir, { posts, episodes, services }) {
   fs.copyFileSync(path.join(generatorDir, 'sw.js'), path.join(adminDir, 'sw.js'));
   fs.copyFileSync(path.resolve(outDir, '..', 'node_modules', '@supabase', 'supabase-js', 'dist', 'umd', 'supabase.js'), path.join(adminDir, 'supabase.js'));
   fs.copyFileSync(path.resolve(outDir, '..', 'node_modules', 'jszip', 'dist', 'jszip.min.js'), path.join(adminDir, 'jszip.min.js'));
+  fs.copyFileSync(path.resolve(outDir, '..', 'node_modules', 'pdf-lib', 'dist', 'pdf-lib.min.js'), path.join(adminDir, 'pdf-lib.min.js'));
 
   // GitHub Pages serves 404.html for unknown URLs; the app shows its Not Found page.
   fs.writeFileSync(

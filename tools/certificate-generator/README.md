@@ -22,6 +22,9 @@ against the server on sync. Publishing needs a connection.
   90 days / everything). *New certificate* puts that customer and unit on the form.
 * **Certificates:** search every published certificate; download the PDF, *Reopen* it on the form
   to correct and republish (same number and QR code), *Revoke* / *Restore*, or delete permanently.
+  **Job PDF** combines every certificate from the same service order (or the same day when there's
+  no service order) behind a branded summary page; **Email** opens a pre-written email in your mail
+  program to the customer's portal contacts (attach the Job PDF and send).
 * **Backup:** download a full backup (.json with customers, portal emails, equipment, settings,
   counters and every certificate's details) and a .zip of all PDFs, a folder per customer.
 
