@@ -30,9 +30,11 @@ a:hover {
   color: #16A34A;
 }
 
+/* Stop sideways scrolling on phones. "clip" (unlike "hidden") keeps the
+   sticky header working. */
 html,
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
