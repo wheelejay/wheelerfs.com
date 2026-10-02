@@ -202,6 +202,37 @@
   .backup-card p { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
   .backup-card .primary { background: var(--green); color: #fff; font-weight: 700; }
 
+  /* ---------- billing (quotes & invoices) ---------- */
+  .modes { display: inline-flex; background: rgba(255,255,255,.1); border-radius: 8px; padding: 2px; margin-right: 6px; }
+  .modes button { background: transparent; border: 0; color: #cbd5e1; padding: 5px 12px; }
+  .modes button.on { background: #fff; color: var(--navy); font-weight: 700; }
+  body.billing .cert-only, body:not(.billing) .bill-only { display: none !important; }
+  body.billing #certLayout, body:not(.billing) #billLayout { display: none; }
+  .bill-lines input, .bill-lines select { padding: 4px 6px; font-size: 13px; }
+  .bill-lines td { vertical-align: middle; }
+  .bill-lines .num { width: 70px; } .bill-lines .money { width: 90px; text-align: right; }
+  .bill-lines .amt { white-space: nowrap; font-weight: 700; color: var(--navy); text-align: right; }
+  .bill-sum { margin-top: 8px; font-size: 13px; text-align: right; color: var(--muted); }
+  .bill-sum b { color: var(--navy); font-size: 15px; }
+  .page.bill .lines th, .page.bill .lines td { padding: 4px 8px; }
+  .page.bill .lines td.r, .page.bill .lines th.r, .page.bill .tot td.r { text-align: right; white-space: nowrap; }
+  .page.bill .tot td { padding: 3px 8px; }
+  .page.bill .tot tr.grand td { font-size: 11pt; font-weight: 700; color: var(--navy); border-top: 1px solid var(--navy); }
+  .page.bill .tot tr.due td { background: #f0fdf4; font-size: 12pt; font-weight: 800; color: #15803d; }
+  .page.bill .tot tr.due.owing td { background: #fffbeb; color: var(--amber); }
+  .page.bill .tot tr.due.late td { background: #fef2f2; color: #b91c1c; }
+  .page.bill .howto { padding: 6px 9px; white-space: pre-line; font-size: 8.4pt; }
+  .page.bill .howto .pay-qr { float: right; text-align: center; font-size: 6.5pt; color: var(--muted); margin-left: 8px; }
+  .page.bill .howto .pay-qr svg { width: 0.8in; height: 0.8in; display: block; }
+  .page.bill .accept { display: grid; grid-template-columns: 2fr 1.4fr 1fr 1fr; gap: 14px; padding: 18px 9px 8px; font-size: 7.4pt; color: var(--muted); }
+  .page.bill .accept div { border-top: 1px solid var(--navy); padding-top: 3px; }
+  .page.bill .stamp { position: absolute; z-index: 5; bottom: 2.4in; left: 50%; transform: translateX(-50%) rotate(-10deg); background: rgba(255,255,255,.8); border: 4px solid #16A34A; color: #16A34A;
+    font-size: 40pt; font-weight: 900; letter-spacing: .14em; padding: 4px 22px; border-radius: 10px; opacity: .85; }
+  .page.bill .stamp.void { border-color: #b91c1c; color: #b91c1c; }
+  .bill-list-sum { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; padding: 10px 0; }
+  .bill-list-sum b { color: var(--navy); font-size: 15px; }
+  .price-table input, .price-table select { padding: 4px 6px; font-size: 13px; }
+
   /* ---------- print: certificate only ---------- */
   @page { size: Letter; margin: 0; }
   @media print {
@@ -218,18 +249,24 @@
 
 <div class="topbar">
   <h1>Wheeler FS <span>Certificate Generator</span></h1>
-  <button id="btnNew" title="Start a blank certificate">New</button>
-  <button id="btnNext" title="Keep client, type, conditions and standards; clear the equipment and results">Next unit, same visit</button>
-  <button id="btnSaveJob" title="Download this certificate's data as a file you can reopen later">Save job file</button>
-  <button id="btnOpenJob">Open job file</button>
+  <div class="modes" id="modeSwitch" hidden><button type="button" data-mode="certs" class="on">Certificates</button><button type="button" data-mode="billing">Billing</button></div>
+  <button id="btnNew" class="cert-only" title="Start a blank certificate">New</button>
+  <button id="btnNext" class="cert-only" title="Keep client, type, conditions and standards; clear the equipment and results">Next unit, same visit</button>
+  <button id="btnSaveJob" class="cert-only" title="Download this certificate's data as a file you can reopen later">Save job file</button>
+  <button id="btnOpenJob" class="cert-only">Open job file</button>
+  <button id="btnNewQuote" class="bill-only">New quote</button>
+  <button id="btnNewInvoice" class="bill-only">New invoice</button>
+  <button id="btnBills" class="bill-only" title="All quotes and invoices, unpaid totals, price list">Quotes &amp; invoices</button>
+  <button id="btnSaveBill" class="bill-only" title="Save this quote or invoice">Save</button>
+  <button id="btnEmailBill" class="bill-only" title="Pre-written email to the customer">Email</button>
   <input type="file" id="fileJob" accept=".json,application/json" hidden>
   <span class="spacer"></span>
   <button class="sync" id="syncStatus" hidden title="Click to sync now"></button>
   <span class="who" id="whoami" hidden></span>
   <button id="btnSignOut" hidden>Sign out</button>
   <button id="btnSettings">Settings</button>
-  <button id="btnRecords" hidden title="Due dates, published certificates and backups">Records</button>
-  <button id="btnPortal" title="Upload the saved PDF to the customer portal">Publish to portal</button>
+  <button id="btnRecords" class="cert-only" hidden title="Due dates, published certificates and backups">Records</button>
+  <button id="btnPortal" class="cert-only" title="Upload the saved PDF to the customer portal">Publish to portal</button>
   <button id="btnPrint" class="primary">Print / Save PDF</button>
 </div>
 
@@ -247,7 +284,7 @@
   </form>
 </div>
 
-<div class="layout">
+<div class="layout" id="certLayout">
   <form class="form" id="form" autocomplete="off" onsubmit="return false">
 
     <fieldset>
@@ -360,6 +397,95 @@
   </div>
 </div>
 
+<div class="layout" id="billLayout">
+  <form class="form" id="billForm" autocomplete="off" onsubmit="return false">
+    <fieldset>
+      <legend id="billLegend">Invoice</legend>
+      <div class="row">
+        <div class="inline">
+          <label>Number<input data-b="number"></label>
+          <button type="button" class="small" id="btnBillAutoNo" title="Next number for this date">Auto</button>
+        </div>
+        <label>Date<input type="date" data-b="issueDate"></label>
+        <label>Status<select data-b="status" id="billStatusSel"></select></label>
+        <label id="billTermsWrap">Payment terms<select data-b="terms" id="billTerms"></select></label>
+        <label id="billValidWrap">Valid for (days)<input type="number" min="1" max="365" data-b="validDays"></label>
+      </div>
+      <p class="hint" id="billDueHint"></p>
+    </fieldset>
+    <fieldset>
+      <legend>Bill to</legend>
+      <div class="saved"><select id="billCustomer"><option value="">Saved customers…</option></select></div>
+      <div class="row">
+        <label>Company<input data-b="billTo.company"></label>
+        <label>Attention / contact<input data-b="billTo.contact"></label>
+        <label>Street address<input data-b="billTo.address1"></label>
+        <label>City, State ZIP<input data-b="billTo.cityStateZip"></label>
+        <label>Phone<input data-b="billTo.phone"></label>
+        <label>Billing email<input type="email" data-b="billTo.email"></label>
+      </div>
+      <label class="check"><input type="checkbox" id="billSiteSame"> Service location is the same as bill to</label>
+      <div class="row" id="billSiteFields" style="margin-top:6px">
+        <label>Service location address<input data-b="site.address1"></label>
+        <label>City, State ZIP<input data-b="site.cityStateZip"></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Reference</legend>
+      <div class="row three">
+        <label>Customer PO #<input data-b="po"></label>
+        <label>Service order #<input data-b="serviceOrder"></label>
+        <label>Service date<input type="date" data-b="serviceDate"></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Services</legend>
+      <div style="overflow-x:auto"><table class="grid-results bill-lines"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th title="Taxable">Tax</th><th>Amount</th><th></th></tr></thead>
+        <tbody id="billLines"></tbody></table></div>
+      <div class="btn-row"><button type="button" class="small" id="btnAddLine">+ Add line</button></div>
+      <div class="row three" style="margin-top:10px">
+        <label>Discount ($)<input type="number" step="0.01" min="0" data-b="discount"></label>
+        <label>Tax rate (%)<input type="number" step="0.01" min="0" data-b="taxRate"></label>
+        <label class="check" style="margin-top:18px"><input type="checkbox" id="billTaxExempt"> Tax exempt</label>
+      </div>
+      <div class="bill-sum" id="billSum"></div>
+    </fieldset>
+    <fieldset id="billPayFs">
+      <legend>Payments received</legend>
+      <table class="grid-results bill-lines"><thead><tr><th>Date</th><th>Method</th><th>Ref / check #</th><th>Amount</th><th></th></tr></thead>
+        <tbody id="billPays"></tbody></table>
+      <div class="btn-row"><button type="button" class="small" id="btnAddPay">+ Record payment</button></div>
+    </fieldset>
+    <fieldset>
+      <legend>Notes on the document</legend>
+      <div class="row full"><label>Shown above the payment instructions / terms<textarea data-b="notes" style="min-height:60px"></textarea></label></div>
+    </fieldset>
+    <div class="warnings" id="billWarnings"></div>
+  </form>
+  <div class="preview-wrap">
+    <div class="preview-holder" id="billHolder">
+      <div class="preview-scale" id="billScale"><div id="billDoc"></div></div>
+    </div>
+  </div>
+</div>
+
+<dialog id="dlgBills">
+  <div class="dlg">
+    <div class="rec-head">
+      <h2>Quotes &amp; invoices</h2>
+      <div class="tabs" id="billTabs">
+        <button type="button" data-tab="invoice" class="on">Invoices</button>
+        <button type="button" data-tab="quote">Quotes</button>
+        <button type="button" data-tab="prices">Price list</button>
+      </div>
+      <span style="flex:1"></span>
+      <button type="button" id="btnBillsClose">Close</button>
+    </div>
+    <div class="rec-tools" id="billTools"></div>
+    <div class="rec-body" id="billBody"></div>
+  </div>
+</dialog>
+
 <dialog id="dlgRecords">
   <div class="dlg">
     <div class="rec-head">
@@ -391,6 +517,18 @@
       <label>Default acceptance criteria (metal detector &amp; X-ray)<input id="setCriteria"></label>
     </div>
     <label class="check"><input type="checkbox" id="setQr"> Print a verification QR code on certificates (links to wheelerfs.com/verify)</label>
+    <div id="setBilling" hidden>
+      <p class="hint" style="margin-top:14px"><b>Quotes &amp; invoices</b></p>
+      <div class="row">
+        <label>Default tax rate (%)<input type="number" step="0.01" id="setTaxRate"></label>
+        <label>Business address (footer)<input id="setAddress"></label>
+      </div>
+      <div class="row full" style="margin-top:8px">
+        <label>How to pay (printed on invoices)<textarea id="setPayInstr" style="min-height:70px"></textarea></label>
+        <label>Card payment link (optional, e.g. Square or Stripe; printed with a QR code)<input id="setCardLink" placeholder="https://"></label>
+        <label>Scope &amp; terms (printed on quotes)<textarea id="setQuoteTerms" style="min-height:70px"></textarea></label>
+      </div>
+    </div>
     <p class="hint" style="margin-top:12px"><b>Default test standards:</b> the standards, test points and checks currently on the form become the default for new certificates of the same type (for magnets this also saves the pull tester, acceptance limit and points per tube).</p>
     <button type="button" class="small" id="btnSetStdDefault">Use current standards, test points &amp; checks as default</button>
 
@@ -523,8 +661,20 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
                 procedure: '', criteria: "Client HACCP / food safety plan specification", signature: '', showQr: true,
                 standards: stdSet(), standardsXr: stdSet(),
                 magnet: { sphereSize: '6.0', sphereCert: '', pullerModel: '', pullerSerial: '', pullerCalDue: '', limit: '2.50', points: 4 },
-                layouts: structuredClone(DEFAULT_LAYOUTS) },
-    customers: [], counters: {}, draft: null
+                layouts: structuredClone(DEFAULT_LAYOUTS),
+                billing: { taxRate: 7.25, address: '541 West 9560 South, Sandy, UT 84070',
+                  payInstructions: 'Checks: payable to Wheeler Food Safety Service LLC, mailed to the address below.\nACH / bank transfer and credit card: contact us for details.\nPlease include the invoice number with your payment.',
+                  cardLink: '',
+                  quoteTerms: 'Includes on-site validation of the equipment listed, use of certified test standards, a Certificate of Validation for each unit, and access to the Wheeler Food Safety customer portal. Additional units validated on the same visit are billed at the additional-unit rate.' },
+                prices: [
+                  { id: 'md1', name: 'Metal detector validation – first unit', price: 650, certType: 'md', role: 'first', taxable: true },
+                  { id: 'md2', name: 'Metal detector validation – additional unit, same visit', price: 250, certType: 'md', role: 'additional', taxable: true },
+                  { id: 'xr1', name: 'X-ray system validation – first unit', price: 700, certType: 'xr', role: 'first', taxable: true },
+                  { id: 'xr2', name: 'X-ray system validation – additional unit, same visit', price: 300, certType: 'xr', role: 'additional', taxable: true },
+                  { id: 'mg1', name: 'Magnet validation – first unit', price: 350, certType: 'mg', role: 'first', taxable: true },
+                  { id: 'mg2', name: 'Magnet validation – additional unit, same visit', price: 150, certType: 'mg', role: 'additional', taxable: true },
+                  { id: 'tm', name: 'Temperature mapping', price: 0, certType: '', role: '', taxable: true }] },
+    customers: [], counters: {}, draft: null, bills: [], billDraft: null
   };
   let db;
   try { db = Object.assign(structuredClone(defaults), JSON.parse(localStorage.getItem(STORE) || '{}')); }
@@ -534,6 +684,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const out = Object.assign(structuredClone(defaults.settings), v);
     out.magnet = Object.assign(structuredClone(defaults.settings.magnet), v?.magnet);
     out.layouts = Object.assign(structuredClone(DEFAULT_LAYOUTS), v?.layouts);
+    out.billing = Object.assign(structuredClone(defaults.settings.billing), v?.billing);
+    if (!Array.isArray(out.prices) || !out.prices.length) out.prices = structuredClone(defaults.settings.prices);
     return out;
   }
   db.settings = mergeSettings(db.settings);
@@ -930,6 +1082,9 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     $('#setTech').value = s.techName; $('#setReviewerTitle').value = s.reviewerTitle;
     $('#setInterval').value = s.intervalMonths; $('#setProcedure').value = s.procedure; $('#setCriteria').value = s.criteria;
     $('#setQr').checked = s.showQr;
+    $('#setBilling').hidden = !HOSTED;
+    $('#setTaxRate').value = s.billing.taxRate; $('#setAddress').value = s.billing.address;
+    $('#setPayInstr').value = s.billing.payInstructions; $('#setCardLink').value = s.billing.cardLink; $('#setQuoteTerms').value = s.billing.quoteTerms;
     showSig(); dlg.showModal();
   });
   $('#btnSettingsClose').addEventListener('click', () => {
@@ -937,6 +1092,9 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     s.techName = $('#setTech').value; s.reviewerTitle = $('#setReviewerTitle').value;
     s.intervalMonths = Number($('#setInterval').value) || 6; s.procedure = $('#setProcedure').value; s.criteria = $('#setCriteria').value;
     s.showQr = $('#setQr').checked;
+    if (HOSTED) Object.assign(s.billing, { taxRate: Number($('#setTaxRate').value) || 0, address: $('#setAddress').value,
+      payInstructions: $('#setPayInstr').value, cardLink: $('#setCardLink').value.trim(), quoteTerms: $('#setQuoteTerms').value });
+    if (mode === 'billing') renderBill();
     saveSettings(); dlg.close(); render();
   });
   $('#btnSetStdDefault').addEventListener('click', () => {
@@ -1178,8 +1336,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
 
   // Shrinks the certificate just enough to stay on one Letter page (long magnet
   // grids, extra X-ray contaminants); short certificates are left at full size.
-  function fitPage() {
-    const page = $('#cert .page'), content = page.querySelector('.content');
+  function fitPage(root = '#cert') {
+    const page = $(root + ' .page'), content = page.querySelector('.content');
     const cs = getComputedStyle(page);
     const avail = page.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
     let k = 1;
@@ -1200,17 +1358,21 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
 
   // scale the Letter page to fit the preview column
   function fitPreview() {
-    const holder = $('#previewHolder'), scale = $('#previewScale');
-    const pageW = 816, pageH = 1056;
-    const avail = holder.parentElement.clientWidth;
-    const k = Math.min(1, avail / pageW);
-    scale.style.transform = `scale(${k})`;
-    holder.style.width = pageW * k + 'px'; holder.style.height = pageH * k + 'px';
+    for (const [h, sc] of [['#previewHolder', '#previewScale'], ['#billHolder', '#billScale']]) {
+      const holder = $(h), scale = $(sc);
+      const pageW = 816, pageH = 1056;
+      const avail = holder.parentElement.clientWidth;
+      if (!avail) continue;   // the hidden mode
+      const k = Math.min(1, avail / pageW);
+      scale.style.transform = `scale(${k})`;
+      holder.style.width = pageW * k + 'px'; holder.style.height = pageH * k + 'px';
+    }
   }
   window.addEventListener('resize', fitPreview);
 
   // ---------- print ----------
   $('#btnPrint').addEventListener('click', () => {
+    if (mode === 'billing') return printBill();
     const w = warnings();
     if (w.length && !confirm('Before printing, check:\n\n• ' + w.join('\n• ') + '\n\nPrint anyway?')) return;
     const prev = document.title;
@@ -1372,10 +1534,25 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       for (const r of [cust, eq, st]) if (r.error) throw r.error;
       if (st.data) db.settings = mergeSettings(st.data.value);
       db.customers = cust.data.map(r => ({
-        id: r.id, company: r.name, client: { ...(r.details?.client || {}), company: r.name }, cond: r.details?.cond,
+        id: r.id, company: r.name, client: { ...(r.details?.client || {}), company: r.name }, cond: r.details?.cond, billing: r.details?.billing || null,
         detectors: eq.data.filter(e => e.customer_id === r.id).map(e => ({ ...e.data, type: e.type, _id: e.id, _key: e.id })) }));
       db.counters = await this.counters();
+      const bills = await client.from('billing_docs').select('id, data').order('issue_date', { ascending: false });
+      db.billingMissing = !!bills.error;
+      if (bills.error) console.warn('billing_docs unavailable', bills.error);
+      else db.bills = bills.data.map(r => ({ ...normalizeBill(r.data), id: r.id, _key: r.data?._key || r.id }));
       persist();
+    },
+    async saveBill(d) {
+      const client = await supa();
+      const t = totals(d);
+      const cust = db.customers.find(x => x.company === d.billTo.company);
+      const row = { number: d.number, kind: d.kind, status: billStatus(d), customer_id: cust?.id || null, issue_date: d.issueDate || null,
+                    due_date: dueDate(d) || null, total: t.total, balance: t.balance, data: d };
+      const { data, error } = await (d.id ? client.from('billing_docs').update(row).eq('id', d.id).select('id').single()
+                                          : client.from('billing_docs').upsert(row, { onConflict: 'number' }).select('id').single());
+      if (error) throw error;
+      d.id = data.id;
     },
     async saveSettings() {
       const { error } = await (await supa()).from('app_settings').upsert({ key: 'generator', value: db.settings });
@@ -1383,7 +1560,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     },
     async saveCustomer(c) {
       const { data, error } = await (await supa()).from('customers')
-        .upsert({ name: c.company, details: { client: c.client || {}, cond: c.cond || null } }, { onConflict: 'name' }).select('id').single();
+        .upsert({ name: c.company, details: { client: c.client || {}, cond: c.cond || null, billing: c.billing || null } }, { onConflict: 'name' }).select('id').single();
       if (error) throw error;
       return (c.id = data.id);
     },
@@ -1460,6 +1637,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   }
   function showUser(email) {
     $('#whoami').textContent = email; $('#whoami').hidden = false; $('#btnSignOut').hidden = false; $('#btnRecords').hidden = false;
+    $('#modeSwitch').hidden = false;
     const last = db.lastFullBackup ? (Date.now() - new Date(db.lastFullBackup)) / 864e5 : Infinity;
     if (last > 35) setTimeout(() => toast(db.lastFullBackup ? `Your last full backup was ${Math.floor(last)} days ago: Records → Backup.`
       : 'Tip: make a full backup in Records → Backup and keep it in Google Drive.'), 1500);
@@ -1481,7 +1659,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   function queue(...ops) {
     for (const op of ops) {   // one pending entry per thing; numbers are all kept
       const same = o => o.kind === op.kind && (op.kind === 'settings' || (op.kind === 'customer' && o.company === op.company) ||
-                                               (op.kind === 'equipment' && o.key === op.key));
+                                               ((op.kind === 'equipment' || op.kind === 'bill') && o.key === op.key));
       if (op.kind === 'counter' || !db.outbox.some(same)) db.outbox.push(op);
     }
     persist(); syncStatus();
@@ -1514,6 +1692,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     if (op.kind === 'settings') return remote.saveSettings();
     if (op.kind === 'customer') return c && remote.saveCustomer(c);
     if (op.kind === 'equipment') { const entry = c?.detectors.find(d => d._key === op.key); return entry && remote.saveEquipment(c, entry); }
+    if (op.kind === 'bill') { const d = db.bills.find(b => b._key === op.key); return d && remote.saveBill(d); }
+    if (op.kind === 'billdel') { const { error } = await (await supa()).from('billing_docs').delete().eq('id', op.id); if (error) throw error; return; }
     if (op.kind === 'counter') {
       const client = await supa();
       const { data, error } = await client.from('cert_counters').select('n').eq('key', op.key).maybeSingle();
@@ -1618,7 +1798,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   async function loadRecords() {
     try {
       const { data, error } = await (await supa()).from('certificates')
-        .select('id, cert_no, validation_date, next_due, manufacturer, model, serial, asset_id, as_found, as_left, status, pdf_path, customer_id, updated_at, cert_type:data->>certType, service_order:data->client->>serviceOrder, customers(name, details)')
+        .select('id, cert_no, validation_date, next_due, manufacturer, model, serial, asset_id, as_found, as_left, status, pdf_path, customer_id, updated_at, cert_type:data->>certType, service_order:data->client->>serviceOrder, po:data->client->>po, customers(name, details)')
         .order('validation_date', { ascending: false }).order('cert_no', { ascending: false });
       if (error) throw error;
       db.recordsCache = { rows: data, at: new Date().toISOString() }; persist();
@@ -1677,6 +1857,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
           ${list.map(r => `<tr class="${r.status === 'valid' ? '' : 'muted'}"><td><b>${esc(r.cert_no)}</b><small>${esc(fmtDate(r.validation_date, true))}${r.next_due ? ' · due ' + esc(fmtDate(r.next_due, true)) : ''}</small></td>
             <td>${esc(r.customers?.name || '')}</td><td>${unitText(r)}</td><td>${tag(r)}</td>
             <td class="acts"><button type="button" class="small" data-act="pdf" data-id="${r.id}">PDF</button>
+              <button type="button" class="small" data-act="invoice" data-id="${r.id}" title="Start an invoice for this job (every unit on the service order)">Invoice</button>
               <button type="button" class="small" data-act="job" data-id="${r.id}" title="This certificate and the rest of its job (same service order) as one PDF">Job PDF</button>
               <button type="button" class="small" data-act="email" data-id="${r.id}" title="Pre-written email to this customer's portal contacts">Email</button>
               <button type="button" class="small" data-act="reopen" data-id="${r.id}">Reopen</button>
@@ -1713,6 +1894,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       if (act === 'new') return startFromRow(r);
       if (act === 'reopen') return await reopen(r);
       if (act === 'job') return await jobPdf(r, e.target);
+      if (act === 'invoice') return invoiceFromJob(r);
       if (act === 'email') return await emailCustomer(r);
       if (act === 'revoke' || act === 'restore') {
         if (act === 'revoke' && !confirm(`Revoke ${r.cert_no}?\n\nIts QR code will show "Revoked" and the customer portal will mark it revoked. You can restore it later.`)) return;
@@ -1919,6 +2101,422 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       msg.textContent = `Done: ${rows.length - missing} PDFs${missing ? ` (${missing} couldn't be found)` : ''}.`;
     } catch (e) { msg.textContent = ''; isNetworkError(e) ? alert("You're offline. This needs a connection.") : fail('The PDF download failed.', e); }
   }
+
+  // ======================= BILLING: quotes & invoices =======================
+  const TERMS = ['Due on receipt', 'Net 15', 'Net 30', 'Net 45', 'Net 60'];
+  const termDays = t => Number(String(t || '').replace(/\D/g, '')) || 0;
+  const PAY_METHODS = ['Check', 'ACH', 'Card', 'Cash', 'Other'];
+  const STATUS_OPTS = { quote: [['draft', 'Draft'], ['sent', 'Sent'], ['accepted', 'Accepted'], ['declined', 'Declined']],
+                        invoice: [['draft', 'Draft'], ['sent', 'Sent'], ['void', 'Void']] };
+  let mode = 'certs';
+  db.bills ||= [];
+  const round2 = n => Math.round((Number(n) || 0) * 100) / 100;
+  const money = n => '$' + round2(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function addDays(iso, n) {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-').map(Number); const t = new Date(y, m - 1, d + Number(n || 0));
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+  }
+  function blankBill(kind) {
+    const b = db.settings.billing;
+    return { _key: 'b-' + newVerifyCode(), kind, number: '', status: 'draft', issueDate: today(), terms: 'Net 30', validDays: 30,
+      billTo: { company: '', contact: '', address1: '', cityStateZip: '', phone: '', email: '' }, siteSame: true,
+      site: { address1: '', cityStateZip: '' }, po: '', serviceOrder: '', serviceDate: '',
+      lines: [{ item: '', description: '', qty: 1, price: '', taxable: true }], discount: '', taxRate: b.taxRate, taxExempt: false,
+      notes: '', payments: [], certNos: [], fromQuote: '' };
+  }
+  function normalizeBill(d) {
+    const base = blankBill(d?.kind === 'quote' ? 'quote' : 'invoice');
+    return { ...base, ...d, billTo: { ...base.billTo, ...(d?.billTo || {}) }, site: { ...base.site, ...(d?.site || {}) },
+      lines: Array.isArray(d?.lines) && d.lines.length ? d.lines : base.lines, payments: Array.isArray(d?.payments) ? d.payments : [] };
+  }
+  function totals(d) {
+    const lineAmt = l => round2((Number(l.qty) || 0) * (Number(l.price) || 0));
+    const sub = round2(d.lines.reduce((a, l) => a + lineAmt(l), 0));
+    const taxable = d.lines.reduce((a, l) => a + (l.taxable ? lineAmt(l) : 0), 0);
+    const disc = Math.min(Math.max(Number(d.discount) || 0, 0), sub);
+    const taxBase = sub ? taxable * (1 - disc / sub) : 0;           // discount spread across taxable and non-taxable lines
+    const tax = d.taxExempt ? 0 : round2(taxBase * (Number(d.taxRate) || 0) / 100);
+    const total = round2(sub - disc + tax);
+    const paid = round2(d.payments.reduce((a, p) => a + (Number(p.amount) || 0), 0));
+    return { lineAmt, sub, disc, tax, total, paid, balance: round2(total - paid) };
+  }
+  const dueDate = d => d.kind === 'quote' ? addDays(d.issueDate, d.validDays || 30) : addDays(d.issueDate, termDays(d.terms));
+  // what the lists show: paid / partial / overdue are worked out from payments and dates
+  function billStatus(d) {
+    if (d.status === 'void' || d.status === 'declined' || d.status === 'accepted') return d.status;
+    if (d.kind === 'invoice') {
+      const t = totals(d);
+      if (t.total > 0 && t.balance <= 0) return 'paid';
+      if (d.status === 'draft') return 'draft';
+      if (dueDate(d) && dueDate(d) < today()) return 'overdue';
+      return t.paid > 0 ? 'partial' : 'sent';
+    }
+    if (d.status === 'sent' && dueDate(d) < today()) return 'expired';
+    return d.status;
+  }
+  const STATUS_TAG = { draft: ['Draft', ''], sent: ['Sent', 'warn'], partial: ['Part paid', 'warn'], overdue: ['Overdue', 'bad'], paid: ['Paid', 'good'],
+                       void: ['Void', ''], accepted: ['Accepted', 'good'], declined: ['Declined', ''], expired: ['Expired', ''] };
+  const statusTag = d => { const [l, c] = STATUS_TAG[billStatus(d)] || [billStatus(d), '']; return `<span class="tag ${c}">${l}</span>`; };
+  let bill = normalizeBill(db.billDraft || blankBill('invoice'));
+
+  // ---------- mode switch ----------
+  function setMode(m) {
+    mode = m;
+    document.body.classList.toggle('billing', m === 'billing');
+    $('#modeSwitch').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
+    if (m === 'billing') {
+      if (db.billingMissing) setTimeout(() => alert('Billing needs one database update first: run the latest supabase/setup.sql in the Supabase SQL Editor, then refresh this page.'), 50);
+      fillBill();
+    } else fillForm();
+  }
+  $('#modeSwitch').addEventListener('click', e => { if (e.target.dataset.mode) setMode(e.target.dataset.mode); });
+
+  // ---------- editor ----------
+  const priceOpts = sel => '<option value="">Custom…</option>' + db.settings.prices.map(p =>
+    `<option value="${esc(p.id)}"${p.id === sel ? ' selected' : ''}>${esc(p.name)}${p.price ? ' · ' + money(p.price) : ''}</option>`).join('');
+  function fillBill() {
+    const d = bill, isQ = d.kind === 'quote';
+    $('#billLegend').textContent = isQ ? 'Quote' : 'Invoice';
+    $('#billStatusSel').innerHTML = STATUS_OPTS[d.kind].map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+    $('#billTerms').innerHTML = TERMS.map(t => `<option>${t}</option>`).join('');
+    $('#billTermsWrap').hidden = isQ; $('#billValidWrap').hidden = !isQ; $('#billPayFs').hidden = isQ;
+    const names = db.customers.map(c => c.company).sort((a, b) => a.localeCompare(b));
+    $('#billCustomer').innerHTML = '<option value="">Saved customers…</option>' + names.map(n => `<option${n === d.billTo.company ? ' selected' : ''}>${esc(n)}</option>`).join('');
+    $('#billSiteSame').checked = d.siteSame; $('#billSiteFields').hidden = d.siteSame; $('#billTaxExempt').checked = d.taxExempt;
+    $('#billLines').innerHTML = d.lines.map((l, i) => `<tr>
+        <td><select data-line="${i}" data-f="item" style="max-width:150px">${priceOpts(l.item)}</select>
+          <input data-line="${i}" data-f="description" placeholder="Description" style="margin-top:4px;min-width:200px"></td>
+        <td><input class="num" data-line="${i}" data-f="qty" type="number" step="any" min="0"></td>
+        <td><input class="money" data-line="${i}" data-f="price" type="number" step="0.01"></td>
+        <td style="text-align:center"><input type="checkbox" data-line="${i}" data-f="taxable"${l.taxable ? ' checked' : ''} style="width:auto"></td>
+        <td class="amt" id="lineAmt${i}"></td>
+        <td><button type="button" class="small" data-del-line="${i}" title="Remove line">✕</button></td></tr>`).join('');
+    $('#billPays').innerHTML = d.payments.map((p, i) => `<tr>
+        <td><input type="date" data-pay="${i}" data-f="date"></td>
+        <td><select data-pay="${i}" data-f="method">${PAY_METHODS.map(m => `<option${m === p.method ? ' selected' : ''}>${m}</option>`).join('')}</select></td>
+        <td><input data-pay="${i}" data-f="ref" placeholder="Check # / ref"></td>
+        <td><input class="money" data-pay="${i}" data-f="amount" type="number" step="0.01"></td>
+        <td><button type="button" class="small" data-del-pay="${i}" title="Remove payment">✕</button></td></tr>`).join('')
+      || '<tr><td colspan="5" class="hint">No payments yet.</td></tr>';
+    document.querySelectorAll('#billForm [data-b]').forEach(el => { el.value = get(d, el.dataset.b) ?? ''; });
+    document.querySelectorAll('#billLines [data-f]:not([type=checkbox]), #billPays [data-f]').forEach(el => {
+      const row = el.dataset.line !== undefined ? d.lines[el.dataset.line] : d.payments[el.dataset.pay];
+      if (el.tagName !== 'SELECT' || el.dataset.f !== 'item') el.value = row[el.dataset.f] ?? '';
+    });
+    renderBill();
+  }
+  $('#billForm').addEventListener('input', e => {
+    const el = e.target, d = bill;
+    if (el.dataset.b) set(d, el.dataset.b, el.type === 'number' && el.value !== '' ? Number(el.value) : el.value);
+    else if (el.dataset.line !== undefined) {
+      const l = d.lines[el.dataset.line];
+      if (el.dataset.f === 'item') {          // picking a price list item fills the description and price
+        const p = db.settings.prices.find(x => x.id === el.value);
+        l.item = el.value;
+        if (p) { l.description = p.name; l.price = p.price || ''; l.taxable = p.taxable !== false; }
+        return fillBill();
+      }
+      l[el.dataset.f] = el.type === 'checkbox' ? el.checked : el.type === 'number' && el.value !== '' ? Number(el.value) : el.value;
+    } else if (el.dataset.pay !== undefined) {
+      d.payments[el.dataset.pay][el.dataset.f] = el.type === 'number' && el.value !== '' ? Number(el.value) : el.value;
+    } else if (el.id === 'billSiteSame') { d.siteSame = el.checked; $('#billSiteFields').hidden = el.checked; }
+    else if (el.id === 'billTaxExempt') d.taxExempt = el.checked;
+    else return;
+    renderBill();
+  });
+  $('#billForm').addEventListener('change', e => { if (e.target.dataset.f === 'taxable' || e.target.id === 'billSiteSame' || e.target.id === 'billTaxExempt') e.target.dispatchEvent(new Event('input', { bubbles: true })); });
+  $('#billForm').addEventListener('click', e => {
+    const t = e.target, d = bill;
+    if (t.id === 'btnAddLine') { d.lines.push({ item: '', description: '', qty: 1, price: '', taxable: true }); fillBill(); }
+    if (t.dataset.delLine !== undefined) { d.lines.splice(Number(t.dataset.delLine), 1); if (!d.lines.length) d.lines.push({ item: '', description: '', qty: 1, price: '', taxable: true }); fillBill(); }
+    if (t.id === 'btnAddPay') { d.payments.push({ date: today(), method: 'Check', ref: '', amount: Math.max(totals(d).balance, 0) || '' }); fillBill(); }
+    if (t.dataset.delPay !== undefined) { d.payments.splice(Number(t.dataset.delPay), 1); fillBill(); }
+  });
+  // checkboxes inside the lines table don't fire 'input' in every browser; treat change the same way
+  $('#billLines').addEventListener('change', e => { if (e.target.type === 'checkbox') { bill.lines[e.target.dataset.line].taxable = e.target.checked; renderBill(); } });
+  function customerToBill(name) {
+    const c = db.customers.find(x => x.company === name); if (!c) return;
+    const cl = c.client || {}, b = c.billing || {};
+    Object.assign(bill.billTo, { company: c.company, contact: b.contact || cl.contact || '', address1: b.address1 || cl.address1 || '',
+      cityStateZip: b.cityStateZip || cl.cityStateZip || '', phone: b.phone || '', email: b.email || '' });
+    Object.assign(bill, { terms: b.terms || bill.terms, taxExempt: !!b.taxExempt, siteSame: b.siteSame !== false });
+    if (b.siteSame === false) bill.site = { address1: cl.address1 || '', cityStateZip: cl.cityStateZip || '' };
+  }
+  $('#billCustomer').addEventListener('change', e => { customerToBill(e.target.value); fillBill(); });
+  $('#btnBillAutoNo').addEventListener('click', async () => {
+    try {
+      const d = dateKey(bill.issueDate), k = (bill.kind === 'quote' ? 'q:' : 'inv:') + d;
+      let n;
+      try { n = await remote.nextNumber(k); }
+      catch (e) { if (!isNetworkError(e)) throw e; n = (db.counters[k] || 0) + 1; queue({ kind: 'counter', key: k, n, certNo: '' }); }
+      db.counters[k] = Math.max(db.counters[k] || 0, n); persist();
+      bill.number = `${bill.kind === 'quote' ? 'Q' : 'INV'}-${d}-${String(n).padStart(2, '0')}`;
+      fillBill();
+    } catch (e) { fail('Could not get the next number.', e); }
+  });
+  function newBill(kind) {
+    if (!confirm(`Start a new ${kind}? Anything unsaved on the current one will be lost.`)) return;
+    bill = blankBill(kind); fillBill();
+  }
+  $('#btnNewQuote').addEventListener('click', () => newBill('quote'));
+  $('#btnNewInvoice').addEventListener('click', () => newBill('invoice'));
+
+  function billWarnings(d) {
+    const w = [], t = totals(d);
+    if (!d.number) w.push('No number yet: click Auto');
+    if (!d.billTo.company.trim()) w.push('Bill-to company is blank');
+    if (!d.lines.some(l => (Number(l.qty) || 0) * (Number(l.price) || 0))) w.push('No priced lines');
+    if (d.lines.some(l => !String(l.description || '').trim() && (Number(l.price) || 0))) w.push('A priced line has no description');
+    if (d.kind === 'invoice' && !d.billTo.email) w.push('No billing email (needed for the Email button)');
+    if (d.kind === 'invoice' && t.paid > t.total && t.total > 0) w.push('Payments are more than the total');
+    return w;
+  }
+  async function saveBill(quiet) {
+    if (db.billingMissing) return alert('Billing needs the database update first (run the latest supabase/setup.sql).');
+    const d = bill;
+    if (!d.number) return alert('Give it a number first (Auto).');
+    if (!d.billTo.company.trim()) return alert('Enter the bill-to company first.');
+    const i = db.bills.findIndex(b => b._key === d._key);
+    if (db.bills.some((b, j) => j !== i && b.number === d.number)) return alert(`${d.number} is already used by another document.`);
+    i >= 0 ? (db.bills[i] = structuredClone(d)) : db.bills.unshift(structuredClone(d));
+    // remember this customer's billing details for next time
+    let c = db.customers.find(x => x.company === d.billTo.company);
+    if (!c) { c = { company: d.billTo.company, client: { company: d.billTo.company, contact: d.billTo.contact, address1: d.billTo.address1, cityStateZip: d.billTo.cityStateZip }, detectors: [] }; db.customers.push(c); }
+    c.billing = { contact: d.billTo.contact, address1: d.billTo.address1, cityStateZip: d.billTo.cityStateZip, phone: d.billTo.phone,
+                  email: d.billTo.email, terms: d.kind === 'invoice' ? d.terms : (c.billing?.terms || d.terms), taxExempt: d.taxExempt, siteSame: d.siteSame };
+    persist();
+    queue({ kind: 'customer', company: c.company }, { kind: 'bill', key: d._key });
+    const ok = await flush();
+    const saved = db.bills.find(b => b._key === d._key); if (saved?.id) bill.id = saved.id;
+    if (!quiet) toast(ok ? `${d.number} saved` : `${d.number} saved on this device; it will sync when you're online`);
+    renderBill();
+    return true;
+  }
+  $('#btnSaveBill').addEventListener('click', () => saveBill());
+
+  // ---------- the document ----------
+  function renderBill() {
+    const d = bill, s = db.settings, b = s.billing, isQ = d.kind === 'quote', t = totals(d);
+    const due = dueDate(d), st = billStatus(d), late = !isQ && st === 'overdue';
+    const addr = [d.billTo.address1, d.billTo.cityStateZip].filter(Boolean).join('\n');
+    const site = d.siteSame ? 'Same as bill to' : [d.site.address1, d.site.cityStateZip].filter(Boolean).join('\n');
+    $('#billDueHint').textContent = d.issueDate ? (isQ ? `Valid until ${fmtDate(due, true)}` : `Due ${fmtDate(due, true)} (${d.terms})`) : '';
+    d.lines.forEach((l, i) => { const el = $('#lineAmt' + i); if (el) el.textContent = money(t.lineAmt(l)); });
+    $('#billSum').innerHTML = `Subtotal ${money(t.sub)}${t.disc ? ` · Discount −${money(t.disc)}` : ''} · Tax ${money(t.tax)} · <b>Total ${money(t.total)}</b>` +
+      (!isQ && t.paid ? ` · Paid ${money(t.paid)} · <b>Balance ${money(t.balance)}</b>` : '');
+    const chip = (label, value, cls = '') => `<div class="chip ${cls}"><label>${label}</label><strong>${value}</strong></div>`;
+    const chips = isQ
+      ? chip('Quote Date', show(fmtDate(d.issueDate, true))) + chip('Valid Until', show(fmtDate(due, true))) +
+        chip('Items', d.lines.filter(l => l.description || l.price).length) + chip('Quote Total', money(t.total), 'pass')
+      : chip('Invoice Date', show(fmtDate(d.issueDate, true))) + chip('Due Date', `${show(fmtDate(due, true))}`, late ? 'fail' : '') +
+        chip('Terms', esc(d.terms)) + chip('Balance Due', money(Math.max(t.balance, 0)), t.balance <= 0 && t.total > 0 ? 'pass' : late ? 'fail' : 'warn');
+    const payQr = !isQ && b.cardLink ? `<div class="pay-qr">${qrSvg(b.cardLink)}Scan to pay by card</div>` : '';
+    $('#billDoc').innerHTML = `
+    <div class="page bill">
+      <div class="wm" style="background-image:url(${LOGO})"></div>
+      ${!isQ && st === 'paid' ? '<div class="stamp">PAID</div>' : st === 'void' ? '<div class="stamp void">VOID</div>' : ''}
+      <div class="content">
+      <header>
+        <img src="${LOGO}" alt="">
+        <div class="brand"><b>WHEELER</b><span>FOOD SAFETY SERVICES</span>
+          <small>Independent &amp; Audit-Ready Equipment Validation · A Meldrum Company</small></div>
+        <div class="doc"><h1>${isQ ? 'Quote' : 'Invoice'}</h1>
+          <div class="no">No. ${show(d.number)}</div>
+          <div class="meta">${isQ ? 'Prepared' : 'Issued'} ${show(fmtDate(d.issueDate, true))}${d.fromQuote ? ' · from quote ' + esc(d.fromQuote) : ''}</div></div>
+      </header>
+      <div class="accent"></div>
+      <div class="status">${chips}</div>
+      <div class="cols">
+        <div><h2>${isQ ? 'Prepared For' : 'Bill To'}</h2><div class="card">${dl([['Company', d.billTo.company], ['Attention', d.billTo.contact],
+          ['Address', addr], ['Phone', d.billTo.phone], ['Email', d.billTo.email]])}</div></div>
+        <div><h2>Service Details</h2><div class="card">${dl([['Service Location', site], ['Customer PO #', d.po], ['Service Order', d.serviceOrder],
+          ['Service Date', fmtDate(d.serviceDate, true)], [isQ ? 'Valid Until' : 'Payment Terms', isQ ? fmtDate(due, true) : d.terms]])}</div></div>
+      </div>
+      <h2>${isQ ? 'Proposed Services' : 'Services'}</h2>
+      <div class="card"><table class="lines">
+        <tr><th>Description</th><th class="r">Qty</th><th class="r">Unit Price</th><th class="r">Amount</th></tr>
+        ${d.lines.filter(l => l.description || Number(l.price)).map(l => `<tr><td>${esc(l.description)}${l.taxable || d.taxExempt ? '' : ' <span class="empty">(non-taxable)</span>'}</td>
+          <td class="r">${esc(l.qty)}</td><td class="r">${money(l.price)}</td><td class="r">${money(t.lineAmt(l))}</td></tr>`).join('') || '<tr><td colspan="4"><span class="empty">No items yet.</span></td></tr>'}
+      </table></div>
+      <div class="cols">
+        <div>${isQ
+          ? `<h2>Scope &amp; Terms</h2><div class="card howto">${esc(b.quoteTerms)}${d.notes ? '\n\n' + esc(d.notes) : ''}</div>`
+          : `<h2>How to Pay</h2><div class="card howto">${payQr}${d.notes ? esc(d.notes) + '\n\n' : ''}${esc(b.payInstructions)}${b.cardLink ? '\nPay by card: ' + esc(b.cardLink) : ''}\nReference: ${esc(d.number || 'invoice number')}</div>`}</div>
+        <div><h2>Summary</h2><div class="card"><table class="tot">
+          <tr><td>Subtotal</td><td class="r">${money(t.sub)}</td></tr>
+          ${t.disc ? `<tr><td>Discount</td><td class="r">−${money(t.disc)}</td></tr>` : ''}
+          <tr><td>${d.taxExempt ? 'Sales tax (exempt)' : `Sales tax (${esc(d.taxRate || 0)}%)`}</td><td class="r">${money(t.tax)}</td></tr>
+          <tr class="grand"><td>Total</td><td class="r">${money(t.total)}</td></tr>
+          ${!isQ ? d.payments.filter(p => Number(p.amount)).map(p => `<tr><td>Paid ${esc(fmtDate(p.date))} · ${esc(p.method)}${p.ref ? ' #' + esc(p.ref) : ''}</td><td class="r">−${money(p.amount)}</td></tr>`).join('') +
+            `<tr class="due ${t.balance > 0 ? (late ? 'late' : 'owing') : ''}"><td>Balance Due</td><td class="r">${money(Math.max(t.balance, 0))}</td></tr>` : ''}
+        </table></div></div>
+      </div>
+      ${isQ ? `<h2>Customer Acceptance</h2><div class="card"><div class="accept"><div>Authorized signature</div><div>Printed name &amp; title</div><div>Date</div><div>PO #</div></div>
+        <p class="hint" style="padding:0 9px 6px;margin:0;font-size:7pt">To accept, sign and return this quote, or reply to our email with your PO number.</p></div>`
+        : d.certNos?.length ? `<p class="hint" style="font-size:7.4pt;margin:2px 0 0">Certificates for this work: ${esc(d.certNos.join(', '))}. View them any time at wheelerfs.com/portal.</p>` : ''}
+      <footer style="margin-top:auto">
+        <span><b>Wheeler Food Safety Service LLC</b> · ${esc(b.address)}</span>
+        <span>385-201-5609 · jordan@wheelerfs.com · wheelerfs.com</span>
+        <span>${esc(d.number)}</span>
+      </footer>
+      </div>
+    </div>`;
+    fitPage('#billDoc');
+    const w = billWarnings(d);
+    $('#billWarnings').innerHTML = w.length ? `<b>Check before sending:</b><ul>${w.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+    db.billDraft = bill; persist();
+    fitPreview();
+  }
+  function printBill() {
+    const w = billWarnings(bill);
+    if (w.length && !confirm('Before printing, check:\n\n• ' + w.join('\n• ') + '\n\nPrint anyway?')) return;
+    const prev = document.title;
+    document.title = [bill.number || (bill.kind === 'quote' ? 'Quote' : 'Invoice'), bill.billTo.company].filter(Boolean).join(' - ').replace(/[\\/:*?"<>|]/g, '');
+    window.print();
+    document.title = prev;
+    if (!db.bills.some(b => b._key === bill._key && JSON.stringify(b) === JSON.stringify(bill))) setTimeout(() => toast('Remember to Save it too.'), 400);
+  }
+
+  // ---------- email ----------
+  $('#btnEmailBill').addEventListener('click', async () => {
+    const d = bill, t = totals(d), isQ = d.kind === 'quote', b = db.settings.billing;
+    if (!d.number) return alert('Give it a number and save it first.');
+    if (!d.billTo.email && !confirm('There is no billing email on this document. Open the email anyway and type the address yourself?')) return;
+    await saveBill(true);
+    if (!isQ && d.status === 'draft') { d.status = 'sent'; await saveBill(true); }
+    if (isQ && d.status === 'draft') { d.status = 'sent'; await saveBill(true); }
+    const first = (d.billTo.contact || '').trim().split(/\s+/)[0];
+    const subject = isQ ? `Quote ${d.number} from Wheeler Food Safety – ${d.billTo.company}`
+                        : `Invoice ${d.number} from Wheeler Food Safety – ${money(t.balance)} due ${fmtDate(dueDate(d), true)}`;
+    const items = d.lines.filter(l => l.description).map(l => `  • ${l.description}${Number(l.qty) !== 1 ? ' × ' + l.qty : ''}: ${money(t.lineAmt(l))}`);
+    const body = (isQ ? [
+      `Hi ${first || 'there'},`, '', `Attached is quote ${d.number} for ${d.billTo.company}. The total is ${money(t.total)}${d.taxExempt ? '' : ' including tax'}, and it's valid until ${fmtDate(dueDate(d), true)}.`,
+      '', ...items, '', 'To approve, sign and return the quote, or reply to this email with your PO number and we\'ll get you scheduled.' ]
+    : [ `Hi ${first || 'there'},`, '', `Attached is invoice ${d.number} for ${money(t.total)}${d.serviceDate ? ` for our service on ${fmtDate(d.serviceDate, true)}` : ''}${d.po ? ` (PO ${d.po})` : ''}.` +
+        (t.paid ? ` ${money(t.paid)} has been received; the balance is ${money(t.balance)}.` : '') + ` Payment is due ${fmtDate(dueDate(d), true)} (${d.terms}).`,
+      '', ...items, ...(d.certNos?.length ? ['', `The validation certificates (${d.certNos.join(', ')}) are attached and also available any time at https://wheelerfs.com/portal.`] : []),
+      '', 'How to pay:', ...b.payInstructions.split('\n').map(x => '  ' + x), ...(b.cardLink ? ['  Pay by card: ' + b.cardLink] : []) ])
+      .concat(['', 'Thank you,', db.settings.techName || 'Jordan Wheeler', 'Wheeler Food Safety Service', '385-201-5609 · wheelerfs.com']).join('\n');
+    const a = document.createElement('a');
+    a.href = `mailto:${encodeURIComponent(d.billTo.email || '')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    a.click();
+    toast(`Email opened. Attach the ${isQ ? 'quote' : 'invoice'} PDF (Print / Save PDF)${d.certNos?.length ? ' and the Job PDF' : ''} before sending.`);
+  });
+
+  // ---------- from a quote or a job ----------
+  function quoteToInvoice(q) {
+    const inv = Object.assign(blankBill('invoice'), structuredClone({ billTo: q.billTo, siteSame: q.siteSame, site: q.site, po: q.po,
+      serviceOrder: q.serviceOrder, serviceDate: q.serviceDate, lines: q.lines, discount: q.discount, taxRate: q.taxRate, taxExempt: q.taxExempt }));
+    inv.fromQuote = q.number;
+    const c = db.customers.find(x => x.company === q.billTo.company);
+    if (c?.billing?.terms) inv.terms = c.billing.terms;
+    return inv;
+  }
+  function invoiceFromJob(r) {
+    const rows = jobRows(r).filter(x => x.status !== 'revoked');
+    bill = blankBill('invoice');
+    const name = r.customers?.name || '';
+    if (db.customers.some(x => x.company === name)) customerToBill(name); else bill.billTo.company = name;
+    Object.assign(bill, { serviceOrder: r.service_order || '', po: rows.find(x => x.po)?.po || '',
+      serviceDate: rows.map(x => x.validation_date).sort()[0] || '', certNos: rows.map(x => x.cert_no) });
+    const price = (type, role) => db.settings.prices.find(p => p.certType === type && p.role === role) || db.settings.prices.find(p => p.certType === type);
+    bill.lines = [];
+    for (const type of ['md', 'xr', 'mg']) rows.filter(x => (x.cert_type || 'md') === type).forEach((x, i) => {
+      const p = price(type, i === 0 ? 'first' : 'additional');
+      bill.lines.push({ item: p?.id || '', qty: 1, price: p?.price || '', taxable: p ? p.taxable !== false : true,
+        description: `${p?.name || TAG[type] + ' validation'}: ${x.cert_no}${x.serial ? ', S/N ' + x.serial : x.asset_id ? ', ' + x.asset_id : ''}` });
+    });
+    if (!bill.lines.length) bill.lines = blankBill('invoice').lines;
+    dlgR.close(); setMode('billing');
+    toast(`Invoice started for ${name}: ${rows.length} unit${rows.length === 1 ? '' : 's'}. Check prices, then Auto and Save.`);
+  }
+
+  // ---------- list: invoices, quotes, price list ----------
+  const dlgB = $('#dlgBills'); let billTab = 'invoice', billQ = '';
+  $('#btnBills').addEventListener('click', () => { dlgB.showModal(); renderBills(); });
+  $('#btnBillsClose').addEventListener('click', () => dlgB.close());
+  $('#billTabs').addEventListener('click', e => { if (e.target.dataset.tab) { billTab = e.target.dataset.tab; renderBills(); } });
+  function renderBills() {
+    $('#billTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.tab === billTab));
+    const tools = $('#billTools'), body = $('#billBody');
+    if (billTab === 'prices') {
+      tools.innerHTML = '<span class="hint">Prices fill in when you pick an item on a line. "Invoice" from Records uses the first-unit / additional-unit prices for each equipment type.</span>';
+      body.innerHTML = `<table class="rec-table price-table"><tr><th>Item</th><th>Price</th><th>Used for</th><th>Taxable</th><th></th></tr>
+        ${db.settings.prices.map((p, i) => `<tr><td><input data-price="${i}" data-f="name" value="${esc(p.name)}" style="min-width:300px"></td>
+          <td><input data-price="${i}" data-f="price" type="number" step="0.01" value="${esc(p.price)}" style="width:100px"></td>
+          <td><select data-price="${i}" data-f="use">${[['', '—'], ['md:first', 'Metal detector · first unit'], ['md:additional', 'Metal detector · additional'],
+            ['xr:first', 'X-ray · first unit'], ['xr:additional', 'X-ray · additional'], ['mg:first', 'Magnet · first unit'], ['mg:additional', 'Magnet · additional']]
+            .map(([v, l]) => `<option value="${v}"${v === (p.certType ? p.certType + ':' + p.role : '') ? ' selected' : ''}>${l}</option>`).join('')}</select></td>
+          <td style="text-align:center"><input type="checkbox" data-price="${i}" data-f="taxable"${p.taxable !== false ? ' checked' : ''} style="width:auto"></td>
+          <td class="acts"><button type="button" class="small" data-del-price="${i}">✕</button></td></tr>`).join('')}</table>
+        <div class="btn-row" style="margin-top:10px"><button type="button" class="small" id="btnAddPrice">+ Add item</button>
+          <button type="button" class="primary" id="btnSavePrices" style="background:var(--green);color:#fff;font-weight:700">Save price list</button></div>`;
+      return;
+    }
+    tools.innerHTML = `<input id="billQ" type="search" placeholder="Search number, customer, PO…" value="${esc(billQ)}">`;
+    const q = billQ.trim().toLowerCase();
+    const list = db.bills.filter(d => d.kind === billTab && (!q || [d.number, d.billTo.company, d.po, d.serviceOrder].some(v => String(v || '').toLowerCase().includes(q))))
+      .sort((a, b) => (b.issueDate || '').localeCompare(a.issueDate || '') || b.number.localeCompare(a.number));
+    let sum = '';
+    if (billTab === 'invoice') {
+      const open = db.bills.filter(d => d.kind === 'invoice' && ['sent', 'partial', 'overdue'].includes(billStatus(d)));
+      const owed = open.reduce((a, d) => a + totals(d).balance, 0), late = open.filter(d => billStatus(d) === 'overdue');
+      const yr = today().slice(0, 4), paidYr = db.bills.filter(d => d.kind === 'invoice').reduce((a, d) => a + d.payments.filter(p => (p.date || '').startsWith(yr)).reduce((x, p) => x + (Number(p.amount) || 0), 0), 0);
+      sum = `<div class="bill-list-sum"><span>Unpaid: <b>${money(owed)}</b> on ${open.length} invoice${open.length === 1 ? '' : 's'}</span>
+        <span>Overdue: <b style="color:#b91c1c">${money(late.reduce((a, d) => a + totals(d).balance, 0))}</b> (${late.length})</span><span>Received in ${yr}: <b>${money(paidYr)}</b></span></div>`;
+    }
+    const age = d => { const s = billStatus(d); if (d.kind !== 'invoice' || !['sent', 'partial', 'overdue'].includes(s)) return '';
+      const n = -daysUntil(dueDate(d)); return n > 0 ? `<small style="color:#b91c1c">${n} day${n === 1 ? '' : 's'} past due</small>` : `<small>due ${esc(fmtDate(dueDate(d), true))}</small>`; };
+    body.innerHTML = sum + (list.length ? `<table class="rec-table"><tr><th>Number</th><th>Customer</th><th>Date</th><th>Total</th><th>${billTab === 'invoice' ? 'Balance' : 'Valid until'}</th><th>Status</th><th></th></tr>
+      ${list.map(d => { const t = totals(d); return `<tr><td><b>${esc(d.number)}</b>${d.fromQuote ? `<small>from ${esc(d.fromQuote)}</small>` : ''}</td>
+        <td>${esc(d.billTo.company)}<small>${esc([d.po && 'PO ' + d.po, d.serviceOrder && 'SO ' + d.serviceOrder].filter(Boolean).join(' · '))}</small></td>
+        <td>${esc(fmtDate(d.issueDate, true))}</td><td>${money(t.total)}</td>
+        <td>${billTab === 'invoice' ? money(Math.max(t.balance, 0)) + age(d) : esc(fmtDate(dueDate(d), true))}</td><td>${statusTag(d)}</td>
+        <td class="acts"><button type="button" class="small" data-bact="open" data-key="${d._key}">Open</button>
+          ${billTab === 'quote' ? `<button type="button" class="small" data-bact="toinv" data-key="${d._key}">→ Invoice</button>`
+            : t.balance > 0 && billStatus(d) !== 'void' ? `<button type="button" class="small" data-bact="pay" data-key="${d._key}">Record payment</button>` : ''}
+          <button type="button" class="small" data-bact="dup" data-key="${d._key}" title="Copy as a new ${billTab}">Copy</button>
+          <button type="button" class="small" data-bact="del" data-key="${d._key}" title="Delete">✕</button></td></tr>`; }).join('')}</table>`
+      : `<div class="rec-empty">No ${billTab === 'invoice' ? 'invoices' : 'quotes'} yet. Use "New ${billTab}"${billTab === 'invoice' ? ', or Records → Invoice on a job' : ''}.</div>`);
+  }
+  dlgB.addEventListener('input', e => {
+    if (e.target.id === 'billQ') { billQ = e.target.value; const pos = e.target.selectionStart; renderBills(); const el = $('#billQ'); el.focus(); el.setSelectionRange(pos, pos); }
+    const i = e.target.dataset.price; if (i === undefined) return;
+    const p = db.settings.prices[i], f = e.target.dataset.f;
+    if (f === 'name') p.name = e.target.value;
+    if (f === 'price') p.price = e.target.value === '' ? 0 : Number(e.target.value);
+    if (f === 'taxable') p.taxable = e.target.checked;
+    if (f === 'use') { const [type, role] = e.target.value.split(':'); p.certType = type || ''; p.role = role || ''; }
+  });
+  dlgB.addEventListener('change', e => { if (e.target.dataset.f === 'taxable' || e.target.dataset.f === 'use') e.target.dispatchEvent(new Event('input', { bubbles: true })); });
+  dlgB.addEventListener('click', async e => {
+    const t = e.target;
+    if (t.id === 'btnAddPrice') { db.settings.prices.push({ id: 'p-' + newVerifyCode().slice(0, 8), name: '', price: 0, certType: '', role: '', taxable: true }); return renderBills(); }
+    if (t.dataset.delPrice !== undefined) { db.settings.prices.splice(Number(t.dataset.delPrice), 1); return renderBills(); }
+    if (t.id === 'btnSavePrices') { db.settings.prices = db.settings.prices.filter(p => p.name.trim()); saveSettings(); toast('Price list saved'); return renderBills(); }
+    const d = db.bills.find(b => b._key === t.dataset.key); if (!d) return;
+    const act = t.dataset.bact;
+    if (act === 'open') { bill = normalizeBill(structuredClone(d)); dlgB.close(); fillBill(); }
+    if (act === 'dup') { bill = Object.assign(normalizeBill(structuredClone(d)), { _key: 'b-' + newVerifyCode(), id: undefined, number: '', status: 'draft',
+      issueDate: today(), payments: [], fromQuote: '', certNos: [] }); dlgB.close(); fillBill(); toast('Copied. Click Auto for a new number.'); }
+    if (act === 'toinv') {
+      if (!confirm(`Create an invoice from ${d.number} and mark the quote accepted?`)) return;
+      d.status = 'accepted'; bill = normalizeBill(structuredClone(d)); await saveBill(true);
+      bill = quoteToInvoice(d); dlgB.close(); fillBill(); toast('Invoice created from the quote. Click Auto for a number, check it, then Save.');
+    }
+    if (act === 'pay') {
+      bill = normalizeBill(structuredClone(d));
+      bill.payments.push({ date: today(), method: 'Check', ref: '', amount: totals(bill).balance });
+      dlgB.close(); fillBill(); toast('Payment added for the full balance. Adjust the amount or method if needed, then Save.');
+    }
+    if (act === 'del') {
+      if (!confirm(`Delete ${d.number} permanently?${d.kind === 'invoice' && d.status !== 'draft' ? '\n\nFor an invoice that was already sent, setting its status to Void keeps a record instead.' : ''}`)) return;
+      db.bills = db.bills.filter(b => b._key !== d._key); persist();
+      if (d.id) { queue({ kind: 'billdel', id: d.id }); flush(); }
+      renderBills(); toast(d.number + ' deleted');
+    }
+  });
 
   let toastTimer;
   function toast(msg) {
