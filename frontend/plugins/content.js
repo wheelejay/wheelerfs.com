@@ -185,6 +185,12 @@ function prerender(outDir, { posts, episodes, services }) {
     fs.writeFileSync(path.join(dir, 'index.html'), renderPage(template, page));
   }
 
+  // Admin page: the certificate generator itself, which switches to its online
+  // (Supabase) mode when served from the website. It has its own sign-in screen.
+  const adminDir = path.join(outDir, 'admin');
+  fs.mkdirSync(adminDir, { recursive: true });
+  fs.copyFileSync(path.resolve(outDir, '..', '..', 'tools', 'certificate-generator', 'index.html'), path.join(adminDir, 'index.html'));
+
   // GitHub Pages serves 404.html for unknown URLs; the app shows its Not Found page.
   fs.writeFileSync(
     path.join(outDir, '404.html'),
@@ -198,7 +204,7 @@ function prerender(outDir, { posts, episodes, services }) {
     path.join(outDir, 'sitemap.xml'),
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`,
   );
-  fs.writeFileSync(path.join(outDir, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /portal/\nDisallow: /verify/\nSitemap: ${SITE_URL}/sitemap.xml\n`);
+  fs.writeFileSync(path.join(outDir, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /portal/\nDisallow: /verify/\nDisallow: /admin/\nSitemap: ${SITE_URL}/sitemap.xml\n`);
 }
 
 export default function contentPlugin() {

@@ -145,6 +145,80 @@ create policy "certificate pdfs: admin all" on storage.objects for all to authen
   using (bucket_id = 'certificates' and public.is_admin())
   with check (bucket_id = 'certificates' and public.is_admin());
 
+-- ---------------------------------------------------------------- admin page (wheelerfs.com/admin)
+-- Saved customer details, each customer's equipment, generator settings and
+-- certificate number counters. Admin only (customer details are also readable
+-- by that customer's own portal users through the customers policy above).
+
+alter table public.customers add column if not exists details jsonb not null default '{}'::jsonb;
+
+create table if not exists public.equipment (
+  id          uuid primary key default gen_random_uuid(),
+  customer_id uuid not null references public.customers (id) on delete cascade,
+  type        text not null default 'md' check (type in ('md', 'xr', 'mg')),
+  data        jsonb not null default '{}'::jsonb,   -- make, model, serial, test point names, ...
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists equipment_customer_idx on public.equipment (customer_id);
+
+create table if not exists public.app_settings (
+  key        text primary key,
+  value      jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.cert_counters (
+  key text primary key,          -- e.g. '260827' (metal detector) or 'xr:260109'
+  n   integer not null default 0
+);
+
+drop trigger if exists equipment_touch on public.equipment;
+create trigger equipment_touch before update on public.equipment
+  for each row execute function public.touch_updated_at();
+drop trigger if exists app_settings_touch on public.app_settings;
+create trigger app_settings_touch before update on public.app_settings
+  for each row execute function public.touch_updated_at();
+
+alter table public.equipment     enable row level security;
+alter table public.app_settings  enable row level security;
+alter table public.cert_counters enable row level security;
+
+drop policy if exists "equipment: admin all" on public.equipment;
+create policy "equipment: admin all" on public.equipment for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "settings: admin all" on public.app_settings;
+create policy "settings: admin all" on public.app_settings for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "counters: admin all" on public.cert_counters;
+create policy "counters: admin all" on public.cert_counters for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+
+-- Next certificate sequence number for a type + date. One statement, so two
+-- devices can never get the same number. Runs with the caller's rights, so
+-- the admin-only policy on cert_counters applies.
+create or replace function public.next_cert_number(counter_key text) returns integer
+language sql volatile set search_path = public
+as $$
+  insert into public.cert_counters as c (key, n) values (counter_key, 1)
+  on conflict (key) do update set n = c.n + 1
+  returning n
+$$;
+
+-- Used when importing a backup: never moves a counter backwards.
+create or replace function public.raise_cert_counter(counter_key text, at_least integer) returns integer
+language sql volatile set search_path = public
+as $$
+  insert into public.cert_counters as c (key, n) values (counter_key, at_least)
+  on conflict (key) do update set n = greatest(c.n, excluded.n)
+  returning n
+$$;
+
+revoke all on function public.next_cert_number(text) from public;
+revoke all on function public.raise_cert_counter(text, integer) from public;
+grant execute on function public.next_cert_number(text) to authenticated;
+grant execute on function public.raise_cert_counter(text, integer) to authenticated;
+
 -- ---------------------------------------------------------------- you
 
 insert into public.admins (email) values ('jordan@wheelerfs.com') on conflict do nothing;
