@@ -222,3 +222,7 @@ grant execute on function public.raise_cert_counter(text, integer) to authentica
 -- ---------------------------------------------------------------- you
 
 insert into public.admins (email) values ('jordan@wheelerfs.com') on conflict do nothing;
+
+-- ---------------------------------------------------------------- refresh
+-- Tell Supabase's API about new tables and columns right away.
+notify pgrst, 'reload schema';
