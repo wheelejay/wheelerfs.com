@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://wheelerfs.com/</loc></url>
+  <url><loc>https://wheelerfs.com/services/metal-detector-validation/</loc></url>
+  <url><loc>https://wheelerfs.com/services/x-ray-system-validation/</loc></url>
+  <url><loc>https://wheelerfs.com/services/magnet-validation/</loc></url>
+  <url><loc>https://wheelerfs.com/services/temperature-mapping/</loc></url>
   <url><loc>https://wheelerfs.com/blog/</loc></url>
   <url><loc>https://wheelerfs.com/blog/metal-detector-validation-guide/</loc><lastmod>2026-09-30</lastmod></url>
 </urlset>
