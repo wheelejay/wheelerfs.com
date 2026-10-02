@@ -662,7 +662,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
                 standards: stdSet(), standardsXr: stdSet(),
                 magnet: { sphereSize: '6.0', sphereCert: '', pullerModel: '', pullerSerial: '', pullerCalDue: '', limit: '2.50', points: 4 },
                 layouts: structuredClone(DEFAULT_LAYOUTS),
-                billing: { taxRate: 7.25, address: '541 West 9560 South, Sandy, UT 84070',
+                billing: { taxRate: 0, address: '541 West 9560 South, Sandy, UT 84070',
                   payInstructions: 'Checks: payable to Wheeler Food Safety Service LLC, mailed to the address below.\nACH / bank transfer and credit card: contact us for details.\nPlease include the invoice number with your payment.',
                   cardLink: '',
                   quoteTerms: 'Includes on-site validation of the equipment listed, use of certified test standards, a Certificate of Validation for each unit, and access to the Wheeler Food Safety customer portal. Additional units validated on the same visit are billed at the additional-unit rate.' },
@@ -685,6 +685,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     out.magnet = Object.assign(structuredClone(defaults.settings.magnet), v?.magnet);
     out.layouts = Object.assign(structuredClone(DEFAULT_LAYOUTS), v?.layouts);
     out.billing = Object.assign(structuredClone(defaults.settings.billing), v?.billing);
+    if (!out.billing.noTaxDefault) { if (Number(out.billing.taxRate) === 7.25) out.billing.taxRate = 0; out.billing.noTaxDefault = true; }
     if (!Array.isArray(out.prices) || !out.prices.length) out.prices = structuredClone(defaults.settings.prices);
     return out;
   }
@@ -2303,7 +2304,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const site = d.siteSame ? 'Same as bill to' : [d.site.address1, d.site.cityStateZip].filter(Boolean).join('\n');
     $('#billDueHint').textContent = d.issueDate ? (isQ ? `Valid until ${fmtDate(due, true)}` : `Due ${fmtDate(due, true)} (${d.terms})`) : '';
     d.lines.forEach((l, i) => { const el = $('#lineAmt' + i); if (el) el.textContent = money(t.lineAmt(l)); });
-    $('#billSum').innerHTML = `Subtotal ${money(t.sub)}${t.disc ? ` · Discount −${money(t.disc)}` : ''} · Tax ${money(t.tax)} · <b>Total ${money(t.total)}</b>` +
+    $('#billSum').innerHTML = `Subtotal ${money(t.sub)}${t.disc ? ` · Discount −${money(t.disc)}` : ''}${t.tax ? ` · Tax ${money(t.tax)}` : ''} · <b>Total ${money(t.total)}</b>` +
       (!isQ && t.paid ? ` · Paid ${money(t.paid)} · <b>Balance ${money(t.balance)}</b>` : '');
     const chip = (label, value, cls = '') => `<div class="chip ${cls}"><label>${label}</label><strong>${value}</strong></div>`;
     const chips = isQ
@@ -2336,7 +2337,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       <h2>${isQ ? 'Proposed Services' : 'Services'}</h2>
       <div class="card"><table class="lines">
         <tr><th>Description</th><th class="r">Qty</th><th class="r">Unit Price</th><th class="r">Amount</th></tr>
-        ${d.lines.filter(l => l.description || Number(l.price)).map(l => `<tr><td>${esc(l.description)}${l.taxable || d.taxExempt ? '' : ' <span class="empty">(non-taxable)</span>'}</td>
+        ${d.lines.filter(l => l.description || Number(l.price)).map(l => `<tr><td>${esc(l.description)}${l.taxable || d.taxExempt || !Number(d.taxRate) ? '' : ' <span class="empty">(non-taxable)</span>'}</td>
           <td class="r">${esc(l.qty)}</td><td class="r">${money(l.price)}</td><td class="r">${money(t.lineAmt(l))}</td></tr>`).join('') || '<tr><td colspan="4"><span class="empty">No items yet.</span></td></tr>'}
       </table></div>
       <div class="cols">
@@ -2346,7 +2347,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
         <div><h2>Summary</h2><div class="card"><table class="tot">
           <tr><td>Subtotal</td><td class="r">${money(t.sub)}</td></tr>
           ${t.disc ? `<tr><td>Discount</td><td class="r">−${money(t.disc)}</td></tr>` : ''}
-          <tr><td>${d.taxExempt ? 'Sales tax (exempt)' : `Sales tax (${esc(d.taxRate || 0)}%)`}</td><td class="r">${money(t.tax)}</td></tr>
+          ${t.tax || (Number(d.taxRate) && !d.taxExempt) ? `<tr><td>Sales tax (${esc(d.taxRate || 0)}%)</td><td class="r">${money(t.tax)}</td></tr>` : ''}
           <tr class="grand"><td>Total</td><td class="r">${money(t.total)}</td></tr>
           ${!isQ ? d.payments.filter(p => Number(p.amount)).map(p => `<tr><td>Paid ${esc(fmtDate(p.date))} · ${esc(p.method)}${p.ref ? ' #' + esc(p.ref) : ''}</td><td class="r">−${money(p.amount)}</td></tr>`).join('') +
             `<tr class="due ${t.balance > 0 ? (late ? 'late' : 'owing') : ''}"><td>Balance Due</td><td class="r">${money(Math.max(t.balance, 0))}</td></tr>` : ''}
@@ -2391,7 +2392,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
                         : `Invoice ${d.number} from Wheeler Food Safety – ${money(t.balance)} due ${fmtDate(dueDate(d), true)}`;
     const items = d.lines.filter(l => l.description).map(l => `  • ${l.description}${Number(l.qty) !== 1 ? ' × ' + l.qty : ''}: ${money(t.lineAmt(l))}`);
     const body = (isQ ? [
-      `Hi ${first || 'there'},`, '', `Attached is quote ${d.number} for ${d.billTo.company}. The total is ${money(t.total)}${d.taxExempt ? '' : ' including tax'}, and it's valid until ${fmtDate(dueDate(d), true)}.`,
+      `Hi ${first || 'there'},`, '', `Attached is quote ${d.number} for ${d.billTo.company}. The total is ${money(t.total)}${t.tax ? ' including tax' : ''}, and it's valid until ${fmtDate(dueDate(d), true)}.`,
       '', ...items, '', 'To approve, sign and return the quote, or reply to this email with your PO number and we\'ll get you scheduled.' ]
     : [ `Hi ${first || 'there'},`, '', `Attached is invoice ${d.number} for ${money(t.total)}${d.serviceDate ? ` for our service on ${fmtDate(d.serviceDate, true)}` : ''}${d.po ? ` (PO ${d.po})` : ''}.` +
         (t.paid ? ` ${money(t.paid)} has been received; the balance is ${money(t.balance)}.` : '') + ` Payment is due ${fmtDate(dueDate(d), true)} (${d.terms}).`,
