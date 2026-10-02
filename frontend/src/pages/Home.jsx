@@ -149,7 +149,7 @@ const Home = () => {
 
          {/* Pricing Section (moved below services, card style updated) */}
   <section id="pricing" className="pricing-section" style={{ background: '#fff', padding: '6.5rem 0 2.5rem 0', borderBottom: '1.5px solid #e0e7ef' }}>
-          <h2 style={{ textAlign: 'center', color: '#00182b', fontSize: '2.6rem', fontWeight: 800, marginBottom: '0.7rem', paddingTop: '3.5rem' }}>Professional Validation Pricing</h2>
+          <h2 style={{ textAlign: 'center', color: '#00182b', fontSize: '2.6rem', fontWeight: 800, marginBottom: '0.7rem' }}>Professional Validation Pricing</h2>
           <p style={{ textAlign: 'center', color: '#01426A', fontSize: '1.18rem', marginBottom: '2.2rem', fontWeight: 500 }}>Competitive pricing for food safety validation services. Discounts available for multiple units and annual contracts.</p>
           <div className="service-cards pricing-cards">
             {pricingCards.map(card => (
