@@ -139,6 +139,11 @@
   .page footer b { color: var(--navy); }
 
 
+  /* ---------- editable test point / check rows ---------- */
+  .grid-results input.row-label { min-width: 150px; padding: 4px 6px; font-size: 13px; }
+  .grid-results button.small { padding: 3px 7px; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
   /* ---------- magnet pull-force grid ---------- */
   .mag-grid input { width: 64px; padding: 4px 5px; font-size: 13px; }
   .mag-grid td:first-child { font-weight: 700; color: var(--blue); text-align: center; }
@@ -254,12 +259,16 @@
     <fieldset>
       <legend id="resLegend">Results</legend>
       <div id="resFields"></div>
+      <datalist id="dlTests"></datalist>
     </fieldset>
 
     <fieldset>
       <legend id="chkLegend">Checks</legend>
       <table class="grid-results"><tbody id="chkRows"></tbody></table>
-      <div style="margin-top:6px"><button type="button" class="small" id="btnChecksPass">Set all to Pass</button></div>
+      <datalist id="dlChecks"></datalist>
+      <div class="btn-row"><button type="button" class="small" id="btnAddCheck">+ Add check</button>
+        <button type="button" class="small" id="btnChecksPass">Set all to Pass</button></div>
+      <p class="hint">Rename a row by typing over it, ✕ removes it. Save your usual list in Settings → "Use current … as default"; saved equipment also remembers its own list.</p>
     </fieldset>
 
     <fieldset>
@@ -301,8 +310,8 @@
       <label>Default acceptance criteria (metal detector &amp; X-ray)<input id="setCriteria"></label>
     </div>
     <label class="check"><input type="checkbox" id="setQr"> Print a verification QR code on certificates (links to wheelerfs.com/verify)</label>
-    <p class="hint" style="margin-top:12px"><b>Default test standards:</b> the standards currently on the form become the default for new certificates of the same type (for magnets this also saves the pull tester, acceptance limit and points per tube).</p>
-    <button type="button" class="small" id="btnSetStdDefault">Use current standards as default</button>
+    <p class="hint" style="margin-top:12px"><b>Default test standards:</b> the standards, test points and checks currently on the form become the default for new certificates of the same type (for magnets this also saves the pull tester, acceptance limit and points per tube).</p>
+    <button type="button" class="small" id="btnSetStdDefault">Use current standards, test points &amp; checks as default</button>
 
     <p class="hint" style="margin-top:14px"><b>Signature image</b> (PNG with transparent or white background works best).</p>
     <div class="inline">
@@ -402,6 +411,20 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
          ['clean', 'Magnet clean, free of build-up'], ['housing', 'Housing, seals & gaskets in good condition'],
          ['installed', 'Correctly installed & seated in line']],
   };
+  const labels = list => list.map(([, label]) => label);
+  const DEFAULT_LAYOUTS = { md: { tests: labels(POINTS), checks: labels(CHECKS.md) },
+                            xr: { tests: labels(POINTS), checks: labels(CHECKS.xr) },
+                            mg: { tests: [], checks: labels(CHECKS.mg) } };
+  const TEST_SUGGESTIONS = [...labels(POINTS), 'Top of aperture', 'Bottom of aperture', 'Left side of aperture', 'Right side of aperture',
+    'Product in reverse orientation', 'Worst-case orientation', 'Maximum belt speed', 'Minimum belt speed', 'Two products back-to-back',
+    'Thickest part of product', 'Product edge / corner'];
+  const CHECK_SUGGESTIONS = {
+    md: [...labels(CHECKS.md), 'Belt stop on detect', 'Reject timing at line speed', 'Stack light / audible alarm', 'Speed change compensation',
+         'Correct product program selected', 'Settings password-protected', 'Metal-free zone clear', 'Encoder / speed sensor working', 'Emergency stop'],
+    xr: [...labels(CHECKS.xr), 'Belt stop on detect', 'Reject timing at line speed', 'Stack light / audible alarm', 'Lead curtains intact',
+         'Image calibration / learn current', 'Correct product program selected', 'Settings password-protected', 'Emergency stop'],
+    mg: [...labels(CHECKS.mg), 'Magnet cleaned before testing', 'No ferrous fines left after cleaning', 'Easy-clean mechanism works', 'Identification label legible'],
+  };
   const XR_EXTRA = ['Glass', 'Ceramic', 'Calcified bone', 'Dense plastic', 'Rubber', 'Stone', 'Other'];
   const MAX_TUBES = 24, MAX_POINTS = 8;
   const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
@@ -414,7 +437,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     settings: { techName: 'Jordan Wheeler', reviewerTitle: 'Owner / Authorized Signatory', intervalMonths: 6,
                 procedure: '', criteria: "Client HACCP / food safety plan specification", signature: '', showQr: true,
                 standards: stdSet(), standardsXr: stdSet(),
-                magnet: { sphereSize: '6.0', sphereCert: '', pullerModel: '', pullerSerial: '', pullerCalDue: '', limit: '2.50', points: 4 } },
+                magnet: { sphereSize: '6.0', sphereCert: '', pullerModel: '', pullerSerial: '', pullerCalDue: '', limit: '2.50', points: 4 },
+                layouts: structuredClone(DEFAULT_LAYOUTS) },
     customers: [], counters: {}, draft: null
   };
   let db;
@@ -422,6 +446,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   catch { db = structuredClone(defaults); }
   db.settings = Object.assign(structuredClone(defaults.settings), db.settings);
   db.settings.magnet = Object.assign(structuredClone(defaults.settings.magnet), db.settings.magnet);
+  db.settings.layouts = Object.assign(structuredClone(DEFAULT_LAYOUTS), db.settings.layouts);
   const persist = () => { try { localStorage.setItem(STORE, JSON.stringify(db)); } catch {} };
 
   // 20 random URL-safe characters (120 bits): the unguessable part of the QR link.
@@ -432,7 +457,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const grid = (rows, cols, old = []) => Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => old[r]?.[c] ?? ''));
 
   function blankCert(type = 'md') {
-    const s = db.settings, m = s.magnet;
+    const s = db.settings, m = s.magnet, L = s.layouts[type] || DEFAULT_LAYOUTS[type];
     const standards = structuredClone(type === 'xr' ? s.standardsXr : s.standards);
     return {
       type, certNo: '', verifyCode: newVerifyCode(), publishedAt: '', valDate: today(), intervalMonths: s.intervalMonths,
@@ -442,8 +467,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
                magnetType: '', element: '', tubeDiameter: '' },
       cond: { location: 'On-site', product: '', program: '', beltSpeed: '', criteria: s.criteria, procedure: s.procedure },
       standards,
-      results: Object.fromEntries(POINTS.map(([k]) => [k, standards.map(() => '')])),
-      checks: Object.fromEntries(CHECKS[type].map(([k]) => [k, ''])),
+      tests: (type === 'mg' ? [] : L.tests).map(label => ({ label, res: standards.map(() => '') })),
+      checkItems: L.checks.map(label => ({ label, value: '' })),
       magnet: { sphereSize: m.sphereSize, sphereCert: m.sphereCert, pullerModel: m.pullerModel, pullerSerial: m.pullerSerial,
                 pullerCalDue: m.pullerCalDue, limit: m.limit, tubes: 8, points: m.points, pulls: grid(8, m.points) },
       findings: '', techName: s.techName, techDate: today(), reviewerName: s.techName, issueDate: today()
@@ -454,9 +479,13 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const type = TYPES[c?.type] ? c.type : 'md';
     const base = blankCert(type);
     const out = { ...base, ...c, type };
-    for (const k of ['client', 'equip', 'cond', 'checks', 'magnet']) out[k] = { ...base[k], ...(c?.[k] || {}) };
+    for (const k of ['client', 'equip', 'cond', 'magnet']) out[k] = { ...base[k], ...(c?.[k] || {}) };
     if (!Array.isArray(out.standards) || !out.standards.length) out.standards = base.standards;
-    out.results = Object.fromEntries(POINTS.map(([k]) => [k, out.standards.map((_, i) => c?.results?.[k]?.[i] ?? '')]));
+    // certificates saved before rows were editable kept results/checks under fixed keys
+    if (!Array.isArray(c?.tests)) out.tests = c?.results && type !== 'mg' ? POINTS.map(([k, label]) => ({ label, res: c.results[k] || [] })) : base.tests;
+    out.tests = out.tests.map(t => ({ label: t.label ?? '', res: out.standards.map((_, i) => t.res?.[i] ?? '') }));
+    if (!Array.isArray(c?.checkItems)) out.checkItems = c?.checks ? CHECKS[type].map(([k, label]) => ({ label, value: c.checks[k] || '' })) : base.checkItems;
+    delete out.results; delete out.checks;
     const m = out.magnet;
     m.tubes = clamp(m.tubes, 1, MAX_TUBES); m.points = clamp(m.points, 1, MAX_POINTS);
     m.pulls = grid(m.tubes, m.points, m.pulls);
@@ -581,15 +610,21 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     } else {
       $('#resLegend').textContent = 'Results (passes out of 3)';
       $('#resFields').innerHTML = `<table class="grid-results">
-          <tr><th>Test point</th>${cert.standards.map(s => `<th>${esc(shortStd(s.type))}</th>`).join('')}</tr>
-          ${POINTS.map(([k, label]) => `<tr><td>${label}</td>${cert.standards.map((_, i) =>
-            `<td><select data-k="results.${k}.${i}">${opts(RESULT_OPTS, cert.results[k][i])}</select></td>`).join('')}</tr>`).join('')}
+          <tr><th>Test point</th>${cert.standards.map(s => `<th>${esc(shortStd(s.type))}</th>`).join('')}<th></th></tr>
+          ${cert.tests.map((tp, r) => `<tr><td><input class="row-label" data-k="tests.${r}.label" list="dlTests" placeholder="Name this test point"></td>
+            ${cert.standards.map((_, i) => `<td><select data-k="tests.${r}.res.${i}">${opts(RESULT_OPTS, tp.res[i])}</select></td>`).join('')}
+            <td><button type="button" class="small" data-remove-test="${r}" title="Remove this test point">✕</button></td></tr>`).join('')}
         </table>
-        <div style="margin-top:6px"><button type="button" class="small" id="btnAllPass">Set all to 3/3</button></div>`;
+        <div class="btn-row"><button type="button" class="small" id="btnAddTest">+ Add test point</button>
+          <button type="button" class="small" id="btnAllPass">Set all to 3/3</button></div>`;
+      $('#dlTests').innerHTML = TEST_SUGGESTIONS.map(o => `<option>${esc(o)}</option>`).join('');
     }
     $('#chkLegend').textContent = t === 'mg' ? 'Physical inspection' : 'Fail-safe & system checks';
-    $('#chkRows').innerHTML = CHECKS[t].map(([k, label]) => `<tr><td>${label}</td>
-      <td style="width:32%"><select data-k="checks.${k}">${opts(CHECK_OPTS, cert.checks[k] || '')}</select></td></tr>`).join('');
+    $('#chkRows').innerHTML = cert.checkItems.map((ch, r) => `<tr><td><input class="row-label" data-k="checkItems.${r}.label" list="dlChecks" placeholder="Name this check"></td>
+      <td style="width:28%"><select data-k="checkItems.${r}.value">${opts(CHECK_OPTS, ch.value)}</select></td>
+      <td style="width:34px"><button type="button" class="small" data-remove-check="${r}" title="Remove this check">✕</button></td></tr>`).join('')
+      || '<tr><td class="hint">No checks. Use + Add check.</td></tr>';
+    $('#dlChecks').innerHTML = CHECK_SUGGESTIONS[t].map(o => `<option>${esc(o)}</option>`).join('');
     $('#btnNext').textContent = 'Next unit, same visit';
   }
   const shortStd = t => ({ 'Ferrous': 'Fe', 'Non-Ferrous': 'Non-Fe', 'Stainless 316': 'SS' }[t] || t);
@@ -618,16 +653,31 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     }
   });
   $('#form').addEventListener('click', e => {
-    if (e.target.id === 'btnAllPass') { POINTS.forEach(([k]) => cert.results[k] = cert.standards.map(() => '3/3')); fillForm(); }
+    if (e.target.id === 'btnAllPass') { cert.tests.forEach(tp => tp.res = cert.standards.map(() => '3/3')); fillForm(); }
+    if (e.target.id === 'btnAddTest') {
+      cert.tests.push({ label: '', res: cert.standards.map(() => '') });
+      fillForm(); $(`[data-k="tests.${cert.tests.length - 1}.label"]`).focus();
+    }
+    if (e.target.id === 'btnAddCheck') {
+      cert.checkItems.push({ label: '', value: '' });
+      fillForm(); $(`[data-k="checkItems.${cert.checkItems.length - 1}.label"]`).focus();
+    }
+    const rt = e.target.dataset.removeTest;
+    if (rt !== undefined) {
+      if (cert.tests.length === 1) return alert('A certificate needs at least one test point.');
+      cert.tests.splice(Number(rt), 1); fillForm();
+    }
+    const rc = e.target.dataset.removeCheck;
+    if (rc !== undefined) { cert.checkItems.splice(Number(rc), 1); fillForm(); }
     if (e.target.id === 'btnAddStd') {
       cert.standards.push({ type: 'Glass', size: '', cert: '', condition: 'Intact' });
-      POINTS.forEach(([k]) => cert.results[k].push(''));
+      cert.tests.forEach(tp => tp.res.push(''));
       fillForm();
     }
     const rm = e.target.dataset.removeStd;
     if (rm !== undefined) {
       cert.standards.splice(Number(rm), 1);
-      POINTS.forEach(([k]) => cert.results[k].splice(Number(rm), 1));
+      cert.tests.forEach(tp => tp.res.splice(Number(rm), 1));
       fillForm();
     }
   });
@@ -682,8 +732,17 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
                      techDate: cert.techDate, reviewerName: cert.reviewerName, issueDate: cert.issueDate };
       cert = Object.assign(blankCert(type), structuredClone(keep));
     }
-    const { type: _t, product, program, beltSpeed, tubes, points, ...equip } = d;
+    const { type: _t, product, program, beltSpeed, tubes, points, testLabels, checkLabels, ...equip } = d;
     Object.assign(cert.equip, structuredClone(equip));
+    // this unit's own test points / checks; rows with the same name keep what was already entered
+    if (testLabels && type !== 'mg') {
+      const prev = new Map(cert.tests.map(tp => [tp.label, tp]));
+      cert.tests = testLabels.map(label => prev.get(label) || { label, res: cert.standards.map(() => '') });
+    }
+    if (checkLabels) {
+      const prev = new Map(cert.checkItems.map(ch => [ch.label, ch]));
+      cert.checkItems = checkLabels.map(label => prev.get(label) || { label, value: '' });
+    }
     if (product !== undefined) Object.assign(cert.cond, { product, program: program || '', beltSpeed: beltSpeed || '' });
     if (type === 'mg' && tubes) {
       cert.magnet.tubes = clamp(tubes, 1, MAX_TUBES); cert.magnet.points = clamp(points || cert.magnet.points, 1, MAX_POINTS);
@@ -697,6 +756,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     if (!unitId()) return alert('Enter a serial # or asset ID first.');
     const entry = { type: cert.type, ...cert.equip, product: cert.cond.product, program: cert.cond.program, beltSpeed: cert.cond.beltSpeed };
     if (cert.type === 'mg') Object.assign(entry, { tubes: cert.magnet.tubes, points: cert.magnet.points });
+    else entry.testLabels = cert.tests.map(tp => tp.label).filter(Boolean);
+    entry.checkLabels = cert.checkItems.map(ch => ch.label).filter(Boolean);
     const same = d => (d.type || 'md') === cert.type && (cert.equip.serial ? d.serial === cert.equip.serial : !d.serial && d.assetId === cert.equip.assetId);
     const i = c.detectors.findIndex(same);
     i >= 0 ? (c.detectors[i] = entry) : c.detectors.push(entry);
@@ -704,7 +765,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   });
 
   // ---------- quick buttons ----------
-  $('#btnChecksPass').addEventListener('click', () => { CHECKS[cert.type].forEach(([k]) => cert.checks[k] = 'Pass'); fillForm(); });
+  $('#btnChecksPass').addEventListener('click', () => { cert.checkItems.forEach(ch => ch.value = 'Pass'); fillForm(); });
   $('#btnAutoNo').addEventListener('click', () => {
     cert.certNo = takeCertNo(); cert.verifyCode = newVerifyCode(); cert.publishedAt = '';   // new number = new certificate
     fillForm();
@@ -717,9 +778,10 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const keep = { client: cert.client, cond: { ...cert.cond, product: '', program: '', beltSpeed: '' }, standards: cert.standards,
                    valDate: cert.valDate, intervalMonths: cert.intervalMonths, techName: cert.techName, techDate: cert.techDate,
                    reviewerName: cert.reviewerName, issueDate: cert.issueDate };
-    const m = cert.magnet;
+    const m = cert.magnet, prevTests = cert.tests, prevChecks = cert.checkItems;
     cert = Object.assign(blankCert(cert.type), structuredClone(keep));
-    cert.results = Object.fromEntries(POINTS.map(([k]) => [k, cert.standards.map(() => '')]));
+    cert.tests = prevTests.map(tp => ({ label: tp.label, res: cert.standards.map(() => '') }));
+    cert.checkItems = prevChecks.map(ch => ({ label: ch.label, value: '' }));
     Object.assign(cert.magnet, { sphereSize: m.sphereSize, sphereCert: m.sphereCert, pullerModel: m.pullerModel,
       pullerSerial: m.pullerSerial, pullerCalDue: m.pullerCalDue, limit: m.limit, points: m.points, tubes: m.tubes, pulls: grid(m.tubes, m.points) });
     cert.certNo = takeCertNo();
@@ -766,7 +828,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     if (cert.type === 'mg') Object.assign(s.magnet, { sphereSize: m.sphereSize, sphereCert: m.sphereCert, pullerModel: m.pullerModel,
       pullerSerial: m.pullerSerial, pullerCalDue: m.pullerCalDue, limit: m.limit, points: m.points });
     else s[cert.type === 'xr' ? 'standardsXr' : 'standards'] = structuredClone(cert.standards);
-    persist(); toast(`Default ${TYPES[cert.type].label.toLowerCase()} standards saved`);
+    s.layouts[cert.type] = { tests: cert.tests.map(tp => tp.label).filter(Boolean), checks: cert.checkItems.map(ch => ch.label).filter(Boolean) };
+    persist(); toast(`Default ${TYPES[cert.type].label.toLowerCase()} standards, test points & checks saved`);
   });
   function showSig() {
     $('#sigPreview').innerHTML = db.settings.signature ? `<img src="${db.settings.signature}" alt="Signature">` : '<span class="hint">No signature saved</span>';
@@ -796,6 +859,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       if (!confirm('Replace the customers, equipment and settings in this browser with the backup?')) return;
       db.settings = Object.assign(structuredClone(defaults.settings), data.settings);
       db.settings.magnet = Object.assign(structuredClone(defaults.settings.magnet), data.settings?.magnet);
+      db.settings.layouts = Object.assign(structuredClone(DEFAULT_LAYOUTS), data.settings?.layouts);
       db.customers = data.customers || []; db.counters = data.counters || {};
       persist(); dlg.close(); fillForm(); toast('Backup imported');
     } catch { alert('That file is not a certificate generator backup.'); }
@@ -824,14 +888,18 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       if (failed) w.push('One or more tubes are below the minimum pull' + (cert.asLeft === 'In Tolerance' ? ', but As Left says In Tolerance' : ''));
     } else {
       cert.standards.forEach(s => { if (!s.size || !s.cert) w.push(`${s.type} standard needs a size and cert #`); });
-      const res = POINTS.map(([k]) => rowResult(cert.results[k]));
+      const res = cert.tests.map(tp => rowResult(tp.res));
+      if (!cert.tests.length) w.push('Add at least one test point');
+      if (cert.tests.some(tp => !tp.label.trim())) w.push('A test point has no name');
       if (res.includes('')) w.push('Some results are blank');
       failed = res.includes('FAIL');
       if (failed && cert.asLeft === 'In Tolerance') w.push('A result row is FAIL but As Left says In Tolerance');
     }
     if (cert.asFound === 'In Tolerance' && /adjust|repair|replac|correct/i.test(cert.findings)) w.push('Findings mention an adjustment but As Found says In Tolerance');
     if (cert.asFound !== 'In Tolerance' && !cert.findings.trim()) w.push('As Found was not In Tolerance: describe what you found and did under Findings');
-    if (Object.entries(cert.checks).some(([k, v]) => v === 'Fail' && CHECKS[t].some(([c]) => c === k)) && cert.asLeft === 'In Tolerance')
+    if (cert.checkItems.some(ch => !ch.label.trim())) w.push((t === 'mg' ? 'An inspection item' : 'A check') + ' has no name');
+    if (cert.checkItems.some(ch => !ch.value)) w.push((t === 'mg' ? 'Some inspection items' : 'Some checks') + ' have no result');
+    if (cert.checkItems.some(ch => ch.value === 'Fail') && cert.asLeft === 'In Tolerance')
       w.push((t === 'mg' ? 'A physical inspection item' : 'A fail-safe check') + ' failed but As Left says In Tolerance');
     return w;
   }
@@ -898,8 +966,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     return `<h2>Detection &amp; Rejection Results <em>— 3 passes per test point</em></h2>
       <div class="card"><table>
         <tr><th>Test Point</th>${c.standards.map(st => `<th class="c">${sizeLabel(st)}</th>`).join('')}<th class="c">Result</th></tr>
-        ${POINTS.map(([k, label]) => `<tr><td>${label}</td>${c.results[k].map(v => `<td class="c">${show(v)}</td>`).join('')}
-          <td class="c">${verdict(rowResult(c.results[k]))}</td></tr>`).join('')}
+        ${c.tests.map(tp => `<tr><td>${show(tp.label)}</td>${tp.res.map(v => `<td class="c">${show(v)}</td>`).join('')}
+          <td class="c">${verdict(rowResult(tp.res))}</td></tr>`).join('')}
       </table></div>`;
   }
 
@@ -944,7 +1012,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
 
       <div class="cols">
         <div><h2>${c.type === 'mg' ? 'Physical Inspection' : 'Fail-Safe &amp; System Checks'}</h2><div class="card"><table>
-          ${CHECKS[c.type].map(([k, label]) => `<tr><td>${label}</td><td class="c">${cell(c.checks[k])}</td></tr>`).join('')}
+          ${c.checkItems.map(ch => `<tr><td>${show(ch.label)}</td><td class="c">${cell(ch.value)}</td></tr>`).join('')
+            || '<tr><td><span class="empty">No checks recorded.</span></td></tr>'}
         </table></div></div>
         <div><h2>Findings &amp; Corrective Action</h2><div class="card notes">${c.findings.trim() ? esc(c.findings.trim()) : '<span class="empty">No findings.</span>'}</div></div>
       </div>

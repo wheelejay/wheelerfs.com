@@ -16,6 +16,10 @@ publishes `frontend/`), and no customer data is stored in this repository.
    * **Magnet:** set the number of tubes (up to 24) and test points per tube (up to 8), enter
      each pull reading in lbs. A tube passes only if *every* reading meets the minimum pull;
      the certificate shows each tube's minimum and average.
+   * **Test points and checks** (all types) are editable lists: type over a row to rename it,
+     **+ Add test point** / **+ Add check** adds one (with suggestions), ✕ removes it.
+     Settings → *Use current standards, test points & checks as default* saves your usual list
+     per type, and **Save equipment** remembers each unit's own list.
 2. **Auto** next to Certificate No. assigns the next number for the type and validation date (e.g. `WFS-MG-260527-01`) and a new QR code.
 3. **Save customer** / **Save equipment** remember a customer's address and each of their units,
    so next visit you pick them from the dropdowns.
