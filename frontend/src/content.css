@@ -270,6 +270,7 @@
 .portal-table th { text-align: left; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #01426A; background: #f1f5f9; padding: 0.6rem 0.8rem; }
 .portal-table td { padding: 0.7rem 0.8rem; border-top: 1px solid #eef2f7; vertical-align: middle; }
 .portal-table td small { display: block; color: #4b5563; }
+.portal-table td small.equip-type { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #16A34A; }
 .portal-table tr.muted td { color: #6b7280; }
 .btn.btn-small { padding: 0.45rem 0.9rem; font-size: 0.9rem; white-space: nowrap; }
 .badge { display: inline-block; margin-left: 0.4rem; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: #e5e7eb; color: #374151; white-space: nowrap; }

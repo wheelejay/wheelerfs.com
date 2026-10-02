@@ -3,6 +3,7 @@ import usePageMeta from '../usePageMeta';
 import { supabase, formatDay, daysUntil } from '../supabase';
 
 const DUE_SOON_DAYS = 30;
+const TYPE_LABELS = { md: 'Metal detector', xr: 'X-ray', mg: 'Magnet' };
 
 function DueBadge({ iso }) {
   const d = daysUntil(iso);
@@ -59,7 +60,7 @@ function Certificates({ session }) {
   useEffect(() => {
     supabase
       .from('certificates')
-      .select('id, cert_no, validation_date, next_due, manufacturer, model, serial, asset_id, as_left, status, pdf_path, customers(name)')
+      .select('id, cert_no, validation_date, next_due, manufacturer, model, serial, asset_id, as_left, status, pdf_path, cert_type:data->>certType, customers(name)')
       .order('validation_date', { ascending: false })
       .order('cert_no', { ascending: false })
       .then(({ data, error }) => (error ? setError('Could not load your certificates. Please refresh the page.') : setRows(data)));
@@ -115,7 +116,8 @@ function Certificates({ session }) {
                   <tr key={r.id} className={r.status !== 'valid' ? 'muted' : ''}>
                     <td data-label="Certificate">{r.cert_no}{r.status !== 'valid' && <span className="badge">{r.status === 'superseded' ? 'Superseded' : 'Revoked'}</span>}</td>
                     <td data-label="Equipment">
-                      {[r.manufacturer, r.model].filter(Boolean).join(' ')}
+                      <small className="equip-type">{TYPE_LABELS[r.cert_type] || TYPE_LABELS.md}</small>
+                      {[r.manufacturer, r.model].filter((v) => v && v !== 'N/A').join(' ')}
                       <small>{[r.asset_id, r.serial && `S/N ${r.serial}`].filter(Boolean).join(' · ')}</small>
                     </td>
                     <td data-label="Validated">{formatDay(r.validation_date)}</td>
