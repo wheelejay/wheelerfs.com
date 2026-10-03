@@ -30,7 +30,7 @@ against the server on sync. Publishing needs a connection.
 
 **Equipment labels:** **Label** in the top bar downloads a Brother P-touch label (`.lbx`, 24 mm tape ×
 76.5 mm, PT-D610BT) for the certificate on the form: QR code to its verify page, next due month in
-large type, PASS / FAIL / OUT OF SERVICE, certificate number, serial or asset ID, validation date and
+large type, PASS / FAIL / OUT OF SERVICE, certificate number, serial number (asset ID only when there's no serial), validation date and
 tech initials. Open it in P-touch Editor and print; the text can still be edited there. On the admin
 page, **Records → Certificates → Label** does the same for a published certificate, and **Job labels**
 downloads one `.zip` with a label for every unit in that job. Works offline. The QR code only works
