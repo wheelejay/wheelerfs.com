@@ -1414,7 +1414,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     return [c, g];
   }
   // centred text; sizes in points; shrinks to fit maxW
-  function lblCentre(g, text, cx, y, size, { bold = true, spacing = 0, color = '#000', maxW = 1e9 } = {}) {
+  function lblCentre(g, text, cx, y, size, { bold = true, spacing = 0, color = '#000', maxW = 1e9, stroke = 0 } = {}) {
     const ls = 'letterSpacing' in g;
     for (;; size *= 0.95) {
       g.font = `${bold ? 'bold ' : ''}${size * LBL_PX}px ${LBL_FONT}`;
@@ -1423,6 +1423,9 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       if (w <= maxW * LBL_PX || size < 2) break;
     }
     g.fillStyle = color; g.fillText(text, cx * LBL_PX - w / 2, y * LBL_PX);
+    if (stroke) {   // extra weight, so small white-on-black letters survive at 180 dpi
+      g.strokeStyle = color; g.lineWidth = stroke * LBL_PX; g.lineJoin = 'round'; g.strokeText(text, cx * LBL_PX - w / 2, y * LBL_PX);
+    }
   }
   // a font size that fits maxW points (Arial, as P-touch prints it), never above size
   function lblFit(text, maxW, size, bold) {
@@ -1507,18 +1510,19 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
 
     // result block, x 150.4–211.2
     const result = { 'In Tolerance': 'PASS', 'Out of Tolerance': 'FAIL', 'Removed from Service': 'OUT OF SERVICE' }[d.asLeft] || 'VALIDATED';
-    const [sc, sg] = lblCanvas(60.8, 31.2);
+    const [sc, sg] = lblCanvas(60.8, 35.2);
     sg.fillStyle = '#000'; sg.beginPath(); sg.roundRect(0, 0, sc.width, sc.height, 3.2 * LBL_PX); sg.fill();
-    lblCentre(sg, LBL_TYPE[d.type] || LBL_TYPE.md, 30.4, 2.2, 5.4, { spacing: 0.3, color: '#fff', maxW: 56 });
-    if (result.length > 4) lblCentre(sg, result, 30.4, 10.6, 8.6, { spacing: 0.3, color: '#fff', maxW: 57 });
-    else lblCentre(sg, result, 30.4, 7.4, 17, { spacing: 0.9, color: '#fff', maxW: 56 });
-    lblCentre(sg, 'CRITICAL CONTROL POINT', 30.4, 24.6, 4.8, { spacing: 0.1, color: '#fff', maxW: 57.4 });
-    image(sc, 150.4, 8.4, 60.8, 31.2, 'result.png');
+    const white = { color: '#fff', maxW: 56 };
+    lblCentre(sg, LBL_TYPE[d.type] || LBL_TYPE.md, 30.4, 2.0, 5.4, { ...white, spacing: 0.35, stroke: 0.14 });
+    if (result.length > 4) lblCentre(sg, result, 30.4, 10.0, 8.6, { ...white, spacing: 0.3, stroke: 0.1 });
+    else lblCentre(sg, result, 30.4, 7.4, 15, { ...white, spacing: 0.8 });
+    lblCentre(sg, 'CRITICAL', 30.4, 22.0, 5.6, { ...white, spacing: 0.4, stroke: 0.16 });
+    lblCentre(sg, 'CONTROL POINT', 30.4, 28.2, 5.6, { ...white, spacing: 0.4, stroke: 0.16 });
+    image(sc, 150.4, 8.4, 60.8, 35.2, 'result.png');
 
     // business name and phone as real text: sharp at any size
-    text(150.4, 40.2, 60.8, 8.4, 'WHEELER', 7.4, true, 'CENTER');
-    text(150.4, 48.4, 60.8, 5.6, 'FOOD SAFETY SERVICES', lblFit('FOOD SAFETY SERVICES', 58, 4.9, true), true, 'CENTER');
-    text(150.4, 53.8, 60.8, 5.8, '385-201-5609', 5.6, true, 'CENTER');
+    text(150.4, 44.0, 60.8, 6.8, 'WHEELER FOOD SAFETY', lblFit('WHEELER FOOD SAFETY', 60.8, 5.4, true), true, 'CENTER');
+    text(150.4, 51.2, 60.8, 8.4, '385 - 201 - 5609', 6.2, true, 'CENTER');
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?><pt:document ${LBL_NS} version="1.7" generator="P-touch Editor 5.4.016 Windows">` +
       '<pt:body currentSheet="Sheet 1" direction="LTR"><style:sheet name="Sheet 1">' +
