@@ -1398,20 +1398,23 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   // ---------- equipment label (Brother P-touch .lbx: 24 mm tape × 76.5 mm, PT-D610BT) ----------
   // An .lbx is a zip of label.xml (the layout), prop.xml and the bitmaps it places. Positions are
   // points on the tape: x along its 216.8 pt length, y across its 68 pt width (printable 8.4–59.6).
-  // The data is ordinary P-touch text, so any field can still be changed in P-touch Editor.
-  const LBL_PX = 10;   // bitmap pixels per point: 720 dpi, an even 4× the printer's 180 dpi
+  // Text is ordinary P-touch text (sharpest, and still editable in P-touch Editor). The bitmaps are
+  // drawn at 4× and reduced here to exactly one pixel per printer dot (180 dpi), placed on whole
+  // dots, so P-touch never resamples them; resampled small text prints muddy.
+  const LBL_PX = 10;   // drawing pixels per point: 4× the printer's 2.5 dots per point
+  const dot = v => Math.round(v * 2.5) / 2.5;   // snap a position or size to whole printer dots
   const LBL_FONT = 'Arial, "Liberation Sans", Helvetica, sans-serif';
   const LBL_TYPE = { md: 'METAL DETECTOR', xr: 'X-RAY SYSTEM', mg: 'MAGNET' };
   const LBL_NS = ['main', 'style', 'text', 'draw', 'image', 'barcode', 'database', 'table', 'cable']
     .map(k => `xmlns:${k === 'main' ? 'pt' : k}="http://schemas.brother.info/ptouch/2007/lbx/${k}"`).join(' ');
 
   function lblCanvas(wPt, hPt) {
-    const c = document.createElement('canvas'); c.width = Math.round(wPt * LBL_PX); c.height = Math.round(hPt * LBL_PX);
+    const c = document.createElement('canvas'); c.width = Math.round(wPt * 2.5) * 4; c.height = Math.round(hPt * 2.5) * 4;
     const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.textBaseline = 'top';
     return [c, g];
   }
   // centred text; sizes in points; shrinks to fit maxW
-  function lblCentre(g, text, cx, y, size, { bold = true, spacing = 0, color = '#000', maxW = 1e9 } = {}) {
+  function lblCentre(g, text, cx, y, size, { bold = true, spacing = 0, color = '#000', maxW = 1e9, stroke = 0 } = {}) {
     const ls = 'letterSpacing' in g;
     for (;; size *= 0.95) {
       g.font = `${bold ? 'bold ' : ''}${size * LBL_PX}px ${LBL_FONT}`;
@@ -1420,20 +1423,32 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       if (w <= maxW * LBL_PX || size < 2) break;
     }
     g.fillStyle = color; g.fillText(text, cx * LBL_PX - w / 2, y * LBL_PX);
+    if (stroke) {   // extra weight, so small white-on-black letters survive at 180 dpi
+      g.strokeStyle = color; g.lineWidth = stroke * LBL_PX; g.lineJoin = 'round'; g.strokeText(text, cx * LBL_PX - w / 2, y * LBL_PX);
+    }
   }
-  // pure black and white, as a 24-bit BMP like the ones P-touch Editor saves
+  // a font size that fits maxW points (Arial, as P-touch prints it), never above size
+  function lblFit(text, maxW, size, bold) {
+    const g = lblFit.g ||= document.createElement('canvas').getContext('2d');
+    g.font = `${bold ? 'bold ' : ''}100px ${LBL_FONT}`;
+    return Math.min(size, Math.floor(maxW * 0.97 / (g.measureText(text).width / 100) * 10) / 10);
+  }
+  // 4×4 drawing pixels → one printer dot, pure black and white, as a 24-bit BMP like P-touch Editor's
   function lblBmp(c) {
-    const { width: w, height: h } = c, px = c.getContext('2d').getImageData(0, 0, w, h).data;
+    const W = c.width, src = c.getContext('2d').getImageData(0, 0, W, c.height).data, w = W / 4, h = c.height / 4;
+    const px = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let sum = 0;
+      for (let j = 0; j < 4; j++) for (let k = 0; k < 4; k++) { const i = ((y * 4 + j) * W + x * 4 + k) * 4; sum += src[i] * 0.3 + src[i + 1] * 0.59 + src[i + 2] * 0.11; }
+      px[y * w + x] = sum / 16 < 128 ? 0 : 255;
+    }
     const row = Math.ceil(w * 3 / 4) * 4, size = 54 + row * h, b = new Uint8Array(size), v = new DataView(b.buffer);
     b[0] = 66; b[1] = 77; v.setUint32(2, size, true); v.setUint32(10, 54, true); v.setUint32(14, 40, true);
     v.setInt32(18, w, true); v.setInt32(22, h, true); v.setUint16(26, 1, true); v.setUint16(28, 24, true);
-    v.setUint32(34, row * h, true); v.setInt32(38, 28346, true); v.setInt32(42, 28346, true);
+    v.setUint32(34, row * h, true); v.setInt32(38, 7087, true); v.setInt32(42, 7087, true);   // 180 dpi
     for (let y = 0; y < h; y++) {
       const o = 54 + (h - 1 - y) * row;
-      for (let x = 0; x < w; x++) {
-        const i = (y * w + x) * 4, on = px[i] * 0.3 + px[i + 1] * 0.59 + px[i + 2] * 0.11 < 128 ? 0 : 255;
-        b[o + x * 3] = b[o + x * 3 + 1] = b[o + x * 3 + 2] = on;
-      }
+      for (let x = 0; x < w; x++) b[o + x * 3] = b[o + x * 3 + 1] = b[o + x * 3 + 2] = px[y * w + x];
     }
     return b;
   }
@@ -1451,60 +1466,67 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
 
   async function buildLabel(d) {
     const bmps = [], objs = [];
-    const text = (x, y, w, h, value, size, bold = false, align = 'LEFT') => objs.push('<text:text>' + lblStyle(x, y, w, h, 'Text' + (objs.length + 1), 0) +
-      lblFont(size, bold) + '<text:textControl control="FREE" clipFrame="false" aspectNormal="false" shrink="false" autoLF="false" avoidImage="false"/>' +
+    // runs: [[text, size, bold], ...]; a run of '\n' starts a new line
+    const textRuns = (x, y, w, h, runs, align = 'LEFT') => objs.push('<text:text>' + lblStyle(x, y, w, h, 'Text' + (objs.length + 1), 0) +
+      lblFont(runs[0][1], runs[0][2]) + '<text:textControl control="FREE" clipFrame="false" aspectNormal="false" shrink="false" autoLF="false" avoidImage="false"/>' +
       `<text:textAlign horizontalAlignment="${align}" verticalAlignment="CENTER" inLineAlignment="BASELINE"/>` +
-      `<text:textStyle vertical="false" nullBlock="false" charSpace="0" lineSpace="0" orgPoint="${size}pt" combinedChars="false"/>` +
-      `<pt:data>${xmlEsc(value)}</pt:data><text:stringItem charLen="${[...String(value)].length}">${lblFont(size, bold)}</text:stringItem></text:text>`);
+      `<text:textStyle vertical="false" nullBlock="false" charSpace="0" lineSpace="0" orgPoint="${runs[0][1]}pt" combinedChars="false"/>` +
+      `<pt:data>${xmlEsc(runs.map(r => r[0]).join(''))}</pt:data>` +
+      runs.map(([t, size, bold]) => `<text:stringItem charLen="${[...String(t)].length}">${lblFont(size, bold)}</text:stringItem>`).join('') + '</text:text>');
+    const text = (x, y, w, h, value, size, bold = false, align = 'LEFT') => textRuns(x, y, w, h, [[value, size, bold]], align);
     const image = (c, x, y, w, h, orig) => {
       const file = `Object${bmps.length}.bmp`; bmps.push([file, lblBmp(c)]);
       objs.push('<image:image>' + lblStyle(x, y, w, h, 'Image' + (objs.length + 1), 2) +
         `<image:imageStyle originalName="${orig}" alignInText="LEFT" firstMerge="true" fileName="${file}">` +
         '<image:transparent flag="false" color="#FFFFFF"/>' +
-        `<image:trimming flag="false" shape="RECTANGLE" trimOrgX="0pt" trimOrgY="0pt" trimOrgWidth="${(c.width / LBL_PX).toFixed(1)}pt" trimOrgHeight="${(c.height / LBL_PX).toFixed(1)}pt"/>` +
+        `<image:trimming flag="false" shape="RECTANGLE" trimOrgX="0pt" trimOrgY="0pt" trimOrgWidth="${(c.width / 10).toFixed(1)}pt" trimOrgHeight="${(c.height / 10).toFixed(1)}pt"/>` +
         `<image:orgPos x="${x}pt" y="${y}pt" width="${w}pt" height="${h}pt"/>` +
         '<image:effect effect="NONE" brightness="50" contrast="50" photoIndex="4"/>' +
         '<image:mono operationKind="BINARY" reverse="0" ditherKind="MESH" threshold="128" gamma="100" ditherEdge="0" rgbconvProportionRed="30" rgbconvProportionGreen="59" rgbconvProportionBlue="11" rgbconvProportionReversed="0"/>' +
         '</image:imageStyle></image:image>');
     };
 
-    // QR code, whole printer dots per module so it stays sharp
+    // Everything sits inside the printable band: x 5.6–211.2, y 8.4–59.6 (18 mm of the 24 mm tape);
+    // anything outside it is cut off.
+    // QR code: whole printer dots per module so it stays sharp
     const q = qrcode(0, 'M'); q.addData(VERIFY_URL + d.code); q.make();
     const count = q.getModuleCount(), dots = Math.max(1, Math.floor(40 * 2.5 / count)), qPt = count * dots / 2.5;
     const [qc, qg] = lblCanvas(qPt, qPt), m = dots * 4;
     qg.fillStyle = '#000';
     for (let r = 0; r < count; r++) for (let c = 0; c < count; c++) if (q.isDark(r, c)) qg.fillRect(c * m, r * m, m, m);
-    image(qc, +(27.2 - qPt / 2).toFixed(1), 9.4, +qPt.toFixed(1), +qPt.toFixed(1), 'verify-qr.png');
-    text(5.8, 52.4, 42.8, 6, 'SCAN TO VERIFY', 4.4, true, 'CENTER');
+    image(qc, dot(27.6 - qPt / 2), 8.4, dot(qPt), dot(qPt), 'verify-qr.png');
+    text(5.6, 49.2, 44, 10.4, 'SCAN TO VERIFY', lblFit('SCAN TO VERIFY', 44, 5.4, true), true, 'CENTER');
 
-    const [dc] = lblCanvas(0.6, 46.4); dc.getContext('2d').fillStyle = '#000'; dc.getContext('2d').fillRect(0, 0, dc.width, dc.height);
-    image(dc, 52.6, 10.6, 0.6, 46.4, 'divider.png');
+    const [dc, dg] = lblCanvas(0.8, 48.8); dg.fillStyle = '#000'; dg.fillRect(0, 0, dc.width, dc.height);
+    image(dc, 51.2, 9.6, 0.8, 48.8, 'divider.png');
 
     // due date first: it's what people look for
     const due = d.nextDue ? (([y, mo]) => new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'short' }).toUpperCase() + ' ' + y)(d.nextDue.split('-').map(Number)) : '—';
     const initials = (d.tech || '').trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase()).join('');
     const unit = [d.serial && 'S/N  ' + d.serial, d.assetId && (d.serial ? d.assetId : 'ID  ' + d.assetId)].filter(Boolean).join('  ·  ');
-    text(56.8, 9.2, 92, 6, 'NEXT VALIDATION DUE', 4.8, true);
-    text(56.2, 14.6, 93, 22, due, 19, true);
-    text(56.8, 37.2, 92, 6.6, d.certNo, 5.6, true);
-    text(56.8, 44.2, 92, 6.6, unit, 5.2);
-    text(56.8, 51.2, 92, 6.6, `Validated ${fmtDate(d.valDate)}${initials ? '  ·  ' + initials : ''}`, 5.2);
+    const validated = `Validated ${fmtDate(d.valDate)}${initials ? '  ·  ' + initials : ''}`;
+    const MW = 94;   // middle column width, x 54.4–148.4
+    text(54.4, 8.4, MW, 7.2, 'NEXT VALIDATION DUE', lblFit('NEXT VALIDATION DUE', MW, 5.8, true), true);
+    text(53.8, 14.4, MW, 23, due, lblFit(due, MW - 2, 23, true), true);
+    text(54.4, 37.4, MW, 7.4, d.certNo, lblFit(d.certNo, MW, 6.4, true), true);
+    text(54.4, 44.6, MW, 7.4, unit, lblFit(unit, MW, 5.9, false));
+    text(54.4, 51.8, MW, 7.4, validated, lblFit(validated, MW, 5.9, false));
 
-    // result block
+    // result block, x 150.4–211.2
     const result = { 'In Tolerance': 'PASS', 'Out of Tolerance': 'FAIL', 'Removed from Service': 'OUT OF SERVICE' }[d.asLeft] || 'VALIDATED';
-    const [sc, sg] = lblCanvas(59.6, 28.6);
-    sg.fillStyle = '#000'; sg.beginPath(); sg.roundRect(0, 0, sc.width, sc.height, 3.4 * LBL_PX); sg.fill();
-    lblCentre(sg, LBL_TYPE[d.type] || LBL_TYPE.md, 29.8, 2.6, 4.2, { spacing: 0.34, color: '#fff', maxW: 54 });
-    if (result.length > 4) lblCentre(sg, result, 29.8, 10.4, 7.4, { spacing: 0.3, color: '#fff', maxW: 54 });
-    else lblCentre(sg, result, 29.8, 7.4, 14.5, { spacing: 0.8, color: '#fff', maxW: 54 });
-    lblCentre(sg, 'CRITICAL CONTROL POINT', 29.8, 22.4, 3.3, { spacing: 0.14, color: '#fff', maxW: 54 });
-    image(sc, 151, 9.4, 59.6, 28.6, 'result.png');
+    const [sc, sg] = lblCanvas(60.8, 31.2);
+    sg.fillStyle = '#000'; sg.beginPath(); sg.roundRect(0, 0, sc.width, sc.height, 3.2 * LBL_PX); sg.fill();
+    const white = { color: '#fff', maxW: 56 };
+    lblCentre(sg, LBL_TYPE[d.type] || LBL_TYPE.md, 30.4, 1.6, 5.0, { ...white, spacing: 0.35, stroke: 0.14 });
+    if (result.length > 4) lblCentre(sg, result, 30.4, 9.4, 8.0, { ...white, spacing: 0.3, stroke: 0.1 });
+    else lblCentre(sg, result, 30.4, 6.4, 13.5, { ...white, spacing: 0.7 });
+    lblCentre(sg, 'CRITICAL', 30.4, 19.6, 5.2, { ...white, spacing: 0.4, stroke: 0.16 });
+    lblCentre(sg, 'CONTROL POINT', 30.4, 25.2, 5.2, { ...white, spacing: 0.4, stroke: 0.16 });
+    image(sc, 150.4, 8.4, 60.8, 31.2, 'result.png');
 
-    const [bc, bg] = lblCanvas(59.6, 18.4);
-    lblCentre(bg, 'WHEELER', 29.8, 0.4, 6.6, { spacing: 0.7 });
-    lblCentre(bg, 'FOOD SAFETY SERVICES', 29.8, 7.6, 3.8, { spacing: 0.23, maxW: 58 });
-    lblCentre(bg, '385-201-5609', 29.8, 12.6, 4.3, { bold: false });
-    image(bc, 151, 40.6, 59.6, 18.4, 'wheeler.png');
+    // business name and phone as real text, centred under the block
+    textRuns(150.4, 39.8, 60.8, 13, [['WHEELER', 7.2, true], ['\n', 4.5, true], ['FOOD SAFETY SERVICE', 4.5, true]], 'CENTER');
+    text(150.4, 53, 60.8, 6.6, '385 - 201 - 5609', 5.8, true, 'CENTER');
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?><pt:document ${LBL_NS} version="1.7" generator="P-touch Editor 5.4.016 Windows">` +
       '<pt:body currentSheet="Sheet 1" direction="LTR"><style:sheet name="Sheet 1">' +
