@@ -16,6 +16,8 @@ and certificate numbers changed while offline are saved on the device and sent a
 when the connection returns (the status button in the top bar shows what's waiting; click it to
 sync now). Numbers taken offline continue from the device's last known number and are checked
 against the server on sync. Publishing needs a connection.
+With a connection the page always loads the newest version, and a tab left open shows **Reload now**
+when a newer version goes live. Settings shows the version (deploy time) at the bottom.
 
 **Records (admin page only):** the **Records** button opens three tabs:
 * **Due dates:** each unit's latest valid certificate, sorted by next due date (overdue / 30 / 60 /
