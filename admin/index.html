@@ -250,7 +250,7 @@
   @page { size: Letter; margin: 0; }
   @media print {
     body { background: #fff; }
-    .topbar, .form, dialog, #toast, #gate { display: none !important; }
+    .topbar, .form, dialog, #toast, #gate, #updateBar { display: none !important; }
     .layout { display: block; padding: 0; }
     .preview-wrap { position: static; }
     .preview-holder { box-shadow: none; border-radius: 0; overflow: visible; width: auto !important; height: auto !important; }
@@ -557,6 +557,7 @@
       <button type="button" class="small" id="btnImport">Import backup</button>
       <input type="file" id="fileImport" accept=".json,application/json" hidden>
     </div>
+    <p class="hint" id="buildInfo" style="margin-top:14px"></p>
     <div class="actions">
       <button type="button" id="btnSettingsClose" class="primary">Done</button>
     </div>
@@ -624,6 +625,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const SUPABASE_KEY = 'sb_publishable_EjnwXzqk_jyHS0lVvfRbAw_zMs6S6e2';
   const SUPABASE_JS = HOSTED ? 'supabase.js' : 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js';
   const VERIFY_URL = 'https://wheelerfs.com/verify/?c=';
+  const BUILD = '2026-10-03 23:33';   // the website build writes the deploy time here (see frontend/plugins/content.js)
+  const buildText = () => BUILD.startsWith('__') ? 'local file' : BUILD + ' UTC';
 
   // ---------- certificate types ----------
   const TYPES = {
@@ -1092,6 +1095,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const dlg = $('#dlgSettings');
   $('#btnSettings').addEventListener('click', () => {
     const s = db.settings;
+    $('#buildInfo').textContent = 'Version: ' + buildText();
     $('#setTech').value = s.techName; $('#setReviewerTitle').value = s.reviewerTitle;
     $('#setInterval').value = s.intervalMonths; $('#setProcedure').value = s.procedure; $('#setCriteria').value = s.criteria;
     $('#setQr').checked = s.showQr;
@@ -1941,6 +1945,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     $('#gate').hidden = false; gateMessage('Connecting…');
     // keep a copy of this page on the device so it opens without a connection
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(e => console.warn('offline copy unavailable', e));
+    checkForUpdate(); setInterval(checkForUpdate, 10 * 60e3);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
     try {
       const client = await supa();
       const { data: { session }, error } = await client.auth.getSession();
@@ -2741,6 +2747,21 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   });
 
   let toastTimer;
+  // A tab left open keeps running the version it loaded, so ask the server (past every cache) for the
+  // current version and offer a reload when it's newer.
+  async function checkForUpdate() {
+    if (BUILD.startsWith('__') || !navigator.onLine || $('#updateBar')) return;
+    try {
+      const res = await fetch('index.html?fresh=' + Date.now(), { cache: 'no-store' });
+      const live = res.ok && (await res.text()).match(/const BUILD = '([^']+)'/)?.[1];
+      if (!live || live === BUILD) return;
+      const bar = document.createElement('div'); bar.id = 'updateBar';
+      bar.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:9px 14px;border-radius:8px;font-size:14px;z-index:1000;box-shadow:0 4px 14px rgba(0,0,0,.25);display:flex;gap:10px;align-items:center';
+      bar.innerHTML = '<span>A newer version of the admin page is ready.</span><button type="button" class="small">Reload now</button>';
+      bar.querySelector('button').onclick = () => location.reload();
+      document.body.appendChild(bar);
+    } catch { /* offline: try again later */ }
+  }
   function toast(msg) {
     let t = $('#toast');
     if (!t) { t = document.createElement('div'); t.id = 'toast';
