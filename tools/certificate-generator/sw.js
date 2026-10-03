@@ -2,7 +2,7 @@
 // wheelerfs.com/admin opens with no signal. With a connection the newest
 // version is always fetched first; the saved copy is used after a few seconds
 // without an answer.
-const CACHE = 'wfs-admin-v1';
+const CACHE = 'wfs-admin-v2';
 const FILES = ['./', './supabase.js'];
 const WAIT_MS = 4000;
 
@@ -22,7 +22,9 @@ self.addEventListener('fetch', e => {
   const key = url.pathname === scope || url.pathname === scope + 'index.html' ? './' : e.request;
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    const network = fetch(e.request).then(res => {
+    // Always the newest copy: the extra query gets past GitHub's server cache, no-store past the browser's.
+    const fresh = new URL(url); fresh.searchParams.set('fresh', Date.now());
+    const network = fetch(fresh, { cache: 'no-store', credentials: 'same-origin' }).then(res => {
       if (res.ok) cache.put(key, res.clone());
       return res;
     });

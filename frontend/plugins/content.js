@@ -190,7 +190,10 @@ function prerender(outDir, { posts, episodes, services }) {
   const adminDir = path.join(outDir, 'admin');
   fs.mkdirSync(adminDir, { recursive: true });
   const generatorDir = path.resolve(outDir, '..', '..', 'tools', 'certificate-generator');
-  fs.copyFileSync(path.join(generatorDir, 'index.html'), path.join(adminDir, 'index.html'));
+  // the deploy time, shown in Settings and used by the page to notice when a newer version is live
+  const build = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  fs.writeFileSync(path.join(adminDir, 'index.html'),
+    fs.readFileSync(path.join(generatorDir, 'index.html'), 'utf8').replace("const BUILD = '__WFS_BUILD__'", `const BUILD = '${build}'`));
   // offline copy of the admin page, plus the Supabase library served from this site so it can be cached
   fs.copyFileSync(path.join(generatorDir, 'sw.js'), path.join(adminDir, 'sw.js'));
   fs.copyFileSync(path.resolve(outDir, '..', 'node_modules', '@supabase', 'supabase-js', 'dist', 'umd', 'supabase.js'), path.join(adminDir, 'supabase.js'));
