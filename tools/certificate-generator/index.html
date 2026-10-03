@@ -280,6 +280,7 @@
   <button id="btnSettings">Settings</button>
   <button id="btnRecords" class="cert-only" hidden title="Due dates, published certificates and backups">Records</button>
   <button id="btnPortal" class="cert-only" title="Upload the saved PDF to the customer portal">Publish to portal</button>
+  <button id="btnLabel" class="cert-only" title="Brother P-touch label for this unit (.lbx), with its QR code">Label</button>
   <button id="btnPrint" class="primary">Print / Save PDF</button>
 </div>
 
@@ -1394,6 +1395,173 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     if (db.settings.showQr && !cert.publishedAt) setTimeout(() => toast('Saved? Use "Publish to portal" so the QR code works.'), 400);
   });
 
+  // ---------- equipment label (Brother P-touch .lbx: 24 mm tape × 76.5 mm, PT-D610BT) ----------
+  // An .lbx is a zip of label.xml (the layout), prop.xml and the bitmaps it places. Positions are
+  // points on the tape: x along its 216.8 pt length, y across its 68 pt width (printable 8.4–59.6).
+  // The data is ordinary P-touch text, so any field can still be changed in P-touch Editor.
+  const LBL_PX = 10;   // bitmap pixels per point: 720 dpi, an even 4× the printer's 180 dpi
+  const LBL_FONT = 'Arial, "Liberation Sans", Helvetica, sans-serif';
+  const LBL_TYPE = { md: 'METAL DETECTOR', xr: 'X-RAY SYSTEM', mg: 'MAGNET' };
+  const LBL_NS = ['main', 'style', 'text', 'draw', 'image', 'barcode', 'database', 'table', 'cable']
+    .map(k => `xmlns:${k === 'main' ? 'pt' : k}="http://schemas.brother.info/ptouch/2007/lbx/${k}"`).join(' ');
+
+  function lblCanvas(wPt, hPt) {
+    const c = document.createElement('canvas'); c.width = Math.round(wPt * LBL_PX); c.height = Math.round(hPt * LBL_PX);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.textBaseline = 'top';
+    return [c, g];
+  }
+  // centred text; sizes in points; shrinks to fit maxW
+  function lblCentre(g, text, cx, y, size, { bold = true, spacing = 0, color = '#000', maxW = 1e9 } = {}) {
+    const ls = 'letterSpacing' in g;
+    for (;; size *= 0.95) {
+      g.font = `${bold ? 'bold ' : ''}${size * LBL_PX}px ${LBL_FONT}`;
+      if (ls) g.letterSpacing = spacing * LBL_PX + 'px';
+      var w = g.measureText(text).width - (ls ? spacing * LBL_PX : 0);
+      if (w <= maxW * LBL_PX || size < 2) break;
+    }
+    g.fillStyle = color; g.fillText(text, cx * LBL_PX - w / 2, y * LBL_PX);
+  }
+  // pure black and white, as a 24-bit BMP like the ones P-touch Editor saves
+  function lblBmp(c) {
+    const { width: w, height: h } = c, px = c.getContext('2d').getImageData(0, 0, w, h).data;
+    const row = Math.ceil(w * 3 / 4) * 4, size = 54 + row * h, b = new Uint8Array(size), v = new DataView(b.buffer);
+    b[0] = 66; b[1] = 77; v.setUint32(2, size, true); v.setUint32(10, 54, true); v.setUint32(14, 40, true);
+    v.setInt32(18, w, true); v.setInt32(22, h, true); v.setUint16(26, 1, true); v.setUint16(28, 24, true);
+    v.setUint32(34, row * h, true); v.setInt32(38, 28346, true); v.setInt32(42, 28346, true);
+    for (let y = 0; y < h; y++) {
+      const o = 54 + (h - 1 - y) * row;
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4, on = px[i] * 0.3 + px[i + 1] * 0.59 + px[i + 2] * 0.11 < 128 ? 0 : 255;
+        b[o + x * 3] = b[o + x * 3 + 1] = b[o + x * 3 + 2] = on;
+      }
+    }
+    return b;
+  }
+
+  // ---- label.xml pieces (the structure P-touch Editor 5.4 writes)
+  const lblStyle = (x, y, w, h, name, lock) =>
+    `<pt:objectStyle x="${x}pt" y="${y}pt" width="${w}pt" height="${h}pt" backColor="#FFFFFF" backPrintColorNumber="0" ropMode="COPYPEN" angle="0" anchor="TOPLEFT" flip="NONE">` +
+    '<pt:pen style="NULL" widthX="0.5pt" widthY="0.5pt" color="#000000" printColorNumber="1"/>' +
+    '<pt:brush style="NULL" color="#000000" printColorNumber="1" id="0"/>' +
+    `<pt:expanded objectName="${name}" ID="0" lock="${lock}" templateMergeTarget="LABELLIST" templateMergeType="NONE" templateMergeID="0" linkStatus="NONE" linkID="0"/></pt:objectStyle>`;
+  const lblFont = (size, bold) =>
+    `<text:ptFontInfo><text:logFont name="Arial" width="${(size / 2).toFixed(1)}pt" italic="false" weight="${bold ? 700 : 400}" charSet="0" pitchAndFamily="34"/>` +
+    `<text:fontExt effect="NOEFFECT" underline="0" strikeout="0" size="${size}pt" orgSize="${size * 4}pt" textColor="#000000" textPrintColorNumber="1"/></text:ptFontInfo>`;
+  const xmlEsc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  async function buildLabel(d) {
+    const bmps = [], objs = [];
+    const text = (x, y, w, h, value, size, bold = false, align = 'LEFT') => objs.push('<text:text>' + lblStyle(x, y, w, h, 'Text' + (objs.length + 1), 0) +
+      lblFont(size, bold) + '<text:textControl control="FREE" clipFrame="false" aspectNormal="false" shrink="false" autoLF="false" avoidImage="false"/>' +
+      `<text:textAlign horizontalAlignment="${align}" verticalAlignment="CENTER" inLineAlignment="BASELINE"/>` +
+      `<text:textStyle vertical="false" nullBlock="false" charSpace="0" lineSpace="0" orgPoint="${size}pt" combinedChars="false"/>` +
+      `<pt:data>${xmlEsc(value)}</pt:data><text:stringItem charLen="${[...String(value)].length}">${lblFont(size, bold)}</text:stringItem></text:text>`);
+    const image = (c, x, y, w, h, orig) => {
+      const file = `Object${bmps.length}.bmp`; bmps.push([file, lblBmp(c)]);
+      objs.push('<image:image>' + lblStyle(x, y, w, h, 'Image' + (objs.length + 1), 2) +
+        `<image:imageStyle originalName="${orig}" alignInText="LEFT" firstMerge="true" fileName="${file}">` +
+        '<image:transparent flag="false" color="#FFFFFF"/>' +
+        `<image:trimming flag="false" shape="RECTANGLE" trimOrgX="0pt" trimOrgY="0pt" trimOrgWidth="${(c.width / LBL_PX).toFixed(1)}pt" trimOrgHeight="${(c.height / LBL_PX).toFixed(1)}pt"/>` +
+        `<image:orgPos x="${x}pt" y="${y}pt" width="${w}pt" height="${h}pt"/>` +
+        '<image:effect effect="NONE" brightness="50" contrast="50" photoIndex="4"/>' +
+        '<image:mono operationKind="BINARY" reverse="0" ditherKind="MESH" threshold="128" gamma="100" ditherEdge="0" rgbconvProportionRed="30" rgbconvProportionGreen="59" rgbconvProportionBlue="11" rgbconvProportionReversed="0"/>' +
+        '</image:imageStyle></image:image>');
+    };
+
+    // QR code, whole printer dots per module so it stays sharp
+    const q = qrcode(0, 'M'); q.addData(VERIFY_URL + d.code); q.make();
+    const count = q.getModuleCount(), dots = Math.max(1, Math.floor(40 * 2.5 / count)), qPt = count * dots / 2.5;
+    const [qc, qg] = lblCanvas(qPt, qPt), m = dots * 4;
+    qg.fillStyle = '#000';
+    for (let r = 0; r < count; r++) for (let c = 0; c < count; c++) if (q.isDark(r, c)) qg.fillRect(c * m, r * m, m, m);
+    image(qc, +(27.2 - qPt / 2).toFixed(1), 9.4, +qPt.toFixed(1), +qPt.toFixed(1), 'verify-qr.png');
+    text(5.8, 52.4, 42.8, 6, 'SCAN TO VERIFY', 4.4, true, 'CENTER');
+
+    const [dc] = lblCanvas(0.6, 46.4); dc.getContext('2d').fillStyle = '#000'; dc.getContext('2d').fillRect(0, 0, dc.width, dc.height);
+    image(dc, 52.6, 10.6, 0.6, 46.4, 'divider.png');
+
+    // due date first: it's what people look for
+    const due = d.nextDue ? (([y, mo]) => new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'short' }).toUpperCase() + ' ' + y)(d.nextDue.split('-').map(Number)) : '—';
+    const initials = (d.tech || '').trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase()).join('');
+    const unit = [d.serial && 'S/N  ' + d.serial, d.assetId && (d.serial ? d.assetId : 'ID  ' + d.assetId)].filter(Boolean).join('  ·  ');
+    text(56.8, 9.2, 92, 6, 'NEXT VALIDATION DUE', 4.8, true);
+    text(56.2, 14.6, 93, 22, due, 19, true);
+    text(56.8, 37.2, 92, 6.6, d.certNo, 5.6, true);
+    text(56.8, 44.2, 92, 6.6, unit, 5.2);
+    text(56.8, 51.2, 92, 6.6, `Validated ${fmtDate(d.valDate)}${initials ? '  ·  ' + initials : ''}`, 5.2);
+
+    // result block
+    const result = { 'In Tolerance': 'PASS', 'Out of Tolerance': 'FAIL', 'Removed from Service': 'OUT OF SERVICE' }[d.asLeft] || 'VALIDATED';
+    const [sc, sg] = lblCanvas(59.6, 28.6);
+    sg.fillStyle = '#000'; sg.beginPath(); sg.roundRect(0, 0, sc.width, sc.height, 3.4 * LBL_PX); sg.fill();
+    lblCentre(sg, LBL_TYPE[d.type] || LBL_TYPE.md, 29.8, 2.6, 4.2, { spacing: 0.34, color: '#fff', maxW: 54 });
+    if (result.length > 4) lblCentre(sg, result, 29.8, 10.4, 7.4, { spacing: 0.3, color: '#fff', maxW: 54 });
+    else lblCentre(sg, result, 29.8, 7.4, 14.5, { spacing: 0.8, color: '#fff', maxW: 54 });
+    lblCentre(sg, 'CRITICAL CONTROL POINT', 29.8, 22.4, 3.3, { spacing: 0.14, color: '#fff', maxW: 54 });
+    image(sc, 151, 9.4, 59.6, 28.6, 'result.png');
+
+    const [bc, bg] = lblCanvas(59.6, 18.4);
+    lblCentre(bg, 'WHEELER', 29.8, 0.4, 6.6, { spacing: 0.7 });
+    lblCentre(bg, 'FOOD SAFETY SERVICES', 29.8, 7.6, 3.8, { spacing: 0.23, maxW: 58 });
+    lblCentre(bg, '385-201-5609', 29.8, 12.6, 4.3, { bold: false });
+    image(bc, 151, 40.6, 59.6, 18.4, 'wheeler.png');
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?><pt:document ${LBL_NS} version="1.7" generator="P-touch Editor 5.4.016 Windows">` +
+      '<pt:body currentSheet="Sheet 1" direction="LTR"><style:sheet name="Sheet 1">' +
+      '<style:paper media="0" width="68pt" height="216.8pt" marginLeft="8.4pt" marginTop="5.6pt" marginRight="8.4pt" marginBottom="5.6pt" orientation="landscape" autoLength="false" monochromeDisplay="true" printColorDisplay="false" printColorsID="0" paperColor="#FFFFFF" paperInk="#000000" split="1" format="261" backgroundTheme="0" printerID="31792" printerName="Brother PT-D610BT"/>' +
+      '<style:cutLine regularCut="0pt" freeCut=""/>' +
+      '<style:backGround x="5.6pt" y="8.4pt" width="205.6pt" height="51.2pt" brushStyle="NULL" brushId="0" userPattern="NONE" userPatternId="0" color="#000000" printColorNumber="1" backColor="#FFFFFF" backPrintColorNumber="0"/>' +
+      `<pt:objects>${objs.join('')}</pt:objects></style:sheet></pt:body></pt:document>`;
+    const now = new Date().toISOString().slice(0, 19) + 'Z';
+    const prop = '<?xml version="1.0" encoding="UTF-8"?><meta:properties xmlns:meta="http://schemas.brother.info/ptouch/2007/lbx/meta" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/">' +
+      `<meta:appName>P-touch Editor</meta:appName><dc:title>${xmlEsc(d.certNo)}</dc:title><dc:subject></dc:subject><dc:creator>Wheeler FS</dc:creator><meta:keyword></meta:keyword><dc:description></dc:description><meta:template></meta:template>` +
+      `<dcterms:created>${now}</dcterms:created><dcterms:modified>${now}</dcterms:modified><meta:lastPrinted></meta:lastPrinted><meta:modifiedBy>Wheeler FS</meta:modifiedBy><meta:revision>1</meta:revision><meta:editTime>0</meta:editTime>` +
+      '<meta:numPages>1</meta:numPages><meta:numWords>0</meta:numWords><meta:numChars>0</meta:numChars><meta:security>0</meta:security><meta:transferScript></meta:transferScript></meta:properties>';
+    return makeZip([['label.xml', xml], ...bmps, ['prop.xml', prop]], 'application/octet-stream');
+  }
+
+  // Small zip writer (deflate where the browser has it), so labels work offline with no extra files.
+  const CRC_T = Uint32Array.from({ length: 256 }, (_, n) => { for (let k = 0; k < 8; k++) n = n & 1 ? 0xEDB88320 ^ (n >>> 1) : n >>> 1; return n; });
+  const crc32 = d => { let c = -1; for (let i = 0; i < d.length; i++) c = CRC_T[(c ^ d[i]) & 255] ^ (c >>> 8); return (c ^ -1) >>> 0; };
+  async function makeZip(files, type = 'application/zip') {
+    const enc = new TextEncoder(), out = [], central = [], t = new Date();
+    const time = t.getHours() << 11 | t.getMinutes() << 5 | t.getSeconds() >> 1;
+    const date = (t.getFullYear() - 1980) << 9 | (t.getMonth() + 1) << 5 | t.getDate();
+    let offset = 0;
+    for (let [name, data] of files) {
+      if (typeof data === 'string') data = enc.encode(data);
+      if (data instanceof Blob) data = new Uint8Array(await data.arrayBuffer());
+      const nm = enc.encode(name), crc = crc32(data);
+      let body = data, method = 0;
+      if (window.CompressionStream) {
+        body = new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()); method = 8;
+      }
+      const head = (sig, len) => { const b = new Uint8Array(len + nm.length), v = new DataView(b.buffer); v.setUint32(0, sig, true); return [b, v]; };
+      const [lh, lv] = head(0x04034b50, 30);
+      [[4, 20], [6, 0x800], [8, method], [10, time], [12, date], [26, nm.length]].forEach(([o, x]) => lv.setUint16(o, x, true));
+      lv.setUint32(14, crc, true); lv.setUint32(18, body.length, true); lv.setUint32(22, data.length, true); lh.set(nm, 30);
+      const [ch, cv] = head(0x02014b50, 46);
+      [[4, 20], [6, 20], [8, 0x800], [10, method], [12, time], [14, date], [28, nm.length]].forEach(([o, x]) => cv.setUint16(o, x, true));
+      cv.setUint32(16, crc, true); cv.setUint32(20, body.length, true); cv.setUint32(24, data.length, true); cv.setUint32(42, offset, true); ch.set(nm, 46);
+      out.push(lh, body); central.push(ch); offset += lh.length + body.length;
+    }
+    const size = central.reduce((s, c) => s + c.length, 0), end = new Uint8Array(22), ev = new DataView(end.buffer);
+    ev.setUint32(0, 0x06054b50, true); ev.setUint16(8, files.length, true); ev.setUint16(10, files.length, true);
+    ev.setUint32(12, size, true); ev.setUint32(16, offset, true);
+    return new Blob([...out, ...central, end], { type });
+  }
+
+  const labelName = no => `${no} label.lbx`.replace(/[\\/:*?"<>|]/g, '');
+  const labelFromRow = r => ({ certNo: r.cert_no, code: r.verify_code, type: r.cert_type || 'md', asLeft: r.as_left, serial: r.serial,
+    assetId: r.asset_id, valDate: r.validation_date, nextDue: r.next_due, tech: r.tech_name });
+  $('#btnLabel').addEventListener('click', async () => {
+    if (!cert.certNo) return alert('Give the certificate a number first (Auto next to Certificate No.).');
+    saveBlob(labelName(cert.certNo), await buildLabel({ certNo: cert.certNo, code: cert.verifyCode, type: cert.type, asLeft: cert.asLeft,
+      serial: cert.equip.serial, assetId: cert.equip.assetId, valDate: cert.valDate, nextDue: addMonths(cert.valDate, cert.intervalMonths), tech: cert.techName }));
+    toast(cert.publishedAt ? 'Label saved. Open it in P-touch Editor and print.'
+      : 'Label saved. Open it in P-touch Editor to print; publish the certificate so its QR code works.');
+  });
+
   // ---------- customer portal (Supabase) ----------
   let sb = null;
   async function supa() {
@@ -1810,7 +1978,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   async function loadRecords() {
     try {
       const { data, error } = await (await supa()).from('certificates')
-        .select('id, cert_no, validation_date, next_due, manufacturer, model, serial, asset_id, as_found, as_left, status, pdf_path, customer_id, updated_at, cert_type:data->>certType, service_order:data->client->>serviceOrder, po:data->client->>po, customers(name, details)')
+        .select('id, cert_no, validation_date, next_due, manufacturer, model, serial, asset_id, as_found, as_left, status, pdf_path, customer_id, updated_at, verify_code, tech_name:data->>techName, cert_type:data->>certType, service_order:data->client->>serviceOrder, po:data->client->>po, customers(name, details)')
         .order('validation_date', { ascending: false }).order('cert_no', { ascending: false });
       if (error) throw error;
       db.recordsCache = { rows: data, at: new Date().toISOString() }; persist();
@@ -1871,6 +2039,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
             <td class="acts"><button type="button" class="small" data-act="pdf" data-id="${r.id}">PDF</button>
               <button type="button" class="small" data-act="invoice" data-id="${r.id}" title="Start an invoice for this job (every unit on the service order)">Invoice</button>
               <button type="button" class="small" data-act="job" data-id="${r.id}" title="This certificate and the rest of its job (same service order) as one PDF">Job PDF</button>
+              <button type="button" class="small" data-act="label" data-id="${r.id}" title="Brother P-touch equipment label for this unit (.lbx)">Label</button>
+              <button type="button" class="small" data-act="labels" data-id="${r.id}" title="Labels for every unit in this job, in one .zip">Job labels</button>
               <button type="button" class="small" data-act="email" data-id="${r.id}" title="Pre-written email to this customer's portal contacts">Email</button>
               <button type="button" class="small" data-act="reopen" data-id="${r.id}">Reopen</button>
               ${r.status === 'revoked' ? `<button type="button" class="small" data-act="restore" data-id="${r.id}">Restore</button>`
@@ -1907,6 +2077,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       if (act === 'reopen') return await reopen(r);
       if (act === 'job') return await jobPdf(r, e.target);
       if (act === 'invoice') return invoiceFromJob(r);
+      if (act === 'label' || act === 'labels') return await rowLabels(r, act === 'labels', e.target);
       if (act === 'email') return await emailCustomer(r);
       if (act === 'revoke' || act === 'restore') {
         if (act === 'revoke' && !confirm(`Revoke ${r.cert_no}?\n\nIts QR code will show "Revoked" and the customer portal will mark it revoked. You can restore it later.`)) return;
@@ -1978,6 +2149,20 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const loadScript = (src, global) => window[global] ? Promise.resolve() : new Promise((resolve, reject) => {
     const el = document.createElement('script'); el.src = src; el.onload = resolve;
     el.onerror = () => reject(new Error('Could not load ' + src)); document.head.appendChild(el); });
+
+  async function rowLabels(r, job, btn) {
+    const rows = job ? jobRows(r) : [r];
+    if (rows.some(x => !x.verify_code)) return alert('Click Refresh at the top of Records first, so the QR codes are loaded.');
+    if (!job && r.status !== 'valid' && !confirm(`${r.cert_no} is ${r.status}. Its QR code will say so. Make a label anyway?`)) return;
+    const label = btn.textContent; btn.disabled = true; btn.textContent = 'Building…';
+    try {
+      if (rows.length === 1) { saveBlob(labelName(rows[0].cert_no), await buildLabel(labelFromRow(rows[0]))); toast('Label saved. Open it in P-touch Editor and print.'); return; }
+      const files = [];
+      for (const x of rows) files.push([labelName(x.cert_no), await buildLabel(labelFromRow(x))]);
+      saveBlob(`${jobName(r)} - Labels.zip`, await makeZip(files));
+      toast(`${rows.length} labels saved in one .zip. Unzip it and open each label in P-touch Editor.`);
+    } finally { btn.disabled = false; btn.textContent = label; }
+  }
 
   async function jobPdf(r, btn) {
     const rows = jobRows(r).filter(x => x.pdf_path);

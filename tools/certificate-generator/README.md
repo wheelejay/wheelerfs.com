@@ -28,6 +28,14 @@ against the server on sync. Publishing needs a connection.
 * **Backup:** download a full backup (.json with customers, portal emails, equipment, settings,
   counters and every certificate's details) and a .zip of all PDFs, a folder per customer.
 
+**Equipment labels:** **Label** in the top bar downloads a Brother P-touch label (`.lbx`, 24 mm tape ×
+76.5 mm, PT-D610BT) for the certificate on the form: QR code to its verify page, next due month in
+large type, PASS / FAIL / OUT OF SERVICE, certificate number, serial or asset ID, validation date and
+tech initials. Open it in P-touch Editor and print; the text can still be edited there. On the admin
+page, **Records → Certificates → Label** does the same for a published certificate, and **Job labels**
+downloads one `.zip` with a label for every unit in that job. Works offline. The QR code only works
+once the certificate is published.
+
 **Billing (admin page only):** the **Certificates | Billing** switch in the top bar opens quotes
 and invoices built from the same customer list. Pick items from the price list (Quotes &
 invoices → Price list), set terms (Due on receipt / Net 15–60), tax rate or tax exempt, and
