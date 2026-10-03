@@ -1486,49 +1486,47 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
         '</image:imageStyle></image:image>');
     };
 
-    // Layout as arranged in P-touch Editor: it runs past the nominal printable band (x 5.6–211.2,
-    // y 8.4–59.6) and still prints. Rows: top 4.4, bottom row of small text 56.4–63.
-    // QR code: whole printer dots per module so it stays sharp. 4 dots × 29 modules (version 3) fills
-    // the 46.4 pt square; the link needs low error correction to fit that, else version 4 at 3 dots.
-    let q = qrcode(3, 'L');
-    try { q.addData(VERIFY_URL + d.code); q.make(); } catch { q = qrcode(0, 'M'); q.addData(VERIFY_URL + d.code); q.make(); }
-    const count = q.getModuleCount(), dots = Math.max(1, Math.floor(46.4 * 2.5 / count)), qPt = count * dots / 2.5;
+    // Jordan's arrangement from P-touch Editor, kept inside the printable band (x 5.6–211.2,
+    // y 8.4–59.6; anything outside it is cut off). Top line 8.4; bottom row of small text 53–59.6.
+    // QR code: whole printer dots per module so it stays sharp
+    const q = qrcode(0, 'M'); q.addData(VERIFY_URL + d.code); q.make();
+    const count = q.getModuleCount(), dots = Math.max(1, Math.floor(40 * 2.5 / count)), qPt = count * dots / 2.5;
     const [qc, qg] = lblCanvas(qPt, qPt), m = dots * 4;
     qg.fillStyle = '#000';
     for (let r = 0; r < count; r++) for (let c = 0; c < count; c++) if (q.isDark(r, c)) qg.fillRect(c * m, r * m, m, m);
-    image(qc, dot(26.8 - qPt / 2), dot(27.6 - qPt / 2), dot(qPt), dot(qPt), 'verify-qr.png');
-    text(4.4, 56.4, 44.8, 6.6, 'SCAN TO VERIFY', 5, true, 'CENTER');
+    image(qc, dot(26.2 - qPt / 2), 8.4, dot(qPt), dot(qPt), 'verify-qr.png');
+    text(5.6, 53, 41.2, 6.6, 'SCAN TO VERIFY', lblFit('SCAN TO VERIFY', 41.2, 4.8, true), true, 'CENTER');
 
-    const [dc, dg] = lblCanvas(0.8, 56.8); dg.fillStyle = '#000'; dg.fillRect(0, 0, dc.width, dc.height);
-    image(dc, 51.2, 5.6, 0.8, 56.8, 'divider.png');
+    const [dc, dg] = lblCanvas(0.8, 49.6); dg.fillStyle = '#000'; dg.fillRect(0, 0, dc.width, dc.height);
+    image(dc, 49.2, 9.2, 0.8, 49.6, 'divider.png');
 
     // due date first: it's what people look for
     const due = d.nextDue ? (([y, mo]) => new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'short' }).toUpperCase() + ' ' + y)(d.nextDue.split('-').map(Number)) : '—';
     const initials = (d.tech || '').trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase()).join('');
     const unit = [d.serial && 'S/N  ' + d.serial, d.assetId && (d.serial ? d.assetId : 'ID  ' + d.assetId)].filter(Boolean).join('  ·  ');
     const validated = `Validated ${fmtDate(d.valDate)}${initials ? '  ·  ' + initials : ''}`;
-    const MW = 94;   // middle column, x 53.6–147.6; the three detail lines are evenly spaced
-    text(53.6, 4.4, MW, 6.6, 'NEXT VALIDATION DUE', 5.8, true);
-    text(53.6, 10.4, MW, 22, due, lblFit(due, MW - 2, 19.3, true), true);
-    text(53.6, 34.4, MW, 7.4, d.certNo, lblFit(d.certNo, MW, 6.4, true), true);
-    text(53.6, 45.6, MW, 6.6, unit, lblFit(unit, MW, 5.9, false));
-    text(53.6, 56.4, MW, 6.6, validated, lblFit(validated, MW, 5.9, false));
+    const MW = 96;   // middle column, x 51.6–147.6; the three detail lines are evenly spaced
+    text(51.6, 8.4, MW, 6.4, 'NEXT VALIDATION DUE', 5.4, true);
+    text(51.6, 12.8, MW, 19, due, lblFit(due, MW - 2, 18.5, true), true);
+    text(51.6, 32.4, MW, 7, d.certNo, lblFit(d.certNo, MW, 6.2, true), true);
+    text(51.6, 42.8, MW, 6.6, unit, lblFit(unit, MW, 5.6, false));
+    text(51.6, 53, MW, 6.6, validated, lblFit(validated, MW, 5.6, false));
 
-    // result block, x 149.6–210.4
+    // result block, x 150.4–211.2
     const result = { 'In Tolerance': 'PASS', 'Out of Tolerance': 'FAIL', 'Removed from Service': 'OUT OF SERVICE' }[d.asLeft] || 'VALIDATED';
-    const [sc, sg] = lblCanvas(60.8, 35.2);
+    const [sc, sg] = lblCanvas(60.8, 31.2);
     sg.fillStyle = '#000'; sg.beginPath(); sg.roundRect(0, 0, sc.width, sc.height, 3.2 * LBL_PX); sg.fill();
     const white = { color: '#fff', maxW: 56 };
-    lblCentre(sg, LBL_TYPE[d.type] || LBL_TYPE.md, 30.4, 2.0, 5.4, { ...white, spacing: 0.35, stroke: 0.14 });
-    if (result.length > 4) lblCentre(sg, result, 30.4, 10.0, 8.6, { ...white, spacing: 0.3, stroke: 0.1 });
-    else lblCentre(sg, result, 30.4, 7.4, 15, { ...white, spacing: 0.8 });
-    lblCentre(sg, 'CRITICAL', 30.4, 22.0, 5.6, { ...white, spacing: 0.4, stroke: 0.16 });
-    lblCentre(sg, 'CONTROL POINT', 30.4, 28.2, 5.6, { ...white, spacing: 0.4, stroke: 0.16 });
-    image(sc, 149.6, 4.4, 60.8, 35.2, 'result.png');
+    lblCentre(sg, LBL_TYPE[d.type] || LBL_TYPE.md, 30.4, 1.6, 5.0, { ...white, spacing: 0.35, stroke: 0.14 });
+    if (result.length > 4) lblCentre(sg, result, 30.4, 9.4, 8.0, { ...white, spacing: 0.3, stroke: 0.1 });
+    else lblCentre(sg, result, 30.4, 6.4, 13.5, { ...white, spacing: 0.7 });
+    lblCentre(sg, 'CRITICAL', 30.4, 19.6, 5.2, { ...white, spacing: 0.4, stroke: 0.16 });
+    lblCentre(sg, 'CONTROL POINT', 30.4, 25.2, 5.2, { ...white, spacing: 0.4, stroke: 0.16 });
+    image(sc, 150.4, 8.4, 60.8, 31.2, 'result.png');
 
     // business name and phone as real text, centred under the block
-    textRuns(149.6, 40.4, 60.8, 14.4, [['WHEELER', 8, true], ['\n', 4.7, true], ['FOOD SAFETY SERVICE', 4.7, true]], 'CENTER');
-    text(149.6, 56.4, 60.8, 6.6, '385 - 201 - 5609', 6.2, true, 'CENTER');
+    textRuns(150.4, 39.8, 60.8, 13, [['WHEELER', 7.2, true], ['\n', 4.5, true], ['FOOD SAFETY SERVICE', 4.5, true]], 'CENTER');
+    text(150.4, 53, 60.8, 6.6, '385 - 201 - 5609', 5.8, true, 'CENTER');
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?><pt:document ${LBL_NS} version="1.7" generator="P-touch Editor 5.4.016 Windows">` +
       '<pt:body currentSheet="Sheet 1" direction="LTR"><style:sheet name="Sheet 1">' +
