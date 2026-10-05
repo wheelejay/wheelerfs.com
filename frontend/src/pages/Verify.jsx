@@ -39,7 +39,7 @@ const Verify = () => {
       {!loading && !error && !cert && (
         <div className="verify-card bad">
           <h2>Certificate not found</h2>
-          <p>This code doesn't match a certificate issued by Wheeler Food Safety Service. If you scanned it from a certificate, please contact us at 385-201-5609 or <a href="mailto:jordan@wheelerfs.com">jordan@wheelerfs.com</a>.</p>
+          <p>This code doesn't match a certificate issued by Wheeler Food Safety Service. If you scanned it from a certificate, please contact us at 385-201-5609 or <a href="mailto:info@wheelerfs.com">info@wheelerfs.com</a>.</p>
         </div>
       )}
       {cert && (

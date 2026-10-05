@@ -100,7 +100,7 @@ function Certificates({ session }) {
       {rows && rows.length === 0 && (
         <div className="portal-card">
           <h2>No certificates yet</h2>
-          <p>Your email isn't linked to a company in our records yet, or no certificates have been issued. Contact Jordan at <a href="mailto:jordan@wheelerfs.com">jordan@wheelerfs.com</a> or 385-201-5609 to get access.</p>
+          <p>Your email isn't linked to a company in our records yet, or no certificates have been issued. Contact us at <a href="mailto:support@wheelerfs.com">support@wheelerfs.com</a> or 385-201-5609 to get access.</p>
         </div>
       )}
       {groups.map((g) => (
