@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import usePageMeta from '../usePageMeta';
-import { REVIEW_URL } from '../siteInfo';
+import { API_BASE, REVIEW_URL } from '../siteInfo';
 
 const Home = () => {
   usePageMeta({
@@ -23,7 +23,7 @@ const Home = () => {
     const email = form.elements.namedItem('email').value.trim();
     const message = form.elements.namedItem('message').value.trim();
     try {
-      const res = await fetch('https://wheelerfs-com-1.onrender.com/api/contact', {
+      const res = await fetch(`${API_BASE}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, message })

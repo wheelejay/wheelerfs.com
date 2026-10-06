@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 
 const { Resend } = require('resend');
+const { registerChat } = require('./chat');
 
 const app = express();
 
@@ -30,7 +31,13 @@ app.use(
   })
 );
 
+// Render sits behind a proxy; use the visitor's real IP for rate limits
+app.set('trust proxy', 1);
+
 app.use(express.json());
+
+// Website chat assistant
+registerChat(app);
 
 
 // Contact form endpoint
