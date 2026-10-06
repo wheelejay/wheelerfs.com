@@ -1086,3 +1086,17 @@ nav .nav-dropdown.open .nav-submenu {
     font-size: 1rem;
   }
 }
+
+/* Note under the pricing cards explaining mixed-equipment visits */
+.pricing-mix-note {
+  max-width: 820px;
+  margin: 2rem auto 0;
+  padding: 1rem 1.25rem;
+  background: #f7fafc;
+  border-left: 4px solid #16A34A;
+  border-radius: 8px;
+  color: #01426A;
+  font-size: 1rem;
+  line-height: 1.55;
+  text-align: left;
+}

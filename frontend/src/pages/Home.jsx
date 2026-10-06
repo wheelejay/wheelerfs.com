@@ -187,6 +187,9 @@ const Home = () => {
               </div>
             ))}
           </div>
+          <p className="pricing-mix-note">
+            <strong>Mixed equipment on one visit?</strong> The most expensive unit is billed at its first-unit price, and every other unit (metal detectors, X-ray systems, and magnets) at its additional-unit price. For example, 2 X-ray systems and 3 metal detectors: $700 + $300 + 3 × $250 = $1,750.
+          </p>
           {/* Annual Service Contracts */}
           <div style={{ maxWidth: '900px', margin: '0 auto', marginTop: '2.5rem' }}>
             <h3 style={{ color: '#01426A', fontSize: '1.35rem', fontWeight: 700, textAlign: 'center', marginBottom: '1.2rem' }}>Annual Service Contracts <span style={{ color: '#16A34A', fontWeight: 800 }}>(Best Value)</span></h3>
