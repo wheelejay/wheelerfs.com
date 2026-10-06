@@ -2,6 +2,8 @@ import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { episodes, services } from 'virtual:content';
 import { REVIEW_URL } from '../siteInfo';
+import ChatWidget from './ChatWidget';
+import '../chat.css';
 
 const Layout = () => {
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -146,6 +148,8 @@ const Layout = () => {
         <div className="footer-divider"></div>
         <p className="footer-copyright">© {new Date().getFullYear()} Wheeler Food Safety Service. A Meldrum Company.</p>
       </footer>
+
+      <ChatWidget />
     </>
   );
 };
