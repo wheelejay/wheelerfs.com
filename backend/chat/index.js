@@ -16,7 +16,7 @@ const MAX_TURNS = 30; // messages per conversation (user + assistant)
 const MAX_CHARS = 1500; // per message
 const PER_IP_WINDOW_MS = 10 * 60 * 1000;
 const PER_IP_LIMIT = 20; // requests per IP per 10 minutes
-const DAILY_LIMIT = Number(process.env.CHAT_DAILY_LIMIT) || 300; // all visitors
+const DAILY_LIMIT = Number(process.env.CHAT_DAILY_LIMIT) || 100; // all visitors
 const MAX_TOOL_ROUNDS = 3;
 
 const SYSTEM = `You are the website assistant for Wheeler Food Safety, a small Utah company that validates food safety equipment. You chat with visitors on wheelerfs.com, who are usually QA managers, food safety managers, or plant managers at food manufacturers.
