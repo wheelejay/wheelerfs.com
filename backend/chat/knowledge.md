@@ -69,6 +69,19 @@ Page: https://wheelerfs.com/services/temperature-mapping
   of loggers, and the length of the study. There is no fixed price; offer to
   collect details for a quote.
 
+## How multi-unit visits are billed
+Metal detectors, X-ray systems, and magnets validated on the same visit are
+billed together:
+- The single most expensive unit on the visit is billed at its first-unit
+  price (an X-ray system if there is one, otherwise a metal detector,
+  otherwise a magnet).
+- Every other unit, of any type, is billed at that type's additional-unit
+  price (X-ray $300, metal detector $250, magnet $150).
+- Example: 2 X-ray systems and 3 metal detectors = $700 + $300 + 3 x $250 =
+  $1,750.
+- Temperature mapping is quoted separately.
+Use the estimate_price tool for any calculation.
+
 ## Annual service contracts (best value)
 - 2 visits per year: 5% off.
 - Quarterly visits: 10% off.

@@ -27,6 +27,7 @@ Your goals, in order:
 
 Rules:
 - You are an AI assistant. If asked, say so plainly. Visitors can always call (385) 201-5609 or use the contact form instead.
+- For any price involving how many units a visitor has, call estimate_price and report its breakdown and total. Never do the pricing math yourself. Call it as an estimate that Jordan confirms.
 - Only state prices, services, and facts that appear below. Never invent prices, discounts, certifications, turnaround times, availability, or travel fees. If something isn't covered, say Jordan can answer it and offer to pass the question along.
 - Don't give compliance or audit-outcome guarantees, and don't tell anyone their program will pass an audit. General explanations of what validation involves are fine.
 - Before calling send_lead, you need at least the visitor's name and email, plus what they need. Ask for company, phone, and equipment details too, but don't insist on them. Confirm the details back briefly, then call send_lead. Never call it with made-up details.
@@ -39,6 +40,22 @@ Facts about Wheeler Food Safety:
 ${KNOWLEDGE}`;
 
 const TOOLS = [
+  {
+    name: 'estimate_price',
+    description:
+      'Calculate the price of one visit for a mix of metal detectors, X-ray systems, and magnets using Wheeler Food Safety\'s billing rule. Always use this for any price that involves unit counts; never add up prices yourself. Temperature mapping is quoted separately and is not included.',
+    strict: true,
+    input_schema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        metal_detectors: { type: 'integer', description: 'Number of metal detectors (0 if none)' },
+        xray_systems: { type: 'integer', description: 'Number of X-ray inspection systems (0 if none)' },
+        magnets: { type: 'integer', description: 'Number of magnets (0 if none)' },
+      },
+      required: ['metal_detectors', 'xray_systems', 'magnets'],
+    },
+  },
   {
     name: 'send_lead',
     description:
@@ -100,6 +117,44 @@ function cleanHistory(raw) {
     out.push({ role, content });
   }
   return out[out.length - 1].role === 'user' ? out : null;
+}
+
+// Per-visit pricing for metal detectors, X-ray systems, and magnets.
+// The most expensive unit on the visit is billed at its first-unit price;
+// every other unit, of any type, at that type's additional-unit price.
+const PRICES = {
+  xray_systems: { label: 'X-ray system', first: 700, additional: 300 },
+  metal_detectors: { label: 'Metal detector', first: 650, additional: 250 },
+  magnets: { label: 'Magnet', first: 350, additional: 150 },
+};
+
+function estimate(counts) {
+  const units = Object.entries(PRICES).map(([key, p]) => ({ ...p, count: Math.max(0, Math.floor(Number(counts[key]) || 0)) }));
+  const total = units.reduce((n, u) => n + u.count, 0);
+  if (total === 0) return { ok: false, message: 'No units given. Ask how many of each the visitor has.' };
+  if (total > 200) return { ok: false, message: 'That many units needs a custom quote from Jordan.' };
+  const lines = [];
+  let sum = 0;
+  let firstUsed = false;
+  // PRICES is ordered most to least expensive, so the first type with units gets the first-unit price
+  for (const u of units) {
+    if (u.count === 0) continue;
+    let extra = u.count;
+    if (!firstUsed) {
+      lines.push(`1 ${u.label.toLowerCase()} at the first-unit price: $${u.first}`);
+      sum += u.first;
+      extra -= 1;
+      firstUsed = true;
+    }
+    if (extra > 0) {
+      lines.push(`${extra} ${u.label.toLowerCase()}${extra > 1 ? 's' : ''} at $${u.additional} each (additional units): $${extra * u.additional}`);
+      sum += extra * u.additional;
+    }
+  }
+  return {
+    ok: true,
+    message: `${lines.join('\n')}\nTotal for one visit: $${sum.toLocaleString('en-US')}\n(Estimate before any annual contract discount. Jordan confirms the final quote.)`,
+  };
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -200,6 +255,8 @@ function registerChat(app) {
             if (result.ok) leadSent = true;
           } else if (block.name === 'send_lead') {
             result = { ok: true, message: 'Already sent to Jordan in this reply.' };
+          } else if (block.name === 'estimate_price') {
+            result = estimate(block.input);
           } else {
             result = { ok: false, message: `Unknown tool: ${block.name}` };
           }
@@ -227,4 +284,4 @@ function registerChat(app) {
   });
 }
 
-module.exports = { registerChat };
+module.exports = { registerChat, estimate };
