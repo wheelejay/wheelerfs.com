@@ -15,6 +15,8 @@ Most food manufacturers rely on X-ray inspection to find metal, often in packagi
 - **Metal detectability testing** using certified ferrous, non-ferrous, and stainless steel test samples
 - **Testing in your products and packaging**, where detection is hardest
 - **Reject system checks** to confirm contaminated product is removed from the line
+- **Fail-safe checks** for alarms and line stops where your system has them
+- **Adjustment and retesting** if something fails, until the system passes
 - **Traceable documentation** of every test sample and result
 - **A comprehensive validation report** for each system
 

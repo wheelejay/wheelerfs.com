@@ -17,6 +17,7 @@ Your metal detector is a critical control, and auditors want proof that it works
 - **Worst-case positioning**, passing test samples through the center of the aperture
 - **Reject system checks** at normal line speed, including reject timing and confirmation
 - **Fail-safe checks** for alarms and belt stops where your system has them
+- **Adjustment and retesting** if something fails, until the detector passes
 - **A full audit-ready report** for each unit, ready for FDA, USDA, SQF, and BRCGS audits
 
 ## When to validate
