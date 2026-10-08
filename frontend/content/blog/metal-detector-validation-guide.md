@@ -1,5 +1,6 @@
 ---
 title: Metal Detector Validation - What It Is and What Auditors Look For
+seoTitle: Metal Detector Validation: What Auditors Look For
 date: 2026-09-30
 excerpt: Your metal detector is only as good as the evidence that it works. Here's how validation, verification, and testing fit together, and the gaps we see most often in Utah plants.
 draft: false

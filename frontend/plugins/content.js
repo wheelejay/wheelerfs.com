@@ -124,6 +124,38 @@ const listHtml = (heading, items, base) =>
     .map((i) => `<article><h2><a href="${base}/${i.slug}">${escapeHtml(i.title)}</a></h2><p>${escapeHtml(i.excerpt)}</p></article>`)
     .join('');
 
+// Text version of the homepage for search engines. The live page is built by
+// React (src/pages/Home.jsx); keep the wording here roughly in step with it.
+function homeHtml(services, posts) {
+  const serviceItems = services
+    .map((s) => `<li><h3><a href="/services/${s.slug}">${escapeHtml(s.title)}</a></h3><p>${escapeHtml(s.excerpt)}</p>${s.price ? `<p>${escapeHtml(s.price)} ${escapeHtml(s.priceNote)}</p>` : ''}</li>`)
+    .join('');
+  const postItems = posts
+    .slice(0, 5)
+    .map((p) => `<li><a href="/blog/${p.slug}">${escapeHtml(p.title)}</a></li>`)
+    .join('');
+  return [
+    '<main>',
+    '<h1>Food Safety Validation Services</h1>',
+    '<p>Serving Utah food manufacturers and related industries with professional metal detector, X-ray system, magnet, and temperature validation services.</p>',
+    '<section id="services"><h2>Professional Validation Services</h2>',
+    '<p>Independent, third-party validation that keeps your foreign material and temperature controls audit-ready for FDA, USDA, SQF, and BRCGS.</p>',
+    `<ul>${serviceItems}</ul></section>`,
+    '<section id="pricing"><h2>Professional Validation Pricing</h2>',
+    '<p>Mixed equipment on one visit: the most expensive unit is billed at its first-unit price, and every other metal detector, X-ray system, or magnet at its additional-unit price. Annual service contracts save 5% (2 visits a year), 10% (quarterly), or 20% (monthly).</p></section>',
+    '<section id="why-us"><h2>Why Choose Wheeler Food Safety?</h2><ul>',
+    '<li>Specialized expertise in metal detectors, X-ray systems, magnets, and temperature mapping</li>',
+    '<li>Independent, audit-ready documentation for FDA, USDA, and GFSI schemes</li>',
+    '<li>Local to Utah, based in Sandy, to minimize downtime</li>',
+    '</ul></section>',
+    postItems ? `<section><h2>From the blog</h2><ul>${postItems}</ul></section>` : '',
+    '<section id="contact"><h2>Contact Us</h2>',
+    '<p>Wheeler Food Safety, 541 W 9560 S, Sandy, UT 84070. Phone <a href="tel:+13852015609">(385) 201-5609</a>. Email <a href="mailto:info@wheelerfs.com">info@wheelerfs.com</a>.</p>',
+    '</section>',
+    '</main>',
+  ].join('');
+}
+
 function prerender(outDir, { posts, episodes, services }) {
   const template = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
   const pages = [
@@ -136,12 +168,12 @@ function prerender(outDir, { posts, episodes, services }) {
     {
       route: '/blog',
       title: `Blog | ${SITE_NAME}`,
-      description: 'Food safety validation tips, audit prep, and industry news from Wheeler Food Safety.',
+      description: 'Food safety validation tips and audit prep for Utah food manufacturers, from Wheeler Food Safety.',
       body: listHtml('Blog', posts, '/blog'),
     },
     ...posts.map((p) => ({
       route: `/blog/${p.slug}`,
-      title: `${p.title} | ${SITE_NAME}`,
+      title: `${p.seoTitle || p.title} | ${SITE_NAME}`,
       description: p.excerpt,
       body: `<article><h1>${escapeHtml(p.title)}</h1>${p.html}</article>`,
       type: 'article',
@@ -199,6 +231,12 @@ function prerender(outDir, { posts, episodes, services }) {
   fs.copyFileSync(path.resolve(outDir, '..', 'node_modules', '@supabase', 'supabase-js', 'dist', 'umd', 'supabase.js'), path.join(adminDir, 'supabase.js'));
   fs.copyFileSync(path.resolve(outDir, '..', 'node_modules', 'jszip', 'dist', 'jszip.min.js'), path.join(adminDir, 'jszip.min.js'));
   fs.copyFileSync(path.resolve(outDir, '..', 'node_modules', 'pdf-lib', 'dist', 'pdf-lib.min.js'), path.join(adminDir, 'pdf-lib.min.js'));
+
+  // Homepage: keep its own title/description, add the page text for search engines
+  fs.writeFileSync(
+    path.join(outDir, 'index.html'),
+    template.replace(/(<div id="root"[^>]*>)(<\/div>)/, (_, open, close) => open + homeHtml(services, posts) + close),
+  );
 
   // GitHub Pages serves 404.html for unknown URLs; the app shows its Not Found page.
   fs.writeFileSync(
