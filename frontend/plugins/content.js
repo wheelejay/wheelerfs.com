@@ -2,7 +2,9 @@
 //
 // Reads Markdown files from content/blog and content/podcast, turns them into
 // HTML with `marked`, and exposes them to the app as `virtual:content`.
-// Drafts (draft: true) only appear when running `npm run dev`.
+// Drafts (draft: true) only appear when running `npm run dev`. Posts dated in
+// the future are scheduled: they're left out of the build until their date
+// (Utah time), and the deploy workflow rebuilds the site every morning.
 //
 // After `vite build` it also writes a real HTML page for every blog/podcast
 // route (GitHub Pages has no rewrites, so /blog/my-post needs its own file),
@@ -44,6 +46,9 @@ function labelTableCells(html) {
   });
 }
 
+// Today's date in Utah, as YYYY-MM-DD
+const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+
 // Blog posts and episodes need a date and are listed newest first. Service
 // pages have no date and are listed by their `order` number instead.
 function loadCollection(root, dir, includeDrafts, { dated = true } = {}) {
@@ -74,7 +79,7 @@ function loadCollection(root, dir, includeDrafts, { dated = true } = {}) {
         html: labelTableCells(marked.parse(body)),
       };
     })
-    .filter((item) => includeDrafts || !item.draft)
+    .filter((item) => includeDrafts || (!item.draft && !(dated && item.date > today())))
     .sort((a, b) => (dated ? b.date.localeCompare(a.date) : a.order - b.order));
 }
 
@@ -96,7 +101,7 @@ const escapeHtml = (s) =>
 // Swap title/description/social tags into the built index.html and put the
 // page text inside #root so search engines see it without running JavaScript.
 // React replaces the #root contents as soon as the app loads.
-function renderPage(template, { route, title, description, body = '', type = 'website', noindex = false }) {
+function renderPage(template, { route, title, description, body = '', type = 'website', noindex = false, jsonLd }) {
   const url = pageUrl(route);
   const head = [
     ...(noindex ? ['<meta name="robots" content="noindex" />'] : []),
@@ -110,6 +115,7 @@ function renderPage(template, { route, title, description, body = '', type = 'we
     `<meta property="og:url" content="${url}" />`,
     `<meta property="og:image" content="${SITE_URL}/wheelerfslogo.png" />`,
     `<meta name="twitter:card" content="summary" />`,
+    ...(jsonLd ? [`<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, '\\u003c')}</script>`] : []),
   ].join('\n    ');
   // Use replacer functions so "$" in the text (like "$650") is inserted as-is;
   // in a replacement string, "$6" or "$2" would be treated as a special pattern.
@@ -117,6 +123,34 @@ function renderPage(template, { route, title, description, body = '', type = 'we
     .replace(/<!-- page-meta[\s\S]*?<!-- \/page-meta -->/, () => head)
     .replace(/(<div id="root"[^>]*>)(<\/div>)/, (_, open, close) => open + body + close);
 }
+
+const AUTHOR = 'Jordan Wheeler';
+
+// Other posts to link at the end of each post (src/pages/ContentDetail.jsx shows the same)
+const relatedPosts = (posts, post) => posts.filter((p) => p.slug !== post.slug).slice(0, 3);
+
+const relatedHtml = (posts, post) => {
+  const items = relatedPosts(posts, post);
+  if (!items.length) return '';
+  return `<section><h2>More from the blog</h2><ul>${items
+    .map((i) => `<li><a href="/blog/${i.slug}">${escapeHtml(i.title)}</a></li>`)
+    .join('')}</ul></section>`;
+};
+
+// Article details for Google (headline, dates, author, publisher)
+const postJsonLd = (p) => ({
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: p.seoTitle || p.title,
+  description: p.excerpt,
+  datePublished: p.date,
+  dateModified: p.date,
+  url: pageUrl(`/blog/${p.slug}`),
+  mainEntityOfPage: pageUrl(`/blog/${p.slug}`),
+  image: `${SITE_URL}/wheelerfslogo.png`,
+  author: { '@type': 'Person', name: AUTHOR, url: SITE_URL + '/' },
+  publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL + '/', logo: { '@type': 'ImageObject', url: `${SITE_URL}/wheelerfslogo.png` } },
+});
 
 const listHtml = (heading, items, base) =>
   `<h1>${escapeHtml(heading)}</h1>` +
@@ -175,9 +209,10 @@ function prerender(outDir, { posts, episodes, services }) {
       route: `/blog/${p.slug}`,
       title: `${p.seoTitle || p.title} | ${SITE_NAME}`,
       description: p.excerpt,
-      body: `<article><h1>${escapeHtml(p.title)}</h1>${p.html}</article>`,
+      body: `<article><h1>${escapeHtml(p.title)}</h1><p><time datetime="${p.date}">${p.date}</time> · ${AUTHOR}</p>${p.html}${relatedHtml(posts, p)}</article>`,
       type: 'article',
       lastmod: p.date,
+      jsonLd: postJsonLd(p),
     })),
   ];
   if (episodes.length) {
