@@ -27,7 +27,7 @@ const App = () => (
             basePath="/blog"
             title="Blog"
             metaTitle="Blog | Wheeler Food Safety"
-            intro="Food safety validation tips, audit prep, and industry news from Wheeler Food Safety."
+            intro="Food safety validation tips and audit prep for Utah food manufacturers, from Wheeler Food Safety."
             emptyMessage="Our first posts are on the way. Check back soon!"
           />
         }
@@ -38,7 +38,7 @@ const App = () => (
       />
       <Route
         path="blog/:slug"
-        element={<ContentDetail items={posts} basePath="/blog" backLabel="All posts" siteLabel="Wheeler Food Safety" />}
+        element={<ContentDetail items={posts} basePath="/blog" backLabel="All posts" siteLabel="Wheeler Food Safety" relatedLabel="More from the blog" />}
       />
       {episodes.length > 0 && (
         <>

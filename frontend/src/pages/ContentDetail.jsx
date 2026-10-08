@@ -4,7 +4,7 @@ import formatDate from '../formatDate';
 import NotFound from './NotFound';
 
 // Shared page for a single blog post or podcast episode.
-const ContentDetail = ({ items, basePath, backLabel, siteLabel }) => {
+const ContentDetail = ({ items, basePath, backLabel, siteLabel, relatedLabel }) => {
   const { slug } = useParams();
   const item = items.find((i) => i.slug === slug);
 
@@ -14,6 +14,9 @@ const ContentDetail = ({ items, basePath, backLabel, siteLabel }) => {
   });
 
   if (!item) return <NotFound />;
+
+  // a few other posts to read next (newest first)
+  const related = relatedLabel ? items.filter((i) => i.slug !== item.slug).slice(0, 3) : [];
 
   return (
     <main className="content-page">
@@ -49,6 +52,17 @@ const ContentDetail = ({ items, basePath, backLabel, siteLabel }) => {
         )}
 
         <div className="content-body" dangerouslySetInnerHTML={{ __html: item.html }} />
+
+        {related.length > 0 && (
+          <section className="content-related">
+            <h2>{relatedLabel}</h2>
+            <ul>
+              {related.map((r) => (
+                <li key={r.slug}><Link to={`${basePath}/${r.slug}`}>{r.title}</Link></li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <div className="content-cta">
           <p>Need your equipment validated before your next audit?</p>

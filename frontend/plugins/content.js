@@ -2,7 +2,9 @@
 //
 // Reads Markdown files from content/blog and content/podcast, turns them into
 // HTML with `marked`, and exposes them to the app as `virtual:content`.
-// Drafts (draft: true) only appear when running `npm run dev`.
+// Drafts (draft: true) only appear when running `npm run dev`. Posts dated in
+// the future are scheduled: they're left out of the build until their date
+// (Utah time), and the deploy workflow rebuilds the site every morning.
 //
 // After `vite build` it also writes a real HTML page for every blog/podcast
 // route (GitHub Pages has no rewrites, so /blog/my-post needs its own file),
@@ -44,6 +46,9 @@ function labelTableCells(html) {
   });
 }
 
+// Today's date in Utah, as YYYY-MM-DD
+const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+
 // Blog posts and episodes need a date and are listed newest first. Service
 // pages have no date and are listed by their `order` number instead.
 function loadCollection(root, dir, includeDrafts, { dated = true } = {}) {
@@ -74,7 +79,7 @@ function loadCollection(root, dir, includeDrafts, { dated = true } = {}) {
         html: labelTableCells(marked.parse(body)),
       };
     })
-    .filter((item) => includeDrafts || !item.draft)
+    .filter((item) => includeDrafts || (!item.draft && !(dated && item.date > today())))
     .sort((a, b) => (dated ? b.date.localeCompare(a.date) : a.order - b.order));
 }
 
@@ -96,7 +101,7 @@ const escapeHtml = (s) =>
 // Swap title/description/social tags into the built index.html and put the
 // page text inside #root so search engines see it without running JavaScript.
 // React replaces the #root contents as soon as the app loads.
-function renderPage(template, { route, title, description, body = '', type = 'website', noindex = false }) {
+function renderPage(template, { route, title, description, body = '', type = 'website', noindex = false, jsonLd }) {
   const url = pageUrl(route);
   const head = [
     ...(noindex ? ['<meta name="robots" content="noindex" />'] : []),
@@ -110,6 +115,7 @@ function renderPage(template, { route, title, description, body = '', type = 'we
     `<meta property="og:url" content="${url}" />`,
     `<meta property="og:image" content="${SITE_URL}/wheelerfslogo.png" />`,
     `<meta name="twitter:card" content="summary" />`,
+    ...(jsonLd ? [`<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, '\\u003c')}</script>`] : []),
   ].join('\n    ');
   // Use replacer functions so "$" in the text (like "$650") is inserted as-is;
   // in a replacement string, "$6" or "$2" would be treated as a special pattern.
@@ -118,11 +124,71 @@ function renderPage(template, { route, title, description, body = '', type = 'we
     .replace(/(<div id="root"[^>]*>)(<\/div>)/, (_, open, close) => open + body + close);
 }
 
+const AUTHOR = 'Jordan Wheeler';
+
+// Other posts to link at the end of each post (src/pages/ContentDetail.jsx shows the same)
+const relatedPosts = (posts, post) => posts.filter((p) => p.slug !== post.slug).slice(0, 3);
+
+const relatedHtml = (posts, post) => {
+  const items = relatedPosts(posts, post);
+  if (!items.length) return '';
+  return `<section><h2>More from the blog</h2><ul>${items
+    .map((i) => `<li><a href="/blog/${i.slug}">${escapeHtml(i.title)}</a></li>`)
+    .join('')}</ul></section>`;
+};
+
+// Article details for Google (headline, dates, author, publisher)
+const postJsonLd = (p) => ({
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: p.seoTitle || p.title,
+  description: p.excerpt,
+  datePublished: p.date,
+  dateModified: p.date,
+  url: pageUrl(`/blog/${p.slug}`),
+  mainEntityOfPage: pageUrl(`/blog/${p.slug}`),
+  image: `${SITE_URL}/wheelerfslogo.png`,
+  author: { '@type': 'Person', name: AUTHOR, url: SITE_URL + '/' },
+  publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL + '/', logo: { '@type': 'ImageObject', url: `${SITE_URL}/wheelerfslogo.png` } },
+});
+
 const listHtml = (heading, items, base) =>
   `<h1>${escapeHtml(heading)}</h1>` +
   items
     .map((i) => `<article><h2><a href="${base}/${i.slug}">${escapeHtml(i.title)}</a></h2><p>${escapeHtml(i.excerpt)}</p></article>`)
     .join('');
+
+// Text version of the homepage for search engines. The live page is built by
+// React (src/pages/Home.jsx); keep the wording here roughly in step with it.
+function homeHtml(services, posts) {
+  const serviceItems = services
+    .map((s) => `<li><h3><a href="/services/${s.slug}">${escapeHtml(s.title)}</a></h3><p>${escapeHtml(s.excerpt)}</p>${s.price ? `<p>${escapeHtml(s.price)} ${escapeHtml(s.priceNote)}</p>` : ''}</li>`)
+    .join('');
+  const postItems = posts
+    .slice(0, 5)
+    .map((p) => `<li><a href="/blog/${p.slug}">${escapeHtml(p.title)}</a></li>`)
+    .join('');
+  return [
+    '<main>',
+    '<h1>Food Safety Validation Services</h1>',
+    '<p>Serving Utah food manufacturers and related industries with professional metal detector, X-ray system, magnet, and temperature validation services.</p>',
+    '<section id="services"><h2>Professional Validation Services</h2>',
+    '<p>Independent, third-party validation that keeps your foreign material and temperature controls audit-ready for FDA, USDA, SQF, and BRCGS.</p>',
+    `<ul>${serviceItems}</ul></section>`,
+    '<section id="pricing"><h2>Professional Validation Pricing</h2>',
+    '<p>Mixed equipment on one visit: the most expensive unit is billed at its first-unit price, and every other metal detector, X-ray system, or magnet at its additional-unit price. Annual service contracts save 5% (2 visits a year), 10% (quarterly), or 20% (monthly).</p></section>',
+    '<section id="why-us"><h2>Why Choose Wheeler Food Safety?</h2><ul>',
+    '<li>Specialized expertise in metal detectors, X-ray systems, magnets, and temperature mapping</li>',
+    '<li>Independent, audit-ready documentation for FDA, USDA, and GFSI schemes</li>',
+    '<li>Local to Utah, based in Sandy, to minimize downtime</li>',
+    '</ul></section>',
+    postItems ? `<section><h2>From the blog</h2><ul>${postItems}</ul></section>` : '',
+    '<section id="contact"><h2>Contact Us</h2>',
+    '<p>Wheeler Food Safety, 541 W 9560 S, Sandy, UT 84070. Phone <a href="tel:+13852015609">(385) 201-5609</a>. Email <a href="mailto:info@wheelerfs.com">info@wheelerfs.com</a>.</p>',
+    '</section>',
+    '</main>',
+  ].join('');
+}
 
 function prerender(outDir, { posts, episodes, services }) {
   const template = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
@@ -136,16 +202,17 @@ function prerender(outDir, { posts, episodes, services }) {
     {
       route: '/blog',
       title: `Blog | ${SITE_NAME}`,
-      description: 'Food safety validation tips, audit prep, and industry news from Wheeler Food Safety.',
+      description: 'Food safety validation tips and audit prep for Utah food manufacturers, from Wheeler Food Safety.',
       body: listHtml('Blog', posts, '/blog'),
     },
     ...posts.map((p) => ({
       route: `/blog/${p.slug}`,
-      title: `${p.title} | ${SITE_NAME}`,
+      title: `${p.seoTitle || p.title} | ${SITE_NAME}`,
       description: p.excerpt,
-      body: `<article><h1>${escapeHtml(p.title)}</h1>${p.html}</article>`,
+      body: `<article><h1>${escapeHtml(p.title)}</h1><p><time datetime="${p.date}">${p.date}</time> · ${AUTHOR}</p>${p.html}${relatedHtml(posts, p)}</article>`,
       type: 'article',
       lastmod: p.date,
+      jsonLd: postJsonLd(p),
     })),
   ];
   if (episodes.length) {
@@ -199,6 +266,12 @@ function prerender(outDir, { posts, episodes, services }) {
   fs.copyFileSync(path.resolve(outDir, '..', 'node_modules', '@supabase', 'supabase-js', 'dist', 'umd', 'supabase.js'), path.join(adminDir, 'supabase.js'));
   fs.copyFileSync(path.resolve(outDir, '..', 'node_modules', 'jszip', 'dist', 'jszip.min.js'), path.join(adminDir, 'jszip.min.js'));
   fs.copyFileSync(path.resolve(outDir, '..', 'node_modules', 'pdf-lib', 'dist', 'pdf-lib.min.js'), path.join(adminDir, 'pdf-lib.min.js'));
+
+  // Homepage: keep its own title/description, add the page text for search engines
+  fs.writeFileSync(
+    path.join(outDir, 'index.html'),
+    template.replace(/(<div id="root"[^>]*>)(<\/div>)/, (_, open, close) => open + homeHtml(services, posts) + close),
+  );
 
   // GitHub Pages serves 404.html for unknown URLs; the app shows its Not Found page.
   fs.writeFileSync(

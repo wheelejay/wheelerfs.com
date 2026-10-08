@@ -1,12 +1,15 @@
 # Builds the site and publishes it to the gh-pages branch (which GitHub Pages
 # serves at wheelerfs.com) whenever frontend/ changes on main. It can also be
-# run by hand from the Actions tab.
+# run by hand from the Actions tab. It also rebuilds every morning so blog
+# posts dated in the future go live on their date.
 name: Deploy website
 
 on:
   push:
     branches: [main]
     paths: ['frontend/**', 'tools/certificate-generator/**', '.github/workflows/deploy.yml']
+  schedule:
+    - cron: '7 12 * * *' # 6:07am Utah time (5:07am in winter)
   workflow_dispatch:
 
 permissions:

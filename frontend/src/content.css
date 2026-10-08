@@ -159,6 +159,32 @@
   margin-top: 1.5rem;
 }
 
+/* Links to other posts */
+.content-related {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+.content-related h2 {
+  font-size: 1.3rem;
+  margin: 0 0 0.8rem;
+  color: #01426A;
+}
+.content-related ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+.content-related li {
+  margin: 0.4rem 0;
+}
+.content-related a {
+  color: #01426A;
+  font-weight: 600;
+}
+.content-related a:hover {
+  color: #16A34A;
+}
+
 /* Call to action at the end of each post */
 .content-cta {
   margin-top: 3rem;

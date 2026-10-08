@@ -1,7 +1,8 @@
 ---
 title: What Happens During a Metal Detector or X-Ray Validation (and How to Prepare)
+seoTitle: Metal Detector & X-Ray Validation: What to Expect
 date: 2026-10-07
-excerpt: A step-by-step look at validation day, from the pre-checks to the final report, plus a short checklist so your visit runs smoothly and your audit file is complete.
+excerpt: What happens during a metal detector or X-ray validation, step by step, plus a short checklist so your visit runs smoothly and your audit file is complete.
 draft: false
 ---
 
