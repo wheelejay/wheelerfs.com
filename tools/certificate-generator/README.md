@@ -51,6 +51,9 @@ link, quote terms and the footer address are in Settings.
 
 1. Pick the **Certificate type** at the top, then fill in the form on the left; the certificate
    preview on the right updates as you type. Numbers are per type: `WFS-MD-…`, `WFS-XR-…`, `WFS-MG-…`.
+   * **Metal detector:** pick which non-ferrous metal you used (brass, aluminum, copper, or just
+     "Non-Ferrous"), and use **+ Add standard** when a client wants more, for example both brass
+     and aluminum. Each extra standard gets its own results column; ✕ removes it.
    * **X-ray:** same test points as metal detectors, plus optional contaminant standards
      (glass, ceramic, calcified bone, …) with **+ Add contaminant**.
    * **Magnet:** set the number of tubes (up to 24) and test points per tube (up to 8), enter

@@ -55,6 +55,7 @@
   .grid-results td { padding: 2px 4px; }
   .grid-results select { padding: 4px; }
   .std-table input { padding: 4px 6px; }
+  .std-table select { padding: 4px 2px; }
   .warnings { margin: 10px 0 0; padding: 8px 10px; border-radius: 6px; background: #fffbeb; border: 1px solid #fcd34d; color: var(--amber); font-size: 12.5px; }
   .warnings:empty { display: none; }
   .warnings ul { margin: 4px 0 0 18px; padding: 0; }
@@ -664,6 +665,10 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     mg: [...labels(CHECKS.mg), 'Magnet cleaned before testing', 'No ferrous fines left after cleaning', 'Easy-clean mechanism works', 'Identification label legible'],
   };
   const XR_EXTRA = ['Glass', 'Ceramic', 'Calcified bone', 'Dense plastic', 'Rubber', 'Stone', 'Other'];
+  // metal detectors: name the non-ferrous metal when a client asks for it, and add extra metal standards
+  const NF_TYPES = ['Non-Ferrous', 'Non-Ferrous (Brass)', 'Non-Ferrous (Aluminum)', 'Non-Ferrous (Copper)'];
+  const MD_EXTRA = ['Non-Ferrous (Aluminum)', 'Non-Ferrous (Brass)', 'Non-Ferrous (Copper)', 'Ferrous', 'Stainless 304', 'Stainless 316', 'Other'];
+  const EXTRA = { md: MD_EXTRA, xr: XR_EXTRA };
   const MAX_TUBES = 24, MAX_POINTS = 8;
   const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 
@@ -816,6 +821,10 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
 
   // ---------- form building ----------
   const opts = (list, v) => list.map(o => `<option value="${esc(o)}"${o === v ? ' selected' : ''}>${esc(o) || '—'}</option>`).join('');
+  // standard-type picker: short names so the choice fits the narrow Type column
+  const STD_NAMES = { 'Non-Ferrous (Brass)': 'Brass', 'Non-Ferrous (Aluminum)': 'Aluminum', 'Non-Ferrous (Copper)': 'Copper',
+                      'Stainless 304': 'SS 304', 'Stainless 316': 'SS 316' };
+  const stdOpts = (list, v) => list.map(o => `<option value="${esc(o)}"${o === v ? ' selected' : ''}>${esc(STD_NAMES[o] || o)}</option>`).join('');
   const field = (label, k, attrs = '') => `<label>${label}<input data-k="${k}" ${attrs}></label>`;
   function buildTypeFields() {
     const t = cert.type;
@@ -854,15 +863,16 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
         ${field('Pull tester calibration due', 'magnet.pullerCalDue', 'type="date"')}</div>
         <p class="hint">Unlike test spheres, the pull tester's calibration does expire; you'll be warned if it's past due.</p>`
       : `<table class="grid-results std-table">
-        <tr><th>Type</th><th style="width:20%">Size (mm)</th><th style="width:28%">Cert #</th><th style="width:22%">Condition</th>${t === 'xr' ? '<th></th>' : ''}</tr>
+        <tr><th>Type</th><th style="width:20%">Size (mm)</th><th style="width:28%">Cert #</th><th style="width:22%">Condition</th><th></th></tr>
         ${cert.standards.map((s, i) => `<tr>
-          <td>${i < 3 ? esc(s.type) : `<select data-k="standards.${i}.type">${opts(XR_EXTRA, s.type)}</select>`}</td>
+          <td>${i >= 3 ? `<select data-k="standards.${i}.type">${stdOpts(EXTRA[t], s.type)}</select>`
+            : t === 'md' && i === 1 ? `<select data-k="standards.1.type">${stdOpts(NF_TYPES, s.type)}</select>` : esc(s.type)}</td>
           <td><input data-k="standards.${i}.size" inputmode="decimal"></td>
           <td><input data-k="standards.${i}.cert"></td>
           <td><select data-k="standards.${i}.condition">${opts(['Intact', 'Replaced'], s.condition)}</select></td>
-          ${t === 'xr' ? `<td>${i >= 3 ? `<button type="button" class="small" data-remove-std="${i}" title="Remove">✕</button>` : ''}</td>` : ''}</tr>`).join('')}
+          <td>${i >= 3 ? `<button type="button" class="small" data-remove-std="${i}" title="Remove">✕</button>` : ''}</td></tr>`).join('')}
         </table>
-        ${t === 'xr' ? '<div style="margin-top:6px"><button type="button" class="small" id="btnAddStd">+ Add contaminant (glass, bone, …)</button></div>' : ''}
+        <div style="margin-top:6px"><button type="button" class="small" id="btnAddStd">${t === 'xr' ? '+ Add contaminant (glass, bone, …)' : '+ Add standard (aluminum, brass, …)'}</button></div>
         <p class="hint">Your usual test pieces are remembered between certificates (Settings → set as default).</p>`;
 
     if (t === 'mg') {
@@ -898,7 +908,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     $('#dlChecks').innerHTML = CHECK_SUGGESTIONS[t].map(o => `<option>${esc(o)}</option>`).join('');
     $('#btnNext').textContent = 'Next unit, same visit';
   }
-  const shortStd = t => ({ 'Ferrous': 'Fe', 'Non-Ferrous': 'Non-Fe', 'Stainless 316': 'SS' }[t] || t);
+  const shortStd = t => ({ 'Ferrous': 'Fe', 'Non-Ferrous': 'Non-Fe', 'Stainless 316': 'SS', 'Stainless 304': 'SS 304',
+    'Non-Ferrous (Brass)': 'Brass', 'Non-Ferrous (Aluminum)': 'Al', 'Non-Ferrous (Copper)': 'Cu' }[t] || t);
 
   function fillForm() {
     buildTypeFields();
@@ -941,7 +952,9 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const rc = e.target.dataset.removeCheck;
     if (rc !== undefined) { cert.checkItems.splice(Number(rc), 1); fillForm(); }
     if (e.target.id === 'btnAddStd') {
-      cert.standards.push({ type: 'Glass', size: '', cert: '', condition: 'Intact' });
+      // first choice not already on the certificate (e.g. aluminum when brass is the main non-ferrous)
+      const used = cert.standards.map(s => s.type), list = EXTRA[cert.type];
+      cert.standards.push({ type: list.find(x => !used.includes(x)) || list[0], size: '', cert: '', condition: 'Intact' });
       cert.tests.forEach(tp => tp.res.push(''));
       fillForm();
     }
@@ -1265,7 +1278,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
           <td class="c" style="width:16%">${verdict(st.overall)}</td></tr></table>
       </div>`;
     }
-    const sizeLabel = st => ({ 'Ferrous': 'Ferrous', 'Non-Ferrous': 'Non-Ferrous', 'Stainless 316': 'SS 316' }[st.type] || st.type) + (st.size ? ` ${esc(st.size)} mm` : '');
+    const sizeLabel = st => ({ 'Ferrous': 'Ferrous', 'Non-Ferrous': 'Non-Ferrous', 'Stainless 316': 'SS 316', 'Stainless 304': 'SS 304',
+      'Non-Ferrous (Brass)': 'Brass', 'Non-Ferrous (Aluminum)': 'Aluminum', 'Non-Ferrous (Copper)': 'Copper' }[st.type] || st.type) + (st.size ? ` ${esc(st.size)} mm` : '');
     return `<h2>Detection &amp; Rejection Results <em>— 3 passes per test point</em></h2>
       <div class="card"><table>
         <tr><th>Test Point</th>${c.standards.map(st => `<th class="c">${sizeLabel(st)}</th>`).join('')}<th class="c">Result</th></tr>
