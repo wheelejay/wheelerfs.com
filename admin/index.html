@@ -626,7 +626,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const SUPABASE_KEY = 'sb_publishable_EjnwXzqk_jyHS0lVvfRbAw_zMs6S6e2';
   const SUPABASE_JS = HOSTED ? 'supabase.js' : 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js';
   const VERIFY_URL = 'https://wheelerfs.com/verify/?c=';
-  const BUILD = '2026-10-09 00:04';   // the website build writes the deploy time here (see frontend/plugins/content.js)
+  const BUILD = '2026-10-09 00:14';   // the website build writes the deploy time here (see frontend/plugins/content.js)
   const buildText = () => BUILD.startsWith('__') ? 'local file' : BUILD + ' UTC';
 
   // ---------- certificate types ----------
@@ -1366,17 +1366,22 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   }
 
   // Shrinks the certificate just enough to stay on one Letter page (long magnet
-  // grids, extra X-ray contaminants); short certificates are left at full size.
+  // grids, extra standards, long findings); short certificates are left at full size.
+  // Printed text can wrap slightly longer than on screen, so a full page keeps
+  // SLACK px spare; the gap above the signatures absorbs any difference.
+  const SLACK = 18;
   function fitPage(root = '#cert') {
     const page = $(root + ' .page'), content = page.querySelector('.content');
     const cs = getComputedStyle(page);
     const avail = page.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    // content height in page px (the preview is scaled, so compare against the page's own box)
+    const used = () => content.getBoundingClientRect().height / page.getBoundingClientRect().height * page.offsetHeight;
     let k = 1;
     content.style.zoom = 1; content.style.minHeight = '0';
     for (let i = 0; i < 6; i++) {
-      const used = page.scrollHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-      if (used <= avail + 0.5) break;
-      k = Math.max(0.6, k * avail / used - 0.004);
+      const h = used();
+      if (h <= avail - SLACK + 0.5) break;
+      k = Math.max(0.6, k * (avail - SLACK) / h - 0.004);
       content.style.zoom = k;
     }
     content.style.minHeight = (avail / k) + 'px';   // keeps the signatures at the bottom of the page
