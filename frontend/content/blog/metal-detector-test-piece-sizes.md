@@ -34,6 +34,12 @@ A sound approach looks like this:
 
 If you can't explain why you use a particular size, an auditor will ask. "That's what the last company used" isn't a justification.
 
+## Are 3 mm or 4 mm test pieces the right size?
+
+Sizes like 3 mm and 4 mm come up a lot, usually for stainless steel on larger apertures or in wet, salty, or frozen products, where smaller pieces can't be found reliably. On smaller apertures and dry products, many lines can do much better, often well under 3 mm for ferrous.
+
+So 3 mm or 4 mm can be the right answer for one line and far too large for another. The test is the same either way. Is it the smallest size your detector reliably finds in your product? Does it meet your customer's specification? Is your reasoning written down? If your current sizes are larger than your line can achieve, an auditor may ask why you aren't testing with smaller ones.
+
 ## Use certified test pieces
 
 A test piece is only useful if you know its true size. Good practice is to:

@@ -180,7 +180,7 @@ function homeHtml(services, posts) {
     '<section id="why-us"><h2>Why Choose Wheeler Food Safety?</h2><ul>',
     '<li>Specialized expertise in metal detectors, X-ray systems, magnets, and temperature mapping</li>',
     '<li>Independent, audit-ready documentation for FDA, USDA, and GFSI schemes</li>',
-    '<li>Local to Utah, based in Sandy, to minimize downtime</li>',
+    '<li>Local to Utah, based in Sandy and serving plants from Logan and Ogden to Salt Lake City and Provo, to minimize downtime</li>',
     '</ul></section>',
     postItems ? `<section><h2>From the blog</h2><ul>${postItems}</ul></section>` : '',
     '<section id="contact"><h2>Contact Us</h2>',

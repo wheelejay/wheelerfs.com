@@ -247,7 +247,7 @@ const Home = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                 <div><strong style={{ color: '#01426A', fontSize: '1.12rem' }}>Specialized Expertise</strong> – Focused on metal detectors, X-ray systems, magnets, and temperature devices</div>
                 <div><strong style={{ color: '#01426A', fontSize: '1.12rem' }}>Independent &amp; Audit-Ready</strong> – Unbiased results with clear documentation for FDA, USDA, and GFSI compliance</div>
-                <div><strong style={{ color: '#01426A', fontSize: '1.12rem' }}>Local &amp; Responsive</strong> – Utah-based service that minimizes downtime and keeps production moving</div>
+                <div><strong style={{ color: '#01426A', fontSize: '1.12rem' }}>Local &amp; Responsive</strong> – Utah-based service from Logan and Ogden to Salt Lake City and Provo, that minimizes downtime and keeps production moving</div>
               </div>
             </div>
           </div>

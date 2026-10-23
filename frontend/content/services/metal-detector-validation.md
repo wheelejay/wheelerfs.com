@@ -1,6 +1,6 @@
 ---
 title: Metal Detector Validation
-seoTitle: Metal Detector Validation in Utah
+seoTitle: Metal Detector Validation Services in Utah
 excerpt: Independent metal detector validation for Utah food manufacturers, with certified ferrous, non-ferrous, and stainless steel testing and an audit-ready report for every unit.
 icon: /icons/shield.png
 price: $650
@@ -28,8 +28,12 @@ Your metal detector is a critical control, and auditors want proof that it works
 - When you add a new product, package type, or line speed
 - When a customer or certification body requires it
 
+## Where we work
+
+We validate metal detectors at food plants across Utah, from Logan and Ogden to Salt Lake City and Provo. Every unit gets a signed Certificate of Validation with a QR code anyone can scan to confirm it's genuine.
+
 ## Pricing
 
 $650 for the first unit and $250 for each additional unit validated on the same visit. Annual service contracts save 5 to 20 percent. See [pricing](/#pricing) for details.
 
-Want to know more? Read our guide: [Metal Detector Validation: What It Is and What Auditors Look For](/blog/metal-detector-validation-guide).
+Want to know more? Read our guides: [Metal Detector Validation: What It Is and What Auditors Look For](/blog/metal-detector-validation-guide) and [How Often Should You Validate Your Metal Detector?](/blog/how-often-validate-metal-detector)
