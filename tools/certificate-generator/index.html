@@ -657,11 +657,17 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   // instead of a validation with test pieces.
   const isInst = t => t === 'th' || t === 'tp';
   const TRACE = 'Reference standards are calibrated by an A2LA-accredited laboratory (ISO/IEC 17025) with traceability to the National Institute of Standards and Technology (NIST).';
-  const PROBE_KINDS = ['Removable', 'Fixed / installed'];
+  // temperature certificates cover removable probes, fixed gauges and fridge/freezer/room thermometers
+  const ROOM = 'Fridge / freezer / room thermometer';
+  const PROBE_KINDS = ['Removable', 'Fixed / installed', ROOM];
+  const KIND_NAMES = { 'Removable': 'Temperature probe', 'Fixed / installed': 'Temperature gauge', [ROOM]: 'Thermometer' };
   const instMethod = (type, kind) => type === 'th'
     ? 'Comparison against reference standard in a sealed chamber using saturated salt solutions. Each value is the average of 3 readings taken about 10 minutes apart.'
     : kind === 'Fixed / installed' ? 'In-place comparison against reference thermometer at equipment operating temperature.'
+    : kind === ROOM ? 'In-place comparison against reference thermometer placed beside the device in the fridge, freezer or room, after stabilization.'
     : 'Comparison against reference thermometer in ice bath and stirred water bath.';
+  // price-list group for a certificate (temperature certificates are priced by kind of device)
+  const priceGroup = (type, kind) => type !== 'tp' ? type : kind === 'Fixed / installed' ? 'tpf' : kind === ROOM ? 'tpr' : 'tp';
   // default reading points (tolerances from typical manufacturer specs; change them per device)
   function instRows(type, kind, unit) {
     const f = unit === '°F';
@@ -670,6 +676,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
                                row('2', 'RH', '75 %RH (NaCl)', '3'), row('2', 'Temp', 'Ambient', f ? '0.5' : '0.3')];
     const tol = f ? '1.8' : '1.0';
     if (kind === 'Fixed / installed') return [row('1', 'Temp', 'Lower operating setpoint', tol), row('2', 'Temp', 'Upper operating setpoint', tol)];
+    if (kind === ROOM) return [row('1', 'Temp', 'Operating temperature (in place)', tol)];
     return [row('1', 'Temp', f ? '32.0 °F (ice point)' : '0.0 °C (ice point)', tol), row('2', 'Temp', 'Operating temperature', tol)];
   }
   const instRefs = type => [{ instrument: type === 'th' ? 'Rotronic HP32 w/ HC2A-S probe' : 'Fluke 1551A-12', serial: '', certNo: '',
@@ -722,6 +729,15 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const stdSet = () => [{ type: 'Ferrous', size: '', cert: '', condition: 'Intact' },
                         { type: 'Non-Ferrous', size: '', cert: '', condition: 'Intact' },
                         { type: 'Stainless 316', size: '', cert: '', condition: 'Intact' }];
+  const INST_PRICES = [
+    { id: 'th1', name: 'Thermohygrometer verification (RH + temp) – first device', price: 195, certType: 'th', role: 'first', taxable: true },
+    { id: 'th2', name: 'Thermohygrometer verification – additional device, same visit', price: 60, certType: 'th', role: 'additional', taxable: true },
+    { id: 'tp1', name: 'Temperature probe verification, removable – first device', price: 175, certType: 'tp', role: 'first', taxable: true },
+    { id: 'tp2', name: 'Temperature probe verification, removable – additional device, same visit', price: 90, certType: 'tp', role: 'additional', taxable: true },
+    { id: 'tpf1', name: 'Fixed temperature gauge verification (in place) – first device', price: 175, certType: 'tpf', role: 'first', taxable: true },
+    { id: 'tpf2', name: 'Fixed temperature gauge verification – additional device, same visit', price: 90, certType: 'tpf', role: 'additional', taxable: true },
+    { id: 'tpr1', name: 'Fridge, freezer or room thermometer verification – first device', price: 125, certType: 'tpr', role: 'first', taxable: true },
+    { id: 'tpr2', name: 'Fridge, freezer or room thermometer verification – additional device, same visit', price: 40, certType: 'tpr', role: 'additional', taxable: true }];
   const defaults = {
     settings: { techName: 'Jordan Wheeler', reviewerTitle: 'Owner / Authorized Signatory', intervalMonths: 6,
                 procedure: '', criteria: "Client HACCP / food safety plan specification", signature: '', showQr: true,
@@ -740,6 +756,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
                   { id: 'xr2', name: 'X-ray system validation – additional unit, same visit', price: 300, certType: 'xr', role: 'additional', taxable: true },
                   { id: 'mg1', name: 'Magnet validation – first unit', price: 350, certType: 'mg', role: 'first', taxable: true },
                   { id: 'mg2', name: 'Magnet validation – additional unit, same visit', price: 150, certType: 'mg', role: 'additional', taxable: true },
+                  ...INST_PRICES,
                   { id: 'tm', name: 'Temperature mapping', price: 0, certType: '', role: '', taxable: true }] },
     customers: [], counters: {}, draft: null, bills: [], billDraft: null
   };
@@ -755,6 +772,13 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     out.billing = Object.assign(structuredClone(defaults.settings.billing), v?.billing);
     if (!out.billing.noTaxDefault) { if (Number(out.billing.taxRate) === 7.25) out.billing.taxRate = 0; out.billing.noTaxDefault = true; }
     if (!Array.isArray(out.prices) || !out.prices.length) out.prices = structuredClone(defaults.settings.prices);
+    // price items added in later versions appear once in existing price lists (deleting one keeps it deleted)
+    out.priceAdded ||= [];
+    for (const item of INST_PRICES) if (!out.priceAdded.includes(item.id)) {
+      const at = out.prices.findIndex(p => p.id === 'tm');   // before "Temperature mapping", or at the end
+      if (!out.prices.some(p => p.id === item.id)) out.prices.splice(at < 0 ? out.prices.length : at, 0, structuredClone(item));
+      out.priceAdded.push(item.id);
+    }
     return out;
   }
   db.settings = mergeSettings(db.settings);
@@ -892,6 +916,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     if (!found || tol == null) return { found, left, foundOk: null, result: '' };
     return { found, left, foundOk: ok(found), result: (left ? ok(left) : ok(found)) ? 'PASS' : 'FAIL' };
   }
+  const titleCase = v => String(v || '').trim().replace(/\b[a-z]/g, ch => ch.toUpperCase());
   const rowUnit = (r, unit) => r.param === 'RH' ? '%RH' : unit;
   const withUnit = (v, u) => /^\s*-?\d+(\.\d+)?\s*$/.test(v || '') ? `${String(v).trim()} ${u}` : v;
 
@@ -1002,7 +1027,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
         ${field('Model', 'equip.model', `placeholder="${th ? 'e.g. GSP-6G' : 'e.g. TW8060'}"`)}
         ${field('Serial / ID #', 'equip.serial')}
         ${field('Location in plant', 'equip.assetId', `placeholder="${th ? 'e.g. Dry storage' : 'e.g. Kettle 2'}"`)}
-        ${th ? '' : `<label>Probe type<select data-k="equip.probeKind">${opts(PROBE_KINDS, cert.equip.probeKind)}</select></label>`}
+        ${th ? '' : `<label>Device type<select data-k="equip.probeKind">${opts(PROBE_KINDS, cert.equip.probeKind)}</select></label>`}
       </div>
       <div class="row full" style="margin-top:8px">
         ${field('Manufacturer accuracy', 'equip.accuracy', `placeholder="${th ? 'e.g. ±3 %RH (20–80 %RH @ 25 °C); ±0.3 °C' : 'e.g. ±0.5 °C (−20 to 120 °C)'}"`)}
@@ -1019,7 +1044,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       </div>
       <div class="row full" style="margin-top:8px"><label>Method<textarea data-k="inst.method" style="min-height:58px"></textarea></label></div>
       ${th ? '<p class="hint">Run near 25 °C (77 °F), where the RH accuracy is specified. Allow 2–4 hours per point.</p>'
-           : '<p class="hint">Removable probes: ice point plus the customer\'s operating temperature. Fixed probes: the equipment\'s lower and upper setpoints. Never assume water boils at 100 °C at altitude; read the reference.</p>'}`;
+           : '<p class="hint">Removable probes: ice point plus the customer\'s operating temperature. Fixed gauges: the equipment\'s lower and upper setpoints. Fridge, freezer and room thermometers: in place, reference beside the device. Never assume water boils at 100 °C at altitude; read the reference.</p>'}`;
 
     $('#stdFields').innerHTML = I.refs.map((r, i) => `<div class="ref-box">
         <div class="ref-head">Reference ${i + 1}${I.refs.length > 1 ? ` <button type="button" class="small" data-remove-ref="${i}" title="Remove">✕</button>` : ''}</div>
@@ -1078,7 +1103,9 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       const I = cert.inst, tmpl = rs => JSON.stringify(rs.map(r => [r.point, r.param, r.nominal, r.tol]));
       const rowsDefault = tmpl(I.rows) === tmpl(instRows(cert.type, cert.equip.probeKind, I.unit)) && I.rows.every(r => !r.ref && !r.found && !r.left);
       const methodDefault = I.method === instMethod(cert.type, cert.equip.probeKind);
+      const nameDefault = cert.equip.description === KIND_NAMES[cert.equip.probeKind];
       set(cert, k, e.target.value);
+      if (nameDefault && KIND_NAMES[cert.equip.probeKind]) cert.equip.description = KIND_NAMES[cert.equip.probeKind];
       if (rowsDefault) I.rows = instRows(cert.type, cert.equip.probeKind, I.unit);
       if (methodDefault) I.method = instMethod(cert.type, cert.equip.probeKind);
       return fillForm();
@@ -1443,7 +1470,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
 
   function equipmentCard(c) {
     if (isInst(c.type)) return dl([['Description', c.equip.description], ['Make', c.equip.manufacturer], ['Model', c.equip.model],
-      ['Serial / ID #', c.equip.serial], ['Location in Plant', c.equip.assetId], ...(c.type === 'tp' ? [['Probe Type', c.equip.probeKind]] : []),
+      ['Serial / ID #', c.equip.serial], ['Location in Plant', c.equip.assetId], ...(c.type === 'tp' ? [['Device Type', c.equip.probeKind === ROOM ? 'Fridge / freezer / room' : c.equip.probeKind]] : []),
       ['Mfr. Accuracy', c.equip.accuracy], ['Tolerance Applied', c.equip.tolerance]]);
     if (c.type === 'mg') return dl([['Magnet Type', c.equip.magnetType], ['Manufacturer', c.equip.manufacturer],
       ['Model / Element', c.equip.element], ['Serial #', c.equip.serial], ['Asset ID / Location', c.equip.assetId],
@@ -1553,7 +1580,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
           <small>Independent &amp; Audit-Ready Equipment Validation · A Meldrum Company</small></div>
         <div class="doc"><h1>Certificate of ${inst ? kind : 'Validation'}</h1>
           <div class="no">No. ${show(c.certNo)}</div>
-          <div class="meta">${inst ? `${T.title} ${kind}` : T.title} · Page 1 of 1</div></div>
+          <div class="meta">${inst ? `${esc(titleCase(c.equip.description) || T.title)} ${kind}` : T.title} · Page 1 of 1</div></div>
       </header>
       <div class="accent"></div>
 
@@ -1683,7 +1710,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const LBL_PX = 10;   // drawing pixels per point: 4× the printer's 2.5 dots per point
   const dot = v => Math.round(v * 2.5) / 2.5;   // snap a position or size to whole printer dots
   const LBL_FONT = 'Arial, "Liberation Sans", Helvetica, sans-serif';
-  const LBL_TYPE = { md: 'METAL DETECTOR', xr: 'X-RAY SYSTEM', mg: 'MAGNET', th: 'THERMOHYGROMETER', tp: 'TEMP PROBE' };
+  const LBL_TYPE = { md: 'METAL DETECTOR', xr: 'X-RAY SYSTEM', mg: 'MAGNET', th: 'THERMOHYGROMETER', tp: 'TEMP PROBE', tpf: 'TEMP GAUGE', tpr: 'THERMOMETER' };
   const LBL_NS = ['main', 'style', 'text', 'draw', 'image', 'barcode', 'database', 'table', 'cable']
     .map(k => `xmlns:${k === 'main' ? 'pt' : k}="http://schemas.brother.info/ptouch/2007/lbx/${k}"`).join(' ');
 
@@ -1797,7 +1824,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const [sc, sg] = lblCanvas(60.8, 31.2);
     sg.fillStyle = '#000'; sg.beginPath(); sg.roundRect(0, 0, sc.width, sc.height, 3.2 * LBL_PX); sg.fill();
     const white = { color: '#fff', maxW: 56 };
-    lblCentre(sg, LBL_TYPE[d.type] || LBL_TYPE.md, 30.4, 1.6, 5.0, { ...white, spacing: 0.35, stroke: 0.14 });
+    lblCentre(sg, LBL_TYPE[priceGroup(d.type, d.kind)] || LBL_TYPE.md, 30.4, 1.6, 5.0, { ...white, spacing: 0.35, stroke: 0.14 });
     if (result.length > 4) lblCentre(sg, result, 30.4, 9.4, 8.0, { ...white, spacing: 0.3, stroke: 0.1 });
     else lblCentre(sg, result, 30.4, 6.4, 13.5, { ...white, spacing: 0.7 });
     lblCentre(sg, inst ? 'MONITORING' : 'CRITICAL', 30.4, 19.6, 5.2, { ...white, spacing: 0.4, stroke: 0.16 });
@@ -1854,11 +1881,11 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   }
 
   const labelName = no => `${no} label.lbx`.replace(/[\\/:*?"<>|]/g, '');
-  const labelFromRow = r => ({ certNo: r.cert_no, code: r.verify_code, type: r.cert_type || 'md', asLeft: r.as_left, serial: r.serial,
+  const labelFromRow = r => ({ certNo: r.cert_no, code: r.verify_code, type: r.cert_type || 'md', kind: r.probe_kind, asLeft: r.as_left, serial: r.serial,
     assetId: r.asset_id, valDate: r.validation_date, nextDue: r.next_due, tech: r.tech_name });
   $('#btnLabel').addEventListener('click', async () => {
     if (!cert.certNo) return alert('Give the certificate a number first (Auto next to Certificate No.).');
-    saveBlob(labelName(cert.certNo), await buildLabel({ certNo: cert.certNo, code: cert.verifyCode, type: cert.type, asLeft: cert.asLeft,
+    saveBlob(labelName(cert.certNo), await buildLabel({ certNo: cert.certNo, code: cert.verifyCode, type: cert.type, kind: cert.equip.probeKind, asLeft: cert.asLeft,
       serial: cert.equip.serial, assetId: cert.equip.assetId, valDate: cert.valDate, nextDue: addMonths(cert.valDate, cert.intervalMonths), tech: cert.techName }));
     toast(cert.publishedAt ? 'Label saved. Open it in P-touch Editor and print.'
       : 'Label saved. Open it in P-touch Editor to print; publish the certificate so its QR code works.');
@@ -2284,7 +2311,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   async function loadRecords() {
     try {
       const { data, error } = await (await supa()).from('certificates')
-        .select('id, cert_no, validation_date, next_due, manufacturer, model, serial, asset_id, as_found, as_left, status, pdf_path, customer_id, updated_at, verify_code, tech_name:data->>techName, cert_type:data->>certType, service_order:data->client->>serviceOrder, po:data->client->>po, customers(name, details)')
+        .select('id, cert_no, validation_date, next_due, manufacturer, model, serial, asset_id, as_found, as_left, status, pdf_path, customer_id, updated_at, verify_code, tech_name:data->>techName, cert_type:data->>certType, probe_kind:data->equip->>probeKind, service_order:data->client->>serviceOrder, po:data->client->>po, customers(name, details)')
         .order('validation_date', { ascending: false }).order('cert_no', { ascending: false });
       if (error) throw error;
       db.recordsCache = { rows: data, at: new Date().toISOString() }; persist();
@@ -2930,10 +2957,11 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       serviceDate: rows.map(x => x.validation_date).sort()[0] || '', certNos: rows.map(x => x.cert_no) });
     const price = (type, role) => db.settings.prices.find(p => p.certType === type && p.role === role) || db.settings.prices.find(p => p.certType === type);
     bill.lines = [];
-    for (const type of ['md', 'xr', 'mg', 'th', 'tp']) rows.filter(x => (x.cert_type || 'md') === type).forEach((x, i) => {
+    // instruments: first device of each kind at the first-device price, the rest at the additional price
+    for (const type of ['md', 'xr', 'mg', 'th', 'tp', 'tpf', 'tpr']) rows.filter(x => priceGroup(x.cert_type || 'md', x.probe_kind) === type).forEach((x, i) => {
       const p = price(type, i === 0 ? 'first' : 'additional');
       bill.lines.push({ item: p?.id || '', qty: 1, price: p?.price || '', taxable: p ? p.taxable !== false : true,
-        description: `${p?.name || TAG[type] + (isInst(type) ? ' verification' : ' validation')}: ${x.cert_no}${x.serial ? ', S/N ' + x.serial : x.asset_id ? ', ' + x.asset_id : ''}` });
+        description: `${p?.name || (TAG[type] || 'Temperature device') + (TAG[type] && !isInst(type) ? ' validation' : ' verification')}: ${x.cert_no}${x.serial ? ', S/N ' + x.serial : x.asset_id ? ', ' + x.asset_id : ''}` });
     });
     if (!bill.lines.length) bill.lines = blankBill('invoice').lines;
     dlgR.close(); setMode('billing');
@@ -2955,8 +2983,10 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
           <td><input data-price="${i}" data-f="price" type="number" step="0.01" value="${esc(p.price)}" style="width:100px"></td>
           <td><select data-price="${i}" data-f="use">${[['', '—'], ['md:first', 'Metal detector · first unit'], ['md:additional', 'Metal detector · additional'],
             ['xr:first', 'X-ray · first unit'], ['xr:additional', 'X-ray · additional'], ['mg:first', 'Magnet · first unit'], ['mg:additional', 'Magnet · additional'],
-            ['th:first', 'Thermohygrometer · first unit'], ['th:additional', 'Thermohygrometer · additional'],
-            ['tp:first', 'Temperature probe · first unit'], ['tp:additional', 'Temperature probe · additional']]
+            ['th:first', 'Thermohygrometer · first'], ['th:additional', 'Thermohygrometer · additional'],
+            ['tp:first', 'Removable probe · first'], ['tp:additional', 'Removable probe · additional'],
+            ['tpf:first', 'Fixed gauge · first'], ['tpf:additional', 'Fixed gauge · additional'],
+            ['tpr:first', 'Fridge/room thermometer · first'], ['tpr:additional', 'Fridge/room thermometer · additional']]
             .map(([v, l]) => `<option value="${v}"${v === (p.certType ? p.certType + ':' + p.role : '') ? ' selected' : ''}>${l}</option>`).join('')}</select></td>
           <td style="text-align:center"><input type="checkbox" data-price="${i}" data-f="taxable"${p.taxable !== false ? ' checked' : ''} style="width:auto"></td>
           <td class="acts"><button type="button" class="small" data-del-price="${i}">✕</button></td></tr>`).join('')}</table>

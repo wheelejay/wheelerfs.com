@@ -70,6 +70,33 @@ Page: https://wheelerfs.com/services/temperature-mapping
   of loggers, and the length of the study. There is no fixed price; offer to
   collect details for a quote.
 
+### Thermometer & Hygrometer Verification
+Page: https://wheelerfs.com/services/thermometer-hygrometer-verification
+- NIST-traceable verification of thermohygrometers (temperature + humidity
+  meters, e.g. in dry storage), removable temperature probes, fixed or
+  installed temperature gauges, and fridge, freezer, or room thermometers.
+- Each device is compared against calibrated reference standards. Results show
+  the reference reading, the device reading, the error, and pass/fail against
+  the manufacturer's (or the customer's) tolerance.
+- Thermohygrometers: checked at two humidity points (ambient and about 75 %RH,
+  in a sealed salt-solution chamber), with temperature at each point.
+- Removable probes: ice point (0 °C / 32 °F) plus the customer's operating
+  temperature. Fixed gauges: in place, at the equipment's operating
+  temperature. Fridge, freezer, and room thermometers: in place.
+- If a device can be adjusted and is out of tolerance, Jordan can adjust it and
+  re-check it; the certificate then becomes a Certificate of Calibration.
+- Each device gets a Certificate of Verification (or Calibration) with a QR
+  code, in the customer portal.
+- Wheeler Food Safety's reference standards are calibrated by an accredited
+  lab and are NIST-traceable. Do not say Wheeler itself is ISO 17025 or A2LA
+  accredited.
+- Prices (first device of that kind / each additional device of the same kind
+  on the same visit):
+  - Thermohygrometer (2 points, RH + temp): $195 / $60
+  - Temperature probe, removable (ice point + operating point): $175 / $90
+  - Temperature gauge, fixed (in place, at operating temperature): $175 / $90
+  - Fridge, freezer, or room thermometer: $125 / $40
+
 ## How multi-unit visits are billed
 Metal detectors, X-ray systems, and magnets validated on the same visit are
 billed together:
@@ -81,6 +108,10 @@ billed together:
 - Example: 2 X-ray systems and 3 metal detectors = $700 + $300 + 3 x $250 =
   $1,750.
 - Temperature mapping is quoted separately.
+- Thermometer and hygrometer verification is priced per kind of device, on its
+  own: the first device of each kind at its first-device price and the rest of
+  that kind at the additional price. Example: 3 thermohygrometers and 4 fridge
+  thermometers = $195 + 2 x $60 + $125 + 3 x $40 = $560.
 Use the estimate_price tool for any calculation.
 
 ## Annual service contracts (best value)

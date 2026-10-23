@@ -66,6 +66,13 @@ const Home = () => {
       alt: 'Thermometer Icon',
       title: 'Temperature Mapping',
       desc: 'Comprehensive temperature mapping for ambient/cold rooms and high temperature with validated loggers.'
+    },
+    {
+      slug: 'thermometer-hygrometer-verification',
+      icon: '/icons/thermometer.png',
+      alt: 'Thermometer Icon',
+      title: 'Thermometer & Hygrometer Verification',
+      desc: 'NIST-traceable verification of thermohygrometers, temperature probes, gauges, and fridge and freezer thermometers.'
     }
   ];
 
@@ -116,6 +123,18 @@ const Home = () => {
         'Validated data loggers',
         'Coolers, freezers, warehouses, and ovens',
         'Hot and cold spot identification'
+      ]
+    },
+    {
+      title: 'Thermometer & Hygrometer Verification',
+      price: 'From $125',
+      sub: 'First device of each kind',
+      add: 'Less for each additional device',
+      features: [
+        'Thermohygrometer: $195, +$60 each additional',
+        'Removable temperature probe: $175, +$90',
+        'Fixed temperature gauge: $175, +$90',
+        'Fridge, freezer, or room thermometer: $125, +$40'
       ]
     }
   ];
@@ -176,7 +195,7 @@ const Home = () => {
                 justifyContent: 'center',
               }}>
                 <h3 style={{ color: '#01426A', fontSize: '1.55rem', fontWeight: 800, marginBottom: '0.5rem', textAlign: 'center', width: '100%' }}>{card.title}</h3>
-                <div style={{ color: '#16A34A', fontSize: card.price.startsWith('$') ? '3rem' : '1.9rem', fontWeight: 800, marginBottom: '0.0rem', textAlign: 'center', width: '100%' }}>{card.price}</div>
+                <div style={{ color: '#16A34A', fontSize: card.price.includes('$') ? '3rem' : '1.9rem', fontWeight: 800, marginBottom: '0.0rem', textAlign: 'center', width: '100%' }}>{card.price}</div>
                 <div style={{ color: '#01426A', fontSize: '1.08rem', fontWeight: 700, textAlign: 'center', width: '100%', marginBottom: '0.08rem', marginTop: '-0.2rem' }}>{card.sub}</div>
                 <div style={{ color: '#01426A', fontSize: '0.98rem', fontWeight: 500, textAlign: 'center', width: '100%', marginBottom: '0.08rem' }}>{card.add}</div>
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none', textAlign: 'left', width: '100%', fontSize: '0.89rem' }}>
@@ -189,6 +208,7 @@ const Home = () => {
           </div>
           <p className="pricing-mix-note">
             <strong>Mixed equipment on one visit?</strong> The most expensive unit is billed at its first-unit price, and every other unit (metal detectors, X-ray systems, and magnets) at its additional-unit price. For example, 2 X-ray systems and 3 metal detectors: $700 + $300 + 3 × $250 = $1,750.
+            Thermometers and hygrometers are priced per kind of device: the first of each kind at its first-device price, the rest at the additional price.
           </p>
           {/* Annual Service Contracts */}
           <div style={{ maxWidth: '900px', margin: '0 auto', marginTop: '2.5rem' }}>
