@@ -91,7 +91,7 @@ const Layout = () => {
                 <ul id="services-menu" className="nav-submenu">
                   {services.map((service) => (
                     <li key={service.slug}>
-                      <Link to={`/services/${service.slug}`} onClick={handleNavLinkClick}>{service.title}</Link>
+                      <Link to={`/services/${service.slug}/`} onClick={handleNavLinkClick}>{service.title}</Link>
                     </li>
                   ))}
                   <li className="nav-submenu-all">
@@ -101,8 +101,8 @@ const Layout = () => {
               </li>
               <li><Link to="/#pricing" onClick={handleNavLinkClick}>Pricing</Link></li>
               <li><Link to="/#why-us" onClick={handleNavLinkClick}>Why Us</Link></li>
-              <li><Link to="/blog" onClick={handleNavLinkClick}>Blog</Link></li>
-              {episodes.length > 0 && <li><Link to="/podcast" onClick={handleNavLinkClick}>Podcast</Link></li>}
+              <li><Link to="/blog/" onClick={handleNavLinkClick}>Blog</Link></li>
+              {episodes.length > 0 && <li><Link to="/podcast/" onClick={handleNavLinkClick}>Podcast</Link></li>}
               <li><Link to="/#contact" onClick={handleNavLinkClick}>Contact</Link></li>
             </ul>
           </nav>
@@ -125,13 +125,13 @@ const Layout = () => {
             <strong style={{ fontSize: '1.15rem', fontWeight: 800 }}>Services</strong>
             <div className="footer-service-links" style={{ marginTop: '0.5em', fontSize: '0.98rem', fontWeight: 400 }}>
               {services.map((service) => (
-                <Link key={service.slug} to={`/services/${service.slug}`}>{service.title}</Link>
+                <Link key={service.slug} to={`/services/${service.slug}/`}>{service.title}</Link>
               ))}
             </div>
             <div style={{ marginTop: '0.8em', fontSize: '0.98rem', fontWeight: 400 }}>
-              <Link to="/blog">Blog</Link>
-              {episodes.length > 0 && <> · <Link to="/podcast">Podcast</Link></>}
-              {' · '}<Link to="/portal">Customer portal</Link>
+              <Link to="/blog/">Blog</Link>
+              {episodes.length > 0 && <> · <Link to="/podcast/">Podcast</Link></>}
+              {' · '}<Link to="/portal/">Customer portal</Link>
             </div>
           </div>
           <div>

@@ -53,7 +53,7 @@ const Verify = () => {
             <dt>Equipment</dt><dd>{[cert.manufacturer, cert.model].filter(Boolean).join(' ') || '—'}</dd>
             <dt>Serial #</dt><dd>{cert.serial || '—'}</dd>
           </dl>
-          <p className="verify-note">Check that the certificate number and serial number above match the paper certificate. Customers can sign in to the <Link to="/portal">customer portal</Link> to download the full certificate.</p>
+          <p className="verify-note">Check that the certificate number and serial number above match the paper certificate. Customers can sign in to the <Link to="/portal/">customer portal</Link> to download the full certificate.</p>
         </div>
       )}
     </main>
