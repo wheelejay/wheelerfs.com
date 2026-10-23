@@ -26,7 +26,7 @@ const Verify = () => {
   const due = cert && daysUntil(cert.next_due);
   const statusText = cert && (cert.status === 'revoked' ? 'Revoked'
     : cert.status === 'superseded' ? 'Superseded by a newer certificate'
-    : due !== null && due < 0 ? 'Genuine. Validation is past due' : 'Genuine and current');
+    : due !== null && due < 0 ? 'Genuine. Past due for its next service' : 'Genuine and current');
   const tone = cert && (cert.status === 'revoked' ? 'bad' : cert.status === 'superseded' || due < 0 ? 'warn' : 'good');
 
   return (
@@ -48,8 +48,8 @@ const Verify = () => {
           <dl className="verify-facts">
             <dt>Certificate No.</dt><dd>{cert.cert_no}</dd>
             <dt>Issued by</dt><dd>Wheeler Food Safety Service LLC</dd>
-            <dt>Validation date</dt><dd>{formatDay(cert.validation_date)}</dd>
-            {cert.next_due && <><dt>Next validation due</dt><dd>{formatDay(cert.next_due)}</dd></>}
+            <dt>Service date</dt><dd>{formatDay(cert.validation_date)}</dd>
+            {cert.next_due && <><dt>Next due</dt><dd>{formatDay(cert.next_due)}</dd></>}
             <dt>Equipment</dt><dd>{[cert.manufacturer, cert.model].filter(Boolean).join(' ') || '—'}</dd>
             <dt>Serial #</dt><dd>{cert.serial || '—'}</dd>
           </dl>

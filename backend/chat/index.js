@@ -43,7 +43,7 @@ const TOOLS = [
   {
     name: 'estimate_price',
     description:
-      'Calculate the price of one visit for a mix of metal detectors, X-ray systems, and magnets using Wheeler Food Safety\'s billing rule. Always use this for any price that involves unit counts; never add up prices yourself. Temperature mapping is quoted separately and is not included.',
+      'Calculate the price of one visit for a mix of metal detectors, X-ray systems, magnets, thermohygrometers, and temperature probes, gauges, or thermometers using Wheeler Food Safety\'s billing rules. Always use this for any price that involves unit counts; never add up prices yourself. Temperature mapping is quoted separately and is not included.',
     strict: true,
     input_schema: {
       type: 'object',
@@ -52,8 +52,12 @@ const TOOLS = [
         metal_detectors: { type: 'integer', description: 'Number of metal detectors (0 if none)' },
         xray_systems: { type: 'integer', description: 'Number of X-ray inspection systems (0 if none)' },
         magnets: { type: 'integer', description: 'Number of magnets (0 if none)' },
+        thermohygrometers: { type: 'integer', description: 'Number of thermohygrometers (temperature + humidity meters) (0 if none)' },
+        removable_probes: { type: 'integer', description: 'Number of removable / handheld temperature probes (0 if none)' },
+        fixed_gauges: { type: 'integer', description: 'Number of fixed or installed temperature gauges, checked in place (0 if none)' },
+        room_thermometers: { type: 'integer', description: 'Number of fridge, freezer, or room thermometers (0 if none)' },
       },
-      required: ['metal_detectors', 'xray_systems', 'magnets'],
+      required: ['metal_detectors', 'xray_systems', 'magnets', 'thermohygrometers', 'removable_probes', 'fixed_gauges', 'room_thermometers'],
     },
   },
   {
@@ -128,9 +132,20 @@ const PRICES = {
   magnets: { label: 'Magnet', first: 350, additional: 150 },
 };
 
+// Thermometer and hygrometer verification is priced per kind of device: the first
+// device of each kind at its first-device price, the rest at the additional price.
+const INSTRUMENT_PRICES = {
+  thermohygrometers: { label: 'Thermohygrometer', first: 195, additional: 60 },
+  removable_probes: { label: 'Removable temperature probe', first: 175, additional: 90 },
+  fixed_gauges: { label: 'Fixed temperature gauge', first: 175, additional: 90 },
+  room_thermometers: { label: 'Fridge, freezer or room thermometer', first: 125, additional: 40 },
+};
+
 function estimate(counts) {
-  const units = Object.entries(PRICES).map(([key, p]) => ({ ...p, count: Math.max(0, Math.floor(Number(counts[key]) || 0)) }));
-  const total = units.reduce((n, u) => n + u.count, 0);
+  const count = (key) => Math.max(0, Math.floor(Number(counts[key]) || 0));
+  const units = Object.entries(PRICES).map(([key, p]) => ({ ...p, count: count(key) }));
+  const instruments = Object.entries(INSTRUMENT_PRICES).map(([key, p]) => ({ ...p, count: count(key) }));
+  const total = [...units, ...instruments].reduce((n, u) => n + u.count, 0);
   if (total === 0) return { ok: false, message: 'No units given. Ask how many of each the visitor has.' };
   if (total > 200) return { ok: false, message: 'That many units needs a custom quote from Jordan.' };
   const lines = [];
@@ -149,6 +164,16 @@ function estimate(counts) {
     if (extra > 0) {
       lines.push(`${extra} ${u.label.toLowerCase()}${extra > 1 ? 's' : ''} at $${u.additional} each (additional units): $${extra * u.additional}`);
       sum += extra * u.additional;
+    }
+  }
+  for (const u of instruments) {
+    if (u.count === 0) continue;
+    const name = u.label.toLowerCase();
+    lines.push(`1 ${name} at the first-device price: $${u.first}`);
+    sum += u.first;
+    if (u.count > 1) {
+      lines.push(`${u.count - 1} more ${name}${u.count > 2 ? 's' : ''} at $${u.additional} each: $${(u.count - 1) * u.additional}`);
+      sum += (u.count - 1) * u.additional;
     }
   }
   return {

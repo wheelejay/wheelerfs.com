@@ -159,6 +159,18 @@
   .page .mag-split .mag-table th, .page .mag-split .mag-table td { padding: 2.5px 3px; }
   .page .content { display: flex; flex-direction: column; position: relative; }
 
+  /* ---------- thermohygrometers & temperature probes ---------- */
+  .inst-grid { min-width: 430px; }
+  .inst-grid input, .inst-grid select { padding: 4px 4px; font-size: 13px; }
+  .inst-grid td.err { font-weight: 700; font-size: 12.5px; white-space: nowrap; text-align: center; min-width: 44px; }
+  .inst-grid td.err.good { color: #15803d; } .inst-grid td.err.bad { color: #b91c1c; }
+  .ref-box { border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin-bottom: 8px; background: #fff; }
+  .ref-box .ref-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: var(--blue); margin-bottom: 6px; }
+  .page .inst-table th, .page .inst-table td { padding: 3px 5px; }
+  .page .inst-table td.bad { color: #b91c1c; font-weight: 700; }
+  .page .trace { font-size: 6.9pt; color: var(--muted); padding: 4px 8px 5px; border-top: 1px solid #eef2f7; line-height: 1.35; }
+  .page .unc { font-size: 7.6pt; color: var(--navy); padding: 4px 8px; border-top: 1px solid var(--line); background: var(--tint); }
+
   /* ---------- website (admin) mode ---------- */
   #gate { position: fixed; inset: 0; z-index: 100; background: var(--app-bg); display: flex; align-items: center; justify-content: center; padding: 16px; }
   #gate[hidden] { display: none; }
@@ -310,6 +322,8 @@
             <option value="md">Metal detector</option>
             <option value="xr">X-ray inspection system</option>
             <option value="mg">Magnet (pull test)</option>
+            <option value="th">Thermohygrometer (verification)</option>
+            <option value="tp">Temperature probe (verification)</option>
           </select></label>
       </div>
       <div class="row">
@@ -317,7 +331,7 @@
           <label>Certificate No.<input data-k="certNo"></label>
           <button type="button" class="small" id="btnAutoNo" title="Fill the next number for this type and validation date">Auto</button>
         </div>
-        <label>Validation date<input type="date" data-k="valDate"></label>
+        <label><span id="lblValDate">Validation date</span><input type="date" data-k="valDate"></label>
       </div>
       <div class="row three" style="margin-top:8px">
         <label>Interval (months)<input type="number" min="1" max="24" data-k="intervalMonths"></label>
@@ -349,7 +363,7 @@
     </fieldset>
 
     <fieldset>
-      <legend>Equipment</legend>
+      <legend id="equipLegend">Equipment</legend>
       <div class="saved">
         <select id="selEquip"><option value="">This customer's equipment…</option></select>
         <button type="button" class="small" id="btnSaveEquip">Save equipment</button>
@@ -358,11 +372,12 @@
       <datalist id="dlMfr"><option>Thermo Scientific</option><option>Mettler Toledo Safeline</option><option>Loma Systems</option><option>Fortress Technology</option><option>Eriez</option><option>CEIA</option><option>Anritsu</option><option>Ishida</option><option>Eagle</option></datalist>
       <datalist id="dlReject"><option>Air blast</option><option>Pusher</option><option>Retracting band</option><option>Diverter / flap</option><option>Stop on detect</option><option>Drop-flap (gravity)</option></datalist>
       <datalist id="dlMagMfr"><option>Eriez</option><option>Bunting</option><option>Industrial Magnetics (IMI)</option><option>Puritan Magnetics</option><option>Goudsmit</option><option>Jaykrishna</option><option>N/A</option></datalist>
+      <datalist id="dlInstMfr"><option>Elitech</option><option>ThermoWorks</option><option>Fluke</option><option>Testo</option><option>Traceable (Control Company)</option><option>Taylor</option><option>Comark</option><option>Omega</option><option>Cooper-Atkins</option><option>Govee</option></datalist>
       <datalist id="dlMagType"><option>Grate magnet</option><option>Drawer magnet</option><option>Plate magnet</option><option>Bullet / in-line magnet</option><option>Liquid trap magnet</option><option>Hump magnet</option><option>Magnetic rod</option></datalist>
     </fieldset>
 
     <fieldset>
-      <legend>Test conditions</legend>
+      <legend id="condLegend">Test conditions</legend>
       <div id="condFields"></div>
     </fieldset>
 
@@ -387,8 +402,8 @@
     </fieldset>
 
     <fieldset>
-      <legend>Findings &amp; corrective action</legend>
-      <div class="row full"><label>What you found and what you did<textarea data-k="findings"></textarea></label></div>
+      <legend id="fndLegend">Findings &amp; corrective action</legend>
+      <div class="row full"><label><span id="lblFindings">What you found and what you did</span><textarea data-k="findings"></textarea></label></div>
     </fieldset>
 
     <fieldset>
@@ -542,7 +557,7 @@
         <label>Scope &amp; terms (printed on quotes)<textarea id="setQuoteTerms" style="min-height:70px"></textarea></label>
       </div>
     </div>
-    <p class="hint" style="margin-top:12px"><b>Default test standards:</b> the standards, test points and checks currently on the form become the default for new certificates of the same type (for magnets this also saves the pull tester, acceptance limit and points per tube).</p>
+    <p class="hint" style="margin-top:12px"><b>Default test standards:</b> the standards, test points and checks currently on the form become the default for new certificates of the same type (for magnets this also saves the pull tester, acceptance limit and points per tube; for thermohygrometers and temperature probes, the reference standards, method, traceability statement, uncertainty, unit, interval and reading points).</p>
     <button type="button" class="small" id="btnSetStdDefault">Use current standards, test points &amp; checks as default</button>
 
     <p class="hint" style="margin-top:14px"><b>Signature image</b> (PNG with transparent or white background works best).</p>
@@ -634,7 +649,39 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     md: { label: 'Metal detector', prefix: 'WFS-MD', title: 'Metal Detector Performance Verification', noun: 'metal detector' },
     xr: { label: 'X-ray', prefix: 'WFS-XR', title: 'X-ray Inspection System Performance Verification', noun: 'x-ray inspection system' },
     mg: { label: 'Magnet', prefix: 'WFS-MG', title: 'Magnet Pull-Force Validation', noun: 'magnet' },
+    th: { label: 'Thermohygrometer', prefix: 'WFS-TH', title: 'Thermohygrometer', noun: 'thermohygrometer' },
+    tp: { label: 'Temperature probe', prefix: 'WFS-TP', title: 'Temperature Probe', noun: 'temperature probe' },
   };
+  // Thermohygrometers and temperature probes are measuring instruments: they get a
+  // "verification" (or "calibration" when adjusted) against reference standards
+  // instead of a validation with test pieces.
+  const isInst = t => t === 'th' || t === 'tp';
+  const TRACE = 'Reference standards are calibrated by an A2LA-accredited laboratory (ISO/IEC 17025) with traceability to the National Institute of Standards and Technology (NIST).';
+  // temperature certificates cover removable probes, fixed gauges and fridge/freezer/room thermometers
+  const ROOM = 'Fridge / freezer / room thermometer';
+  const PROBE_KINDS = ['Removable', 'Fixed / installed', ROOM];
+  const KIND_NAMES = { 'Removable': 'Temperature probe', 'Fixed / installed': 'Temperature gauge', [ROOM]: 'Thermometer' };
+  const instMethod = (type, kind) => type === 'th'
+    ? 'Comparison against reference standard in a sealed chamber using saturated salt solutions. Each value is the average of 3 readings taken about 10 minutes apart.'
+    : kind === 'Fixed / installed' ? 'In-place comparison against reference thermometer at equipment operating temperature.'
+    : kind === ROOM ? 'In-place comparison against reference thermometer placed beside the device in the fridge, freezer or room, after stabilization.'
+    : 'Comparison against reference thermometer in ice bath and stirred water bath.';
+  // price-list group for a certificate (temperature certificates are priced by kind of device)
+  const priceGroup = (type, kind) => type !== 'tp' ? type : kind === 'Fixed / installed' ? 'tpf' : kind === ROOM ? 'tpr' : 'tp';
+  // default reading points (tolerances from typical manufacturer specs; change them per device)
+  function instRows(type, kind, unit) {
+    const f = unit === '°F';
+    const row = (point, param, nominal, tol) => ({ point, param, nominal, tol, ref: '', found: '', left: '' });
+    if (type === 'th') return [row('1', 'RH', 'Ambient (no salt)', '3'), row('1', 'Temp', 'Ambient', f ? '0.5' : '0.3'),
+                               row('2', 'RH', '75 %RH (NaCl)', '3'), row('2', 'Temp', 'Ambient', f ? '0.5' : '0.3')];
+    const tol = f ? '1.8' : '1.0';
+    if (kind === 'Fixed / installed') return [row('1', 'Temp', 'Lower operating setpoint', tol), row('2', 'Temp', 'Upper operating setpoint', tol)];
+    if (kind === ROOM) return [row('1', 'Temp', 'Operating temperature (in place)', tol)];
+    return [row('1', 'Temp', f ? '32.0 °F (ice point)' : '0.0 °C (ice point)', tol), row('2', 'Temp', 'Operating temperature', tol)];
+  }
+  const instRefs = type => [{ instrument: type === 'th' ? 'Rotronic HP32 w/ HC2A-S probe' : 'Fluke 1551A-12', serial: '', certNo: '',
+    calDate: '', calDue: '', accuracy: type === 'th' ? '±0.8 %RH, ±0.1 °C' : '±0.05 °C' }];
+  const blankRef = () => ({ instrument: '', serial: '', certNo: '', calDate: '', calDue: '', accuracy: '' });
   const RESULT_OPTS = ['', '3/3', '2/3', '1/3', '0/3', 'N/A'];
   const CHECK_OPTS = ['', 'Pass', 'Fail', 'N/A'];
   const POINTS = [['baseline', 'Baseline (no product)'], ['leading', 'Leading edge (in product)'],
@@ -649,11 +696,15 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     mg: [['intact', 'Tubes / elements physically intact'], ['covers', 'Sanitary covers & welds sound (no cracks)'],
          ['clean', 'Magnet clean, free of build-up'], ['housing', 'Housing, seals & gaskets in good condition'],
          ['installed', 'Correctly installed & seated in line']],
+    th: [['display', 'Display legible & working'], ['battery', 'Battery condition OK'], ['sensor', 'Sensor & housing clean, undamaged']],
+    tp: [['display', 'Display legible & working'], ['battery', 'Battery condition OK'], ['probe', 'Probe tip & cable undamaged']],
   };
   const labels = list => list.map(([, label]) => label);
   const DEFAULT_LAYOUTS = { md: { tests: labels(POINTS), checks: labels(CHECKS.md) },
                             xr: { tests: labels(POINTS), checks: labels(CHECKS.xr) },
-                            mg: { tests: [], checks: labels(CHECKS.mg) } };
+                            mg: { tests: [], checks: labels(CHECKS.mg) },
+                            th: { tests: [], checks: labels(CHECKS.th) },
+                            tp: { tests: [], checks: labels(CHECKS.tp) } };
   const TEST_SUGGESTIONS = [...labels(POINTS), 'Top of aperture', 'Bottom of aperture', 'Left side of aperture', 'Right side of aperture',
     'Product in reverse orientation', 'Worst-case orientation', 'Maximum belt speed', 'Minimum belt speed', 'Two products back-to-back',
     'Thickest part of product', 'Product edge / corner'];
@@ -663,6 +714,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     xr: [...labels(CHECKS.xr), 'Belt stop on detect', 'Reject timing at line speed', 'Stack light / audible alarm', 'Lead curtains intact',
          'Image calibration / learn current', 'Correct product program selected', 'Settings password-protected', 'Emergency stop'],
     mg: [...labels(CHECKS.mg), 'Magnet cleaned before testing', 'No ferrous fines left after cleaning', 'Easy-clean mechanism works', 'Identification label legible'],
+    th: [...labels(CHECKS.th), 'Clock / date set correctly', 'Logging & alarms working', 'Min/max memory cleared', 'Verification label applied'],
+    tp: [...labels(CHECKS.tp), 'Probe connector secure', 'Display / transmitter reads in correct units', 'Verification label applied', 'Thermowell clean (fixed probes)'],
   };
   const XR_EXTRA = ['Glass', 'Ceramic', 'Calcified bone', 'Dense plastic', 'Rubber', 'Stone', 'Other'];
   // metal detectors: name the non-ferrous metal when a client asks for it, and add extra metal standards
@@ -676,12 +729,22 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const stdSet = () => [{ type: 'Ferrous', size: '', cert: '', condition: 'Intact' },
                         { type: 'Non-Ferrous', size: '', cert: '', condition: 'Intact' },
                         { type: 'Stainless 316', size: '', cert: '', condition: 'Intact' }];
+  const INST_PRICES = [
+    { id: 'th1', name: 'Thermohygrometer verification (RH + temp) – first device', price: 195, certType: 'th', role: 'first', taxable: true },
+    { id: 'th2', name: 'Thermohygrometer verification – additional device, same visit', price: 60, certType: 'th', role: 'additional', taxable: true },
+    { id: 'tp1', name: 'Temperature probe verification, removable – first device', price: 175, certType: 'tp', role: 'first', taxable: true },
+    { id: 'tp2', name: 'Temperature probe verification, removable – additional device, same visit', price: 90, certType: 'tp', role: 'additional', taxable: true },
+    { id: 'tpf1', name: 'Fixed temperature gauge verification (in place) – first device', price: 175, certType: 'tpf', role: 'first', taxable: true },
+    { id: 'tpf2', name: 'Fixed temperature gauge verification – additional device, same visit', price: 90, certType: 'tpf', role: 'additional', taxable: true },
+    { id: 'tpr1', name: 'Fridge, freezer or room thermometer verification – first device', price: 125, certType: 'tpr', role: 'first', taxable: true },
+    { id: 'tpr2', name: 'Fridge, freezer or room thermometer verification – additional device, same visit', price: 40, certType: 'tpr', role: 'additional', taxable: true }];
   const defaults = {
     settings: { techName: 'Jordan Wheeler', reviewerTitle: 'Owner / Authorized Signatory', intervalMonths: 6,
                 procedure: '', criteria: "Client HACCP / food safety plan specification", signature: '', showQr: true,
                 standards: stdSet(), standardsXr: stdSet(),
                 magnet: { sphereSize: '6.0', sphereCert: '', pullerModel: '', pullerSerial: '', pullerCalDue: '', limit: '2.50', points: 4 },
                 layouts: structuredClone(DEFAULT_LAYOUTS),
+                inst: { th: null, tp: null },   // saved defaults for thermohygrometers / probes (Settings → use current as default)
                 billing: { taxRate: 0, address: '541 West 9560 South, Sandy, UT 84070',
                   payInstructions: 'Checks: payable to Wheeler Food Safety Service LLC, mailed to the address below.\nACH / bank transfer and credit card: contact us for details.\nPlease include the invoice number with your payment.',
                   cardLink: '',
@@ -693,6 +756,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
                   { id: 'xr2', name: 'X-ray system validation – additional unit, same visit', price: 300, certType: 'xr', role: 'additional', taxable: true },
                   { id: 'mg1', name: 'Magnet validation – first unit', price: 350, certType: 'mg', role: 'first', taxable: true },
                   { id: 'mg2', name: 'Magnet validation – additional unit, same visit', price: 150, certType: 'mg', role: 'additional', taxable: true },
+                  ...INST_PRICES,
                   { id: 'tm', name: 'Temperature mapping', price: 0, certType: '', role: '', taxable: true }] },
     customers: [], counters: {}, draft: null, bills: [], billDraft: null
   };
@@ -704,9 +768,17 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const out = Object.assign(structuredClone(defaults.settings), v);
     out.magnet = Object.assign(structuredClone(defaults.settings.magnet), v?.magnet);
     out.layouts = Object.assign(structuredClone(DEFAULT_LAYOUTS), v?.layouts);
+    out.inst = Object.assign({ th: null, tp: null }, v?.inst);
     out.billing = Object.assign(structuredClone(defaults.settings.billing), v?.billing);
     if (!out.billing.noTaxDefault) { if (Number(out.billing.taxRate) === 7.25) out.billing.taxRate = 0; out.billing.noTaxDefault = true; }
     if (!Array.isArray(out.prices) || !out.prices.length) out.prices = structuredClone(defaults.settings.prices);
+    // price items added in later versions appear once in existing price lists (deleting one keeps it deleted)
+    out.priceAdded ||= [];
+    for (const item of INST_PRICES) if (!out.priceAdded.includes(item.id)) {
+      const at = out.prices.findIndex(p => p.id === 'tm');   // before "Temperature mapping", or at the end
+      if (!out.prices.some(p => p.id === item.id)) out.prices.splice(at < 0 ? out.prices.length : at, 0, structuredClone(item));
+      out.priceAdded.push(item.id);
+    }
     return out;
   }
   db.settings = mergeSettings(db.settings);
@@ -722,12 +794,19 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   function blankCert(type = 'md') {
     const s = db.settings, m = s.magnet, L = s.layouts[type] || DEFAULT_LAYOUTS[type];
     const standards = structuredClone(type === 'xr' ? s.standardsXr : s.standards);
+    const I = isInst(type) ? s.inst?.[type] || {} : null;
     return {
-      type, certNo: '', verifyCode: newVerifyCode(), publishedAt: '', valDate: today(), intervalMonths: s.intervalMonths,
+      type, certNo: '', verifyCode: newVerifyCode(), publishedAt: '', valDate: today(), intervalMonths: I ? I.intervalMonths || 12 : s.intervalMonths,
       asFound: 'In Tolerance', asLeft: 'In Tolerance',
       client: { company: '', address1: '', cityStateZip: '', contact: '', serviceOrder: '', po: '' },
       equip: { manufacturer: '', model: '', serial: '', assetId: '', aperture: '', rejectDevice: '',
-               magnetType: '', element: '', tubeDiameter: '' },
+               magnetType: '', element: '', tubeDiameter: '',
+               ...(I ? { description: type === 'th' ? 'Thermohygrometer' : 'Temperature probe', accuracy: '',
+                         tolerance: 'Manufacturer specification', probeKind: type === 'tp' ? 'Removable' : '' } : {}) },
+      ...(I ? { inst: { unit: I.unit || '°C', adjusted: false, method: I.method || instMethod(type, 'Removable'),
+                        ambientTemp: '', ambientRH: '', stabilization: '',
+                        refs: structuredClone(I.refs || instRefs(type)), traceability: I.traceability || TRACE, uncertainty: I.uncertainty || '',
+                        rows: (I.rows || instRows(type, 'Removable', I.unit || '°C')).map(r => ({ ...r, ref: '', found: '', left: '' })) } } : {}),
       cond: { location: 'On-site', product: '', program: '', beltSpeed: '', criteria: s.criteria, procedure: s.procedure },
       standards,
       tests: (type === 'mg' ? [] : L.tests).map(label => ({ label, res: standards.map(() => '') })),
@@ -743,6 +822,11 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const base = blankCert(type);
     const out = { ...base, ...c, type };
     for (const k of ['client', 'equip', 'cond', 'magnet']) out[k] = { ...base[k], ...(c?.[k] || {}) };
+    if (isInst(type)) {
+      out.inst = { ...base.inst, ...(c?.inst || {}) };
+      if (!Array.isArray(out.inst.refs) || !out.inst.refs.length) out.inst.refs = base.inst.refs;
+      if (!Array.isArray(out.inst.rows)) out.inst.rows = base.inst.rows;
+    } else delete out.inst;
     if (!Array.isArray(out.standards) || !out.standards.length) out.standards = base.standards;
     // certificates saved before rows were editable kept results/checks under fixed keys
     if (!Array.isArray(c?.tests)) out.tests = c?.results && type !== 'mg' ? POINTS.map(([k, label]) => ({ label, res: c.results[k] || [] })) : base.tests;
@@ -819,6 +903,23 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const unitId = () => cert.equip.serial || cert.equip.assetId;
   const equipModel = () => cert.type === 'mg' ? [cert.equip.magnetType, cert.equip.element].filter(Boolean).join(' ') : cert.equip.model;
 
+  // instrument readings: error = device − reference, a point passes when |error| ≤ tolerance
+  const decs = v => (String(v).match(/\.(\d+)/)?.[1].length) || 0;
+  function instErr(ref, val) {
+    const a = num(val), b = num(ref);
+    return a == null || b == null ? null : { v: a - b, d: Math.min(3, Math.max(decs(val), decs(ref))) };
+  }
+  const fmtErr = e => e == null ? '' : (Math.abs(e.v) < 1e-9 ? (0).toFixed(e.d) : (e.v > 0 ? '+' : '−') + Math.abs(e.v).toFixed(e.d));
+  function instRow(r, adjusted) {
+    const found = instErr(r.ref, r.found), left = adjusted ? instErr(r.ref, r.left) : null, tol = num(r.tol);
+    const ok = e => e != null && tol != null && Math.abs(e.v) <= Math.abs(tol) + 1e-9;
+    if (!found || tol == null) return { found, left, foundOk: null, result: '' };
+    return { found, left, foundOk: ok(found), result: (left ? ok(left) : ok(found)) ? 'PASS' : 'FAIL' };
+  }
+  const titleCase = v => String(v || '').trim().replace(/\b[a-z]/g, ch => ch.toUpperCase());
+  const rowUnit = (r, unit) => r.param === 'RH' ? '%RH' : unit;
+  const withUnit = (v, u) => /^\s*-?\d+(\.\d+)?\s*$/.test(v || '') ? `${String(v).trim()} ${u}` : v;
+
   // ---------- form building ----------
   const opts = (list, v) => list.map(o => `<option value="${esc(o)}"${o === v ? ' selected' : ''}>${esc(o) || '—'}</option>`).join('');
   // standard-type picker: short names so the choice fits the narrow Type column
@@ -829,6 +930,14 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   function buildTypeFields() {
     const t = cert.type;
     $('#selType').value = t;
+    const inst = isInst(t);
+    $('#lblValDate').textContent = inst ? 'Date of service' : 'Validation date';
+    $('#equipLegend').textContent = inst ? 'Device under test' : 'Equipment';
+    $('#condLegend').textContent = inst ? 'Method & conditions' : 'Test conditions';
+    $('#fndLegend').textContent = inst ? 'Remarks' : 'Findings & corrective action';
+    $('#lblFindings').textContent = inst ? 'e.g. "Unit out of tolerance at 75 %RH; tagged out of service; customer notified 10/23/2026."' : 'What you found and what you did';
+    if (inst) instFields(t);
+    else {
     $('#equipFields').innerHTML = t === 'mg' ? `<div class="row">
         ${field('Magnet type', 'equip.magnetType', 'list="dlMagType" placeholder="e.g. Grate magnet"')}
         ${field('Manufacturer', 'equip.manufacturer', 'list="dlMagMfr"')}
@@ -900,7 +1009,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
           <button type="button" class="small" id="btnAllPass">Set all to 3/3</button></div>`;
       $('#dlTests').innerHTML = TEST_SUGGESTIONS.map(o => `<option>${esc(o)}</option>`).join('');
     }
-    $('#chkLegend').textContent = t === 'mg' ? 'Physical inspection' : 'Fail-safe & system checks';
+    }
+    $('#chkLegend').textContent = t === 'mg' ? 'Physical inspection' : inst ? 'Condition checks' : 'Fail-safe & system checks';
     $('#chkRows').innerHTML = cert.checkItems.map((ch, r) => `<tr><td><input class="row-label" data-k="checkItems.${r}.label" list="dlChecks" placeholder="Name this check"></td>
       <td style="width:28%"><select data-k="checkItems.${r}.value">${opts(CHECK_OPTS, ch.value)}</select></td>
       <td style="width:34px"><button type="button" class="small" data-remove-check="${r}" title="Remove this check">✕</button></td></tr>`).join('')
@@ -908,6 +1018,72 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     $('#dlChecks').innerHTML = CHECK_SUGGESTIONS[t].map(o => `<option>${esc(o)}</option>`).join('');
     $('#btnNext').textContent = 'Next unit, same visit';
   }
+  // form sections for thermohygrometers and temperature probes
+  function instFields(t) {
+    const I = cert.inst, th = t === 'th';
+    $('#equipFields').innerHTML = `<div class="row">
+        ${field('Description', 'equip.description')}
+        ${field('Make', 'equip.manufacturer', 'list="dlInstMfr"')}
+        ${field('Model', 'equip.model', `placeholder="${th ? 'e.g. GSP-6G' : 'e.g. TW8060'}"`)}
+        ${field('Serial / ID #', 'equip.serial')}
+        ${field('Location in plant', 'equip.assetId', `placeholder="${th ? 'e.g. Dry storage' : 'e.g. Kettle 2'}"`)}
+        ${th ? '' : `<label>Device type<select data-k="equip.probeKind">${opts(PROBE_KINDS, cert.equip.probeKind)}</select></label>`}
+      </div>
+      <div class="row full" style="margin-top:8px">
+        ${field('Manufacturer accuracy', 'equip.accuracy', `placeholder="${th ? 'e.g. ±3 %RH (20–80 %RH @ 25 °C); ±0.3 °C' : 'e.g. ±0.5 °C (−20 to 120 °C)'}"`)}
+        ${field('Tolerance applied', 'equip.tolerance', 'placeholder="Manufacturer specification, or the customer\'s spec"')}
+      </div>`;
+
+    $('#condFields').innerHTML = `<div class="row">
+        <label>Location<select data-k="cond.location">${opts(['On-site', 'In-house'], cert.cond.location)}</select></label>
+        <label>Temperature unit<select data-k="inst.unit">${opts(['°C', '°F'], I.unit)}</select></label>
+        ${field('Procedure / SOP No.', 'cond.procedure', `placeholder="${th ? 'e.g. WFS-SOP-RH-001' : 'e.g. WFS-SOP-TP-001'}"`)}
+        ${field('Stabilization time', 'inst.stabilization', `placeholder="${th ? 'e.g. 3 hr per point' : 'e.g. 5 min per point'}"`)}
+        ${field(`Ambient temperature (${esc(I.unit)})`, 'inst.ambientTemp', 'inputmode="decimal"')}
+        ${field('Ambient humidity (%RH)', 'inst.ambientRH', 'inputmode="decimal"')}
+      </div>
+      <div class="row full" style="margin-top:8px"><label>Method<textarea data-k="inst.method" style="min-height:58px"></textarea></label></div>
+      ${th ? '<p class="hint">Run near 25 °C (77 °F), where the RH accuracy is specified. Allow 2–4 hours per point.</p>'
+           : '<p class="hint">Removable probes: ice point plus the customer\'s operating temperature. Fixed gauges: the equipment\'s lower and upper setpoints. Fridge, freezer and room thermometers: in place, reference beside the device. Never assume water boils at 100 °C at altitude; read the reference.</p>'}`;
+
+    $('#stdFields').innerHTML = I.refs.map((r, i) => `<div class="ref-box">
+        <div class="ref-head">Reference ${i + 1}${I.refs.length > 1 ? ` <button type="button" class="small" data-remove-ref="${i}" title="Remove">✕</button>` : ''}</div>
+        <div class="row">
+          ${field('Instrument', `inst.refs.${i}.instrument`)}
+          ${field('Serial #', `inst.refs.${i}.serial`)}
+          ${field('Cal cert #', `inst.refs.${i}.certNo`)}
+          ${field('Reference accuracy', `inst.refs.${i}.accuracy`)}
+          ${field('Cal date', `inst.refs.${i}.calDate`, 'type="date"')}
+          ${field('Cal due', `inst.refs.${i}.calDue`, 'type="date"')}
+        </div></div>`).join('') + `
+      <div class="btn-row" style="margin:0 0 8px"><button type="button" class="small" id="btnAddRef">+ Add reference standard</button></div>
+      <div class="row full">
+        <label>Traceability statement<textarea data-k="inst.traceability" style="min-height:52px"></textarea></label>
+        ${field('Expanded measurement uncertainty (k=2)', 'inst.uncertainty', `placeholder="${th ? 'e.g. ±1.6 %RH / ±0.15 °C' : 'e.g. ±0.12 °C'}"`)}
+      </div>
+      <p class="hint">Say "NIST-traceable". Don't call this an accredited calibration unless Wheeler holds its own ISO/IEC 17025 accreditation.</p>`;
+
+    $('#resLegend').textContent = 'Readings';
+    $('#resFields').innerHTML = `<label class="check" style="margin:0 0 8px"><input type="checkbox" id="instAdjusted"${I.adjusted ? ' checked' : ''}>
+        Device was adjusted (the certificate becomes a Certificate of Calibration and shows As Left readings)</label>
+      <div style="overflow-x:auto"><table class="grid-results inst-grid">
+        <tr><th style="width:34px">Pt</th>${th ? '<th style="width:64px">Param</th>' : ''}<th>Nominal</th><th style="width:58px">Ref</th>
+          <th style="width:58px">As found</th><th style="width:48px">± Tol</th>${I.adjusted ? '<th style="width:58px">As left</th>' : ''}<th>Error</th><th></th></tr>
+        ${I.rows.map((r, i) => `<tr>
+          <td><input data-k="inst.rows.${i}.point"></td>
+          ${th ? `<td><select data-k="inst.rows.${i}.param">${opts(['RH', 'Temp'], r.param)}</select></td>` : ''}
+          <td><input data-k="inst.rows.${i}.nominal" placeholder="${th ? '' : 'e.g. 85.0 ' + esc(I.unit) + ' (kettle)'}"></td>
+          <td><input data-k="inst.rows.${i}.ref" inputmode="decimal"></td>
+          <td><input data-k="inst.rows.${i}.found" inputmode="decimal"></td>
+          <td><input data-k="inst.rows.${i}.tol" inputmode="decimal"></td>
+          ${I.adjusted ? `<td><input data-k="inst.rows.${i}.left" inputmode="decimal"></td>` : ''}
+          <td class="err" id="instErr${i}"></td>
+          <td><button type="button" class="small" data-remove-row="${i}" title="Remove this reading">✕</button></td></tr>`).join('')}
+      </table></div>
+      <div class="btn-row"><button type="button" class="small" id="btnAddRow">${th ? '+ Add point (e.g. 33 %RH MgCl₂)' : '+ Add point'}</button></div>
+      <p class="hint">Enter readings in ${th ? '%RH and ' : ''}${esc(I.unit)}${th ? ' (average of your 3 readings)' : ''}. Error = device − reference; it turns red when it's outside ± tolerance.${I.adjusted ? ' As Left: the device reading after adjustment, against the same reference.' : ''}</p>`;
+  }
+
   const shortStd = t => ({ 'Ferrous': 'Fe', 'Non-Ferrous': 'Non-Fe', 'Stainless 316': 'SS', 'Stainless 304': 'SS 304',
     'Non-Ferrous (Brass)': 'Brass', 'Non-Ferrous (Aluminum)': 'Al', 'Non-Ferrous (Copper)': 'Cu' }[t] || t);
 
@@ -922,11 +1098,24 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     if (k === 'valDate') {   // performed/issued dates follow the validation date unless you changed them
       for (const d of ['techDate', 'issueDate']) if (!cert[d] || cert[d] === cert.valDate) { cert[d] = e.target.value; $(`[data-k="${d}"]`).value = e.target.value; }
     }
+    if (k === 'inst.unit' || k === 'equip.probeKind') {
+      // untouched default reading points and method follow the unit / probe type
+      const I = cert.inst, tmpl = rs => JSON.stringify(rs.map(r => [r.point, r.param, r.nominal, r.tol]));
+      const rowsDefault = tmpl(I.rows) === tmpl(instRows(cert.type, cert.equip.probeKind, I.unit)) && I.rows.every(r => !r.ref && !r.found && !r.left);
+      const methodDefault = I.method === instMethod(cert.type, cert.equip.probeKind);
+      const nameDefault = cert.equip.description === KIND_NAMES[cert.equip.probeKind];
+      set(cert, k, e.target.value);
+      if (nameDefault && KIND_NAMES[cert.equip.probeKind]) cert.equip.description = KIND_NAMES[cert.equip.probeKind];
+      if (rowsDefault) I.rows = instRows(cert.type, cert.equip.probeKind, I.unit);
+      if (methodDefault) I.method = instMethod(cert.type, cert.equip.probeKind);
+      return fillForm();
+    }
     set(cert, k, e.target.value);
     if (/^standards\.\d+\.type$/.test(k)) return fillForm();   // column headings follow the standard type
     render();
   });
   $('#form').addEventListener('change', e => {
+    if (e.target.id === 'instAdjusted') { cert.inst.adjusted = e.target.checked; return fillForm(); }
     if (e.target.id === 'magTubes' || e.target.id === 'magPoints') {
       const m = cert.magnet;
       m.tubes = clamp($('#magTubes').value, 1, MAX_TUBES); m.points = clamp($('#magPoints').value, 1, MAX_POINTS);
@@ -958,6 +1147,22 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       cert.tests.forEach(tp => tp.res.push(''));
       fillForm();
     }
+    if (e.target.id === 'btnAddRef') { cert.inst.refs.push(blankRef()); fillForm(); }
+    const rr = e.target.dataset.removeRef;
+    if (rr !== undefined) { cert.inst.refs.splice(Number(rr), 1); fillForm(); }
+    if (e.target.id === 'btnAddRow') {
+      const rows = cert.inst.rows, next = String(Math.max(0, ...rows.map(r => parseInt(r.point) || 0)) + 1);
+      const blank = { ref: '', found: '', left: '' }, tolOf = p => rows.find(r => r.param === p)?.tol ?? '';
+      if (cert.type === 'th') rows.push({ point: next, param: 'RH', nominal: rows.some(r => /MgCl/.test(r.nominal)) ? '' : '33 %RH (MgCl₂)', tol: tolOf('RH') || '3', ...blank },
+                                        { point: next, param: 'Temp', nominal: 'Ambient', tol: tolOf('Temp'), ...blank });
+      else rows.push({ point: next, param: 'Temp', nominal: '', tol: tolOf('Temp'), ...blank });
+      fillForm();
+    }
+    const rw = e.target.dataset.removeRow;
+    if (rw !== undefined) {
+      if (cert.inst.rows.length === 1) return alert('A certificate needs at least one reading.');
+      cert.inst.rows.splice(Number(rw), 1); fillForm();
+    }
     const rm = e.target.dataset.removeStd;
     if (rm !== undefined) {
       cert.standards.splice(Number(rm), 1);
@@ -972,6 +1177,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const keep = { client: cert.client, valDate: cert.valDate, intervalMonths: cert.intervalMonths, asFound: cert.asFound,
                    asLeft: cert.asLeft, techName: cert.techName, techDate: cert.techDate, reviewerName: cert.reviewerName,
                    issueDate: cert.issueDate, findings: cert.findings };
+    if (isInst(type) !== isInst(cert.type)) delete keep.intervalMonths;   // instruments default to 12 months
     cert = Object.assign(blankCert(type), structuredClone(keep));
     fillForm(); toast(TYPES[type].label + ' certificate. Click Auto for a ' + TYPES[type].prefix + ' number.');
   });
@@ -1021,10 +1227,17 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     if (type !== cert.type) {
       const keep = { client: cert.client, valDate: cert.valDate, intervalMonths: cert.intervalMonths, techName: cert.techName,
                      techDate: cert.techDate, reviewerName: cert.reviewerName, issueDate: cert.issueDate };
+      if (isInst(type) !== isInst(cert.type)) delete keep.intervalMonths;
       cert = Object.assign(blankCert(type), structuredClone(keep));
     }
-    const { type: _t, _id, _key, product, program, beltSpeed, tubes, points, testLabels, checkLabels, ...equip } = d;
+    const { type: _t, _id, _key, product, program, beltSpeed, tubes, points, testLabels, checkLabels, instRows: savedRows, ...equip } = d;
+    const methodDefault = isInst(type) && cert.inst.method === instMethod(type, cert.equip.probeKind);
     Object.assign(cert.equip, structuredClone(equip));
+    if (isInst(type)) {
+      // this unit's own reading points (e.g. the kettle's cook temperature) and tolerances
+      if (savedRows?.length) cert.inst.rows = savedRows.map(r => ({ ...r, ref: '', found: '', left: '' }));
+      if (methodDefault) cert.inst.method = instMethod(type, cert.equip.probeKind);
+    }
     // this unit's own test points / checks; rows with the same name keep what was already entered
     if (testLabels && type !== 'mg') {
       const prev = new Map(cert.tests.map(tp => [tp.label, tp]));
@@ -1046,6 +1259,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     if (!unitId()) return alert('Enter a serial # or asset ID first.');
     const entry = { type: cert.type, ...cert.equip, product: cert.cond.product, program: cert.cond.program, beltSpeed: cert.cond.beltSpeed };
     if (cert.type === 'mg') Object.assign(entry, { tubes: cert.magnet.tubes, points: cert.magnet.points });
+    else if (isInst(cert.type)) entry.instRows = cert.inst.rows.map(({ point, param, nominal, tol }) => ({ point, param, nominal, tol }));
     else entry.testLabels = cert.tests.map(tp => tp.label).filter(Boolean);
     entry.checkLabels = cert.checkItems.map(ch => ch.label).filter(Boolean);
     const same = d => (d.type || 'md') === cert.type && (cert.equip.serial ? d.serial === cert.equip.serial : !d.serial && d.assetId === cert.equip.assetId);
@@ -1075,8 +1289,10 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const keep = { client: cert.client, cond: { ...cert.cond, product: '', program: '', beltSpeed: '' }, standards: cert.standards,
                    valDate: cert.valDate, intervalMonths: cert.intervalMonths, techName: cert.techName, techDate: cert.techDate,
                    reviewerName: cert.reviewerName, issueDate: cert.issueDate };
-    const m = cert.magnet, prevTests = cert.tests, prevChecks = cert.checkItems;
+    const m = cert.magnet, prevTests = cert.tests, prevChecks = cert.checkItems, prevInst = cert.inst;
     cert = Object.assign(blankCert(cert.type), structuredClone(keep));
+    // same visit: same references, method and conditions; reading points kept, readings cleared
+    if (prevInst) cert.inst = { ...structuredClone(prevInst), adjusted: false, rows: prevInst.rows.map(r => ({ ...r, ref: '', found: '', left: '' })) };
     cert.tests = prevTests.map(tp => ({ label: tp.label, res: cert.standards.map(() => '') }));
     cert.checkItems = prevChecks.map(ch => ({ label: ch.label, value: '' }));
     Object.assign(cert.magnet, { sphereSize: m.sphereSize, sphereCert: m.sphereCert, pullerModel: m.pullerModel,
@@ -1131,6 +1347,11 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const s = db.settings, m = cert.magnet;
     if (cert.type === 'mg') Object.assign(s.magnet, { sphereSize: m.sphereSize, sphereCert: m.sphereCert, pullerModel: m.pullerModel,
       pullerSerial: m.pullerSerial, pullerCalDue: m.pullerCalDue, limit: m.limit, points: m.points });
+    else if (isInst(cert.type)) {
+      const I = cert.inst;
+      s.inst[cert.type] = { refs: structuredClone(I.refs), traceability: I.traceability, uncertainty: I.uncertainty, unit: I.unit,
+        method: I.method, intervalMonths: cert.intervalMonths, rows: I.rows.map(({ point, param, nominal, tol }) => ({ point, param, nominal, tol })) };
+    }
     else s[cert.type === 'xr' ? 'standardsXr' : 'standards'] = structuredClone(cert.standards);
     s.layouts[cert.type] = { tests: cert.tests.map(tp => tp.label).filter(Boolean), checks: cert.checkItems.map(ch => ch.label).filter(Boolean) };
     saveSettings(); toast(`Default ${TYPES[cert.type].label.toLowerCase()} standards, test points & checks saved`);
@@ -1187,7 +1408,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const need = [['certNo', 'Certificate No.'], ['valDate', 'Validation date'], ['client.company', 'Company'],
                   ['techName', 'Technician'], ['issueDate', 'Date issued'],
                   ...(t === 'mg' ? [['equip.magnetType', 'Magnet type']]
-                                 : [['equip.manufacturer', 'Manufacturer'], ['equip.model', 'Model'], ['equip.serial', 'Serial #']])];
+                    : isInst(t) ? [['equip.manufacturer', 'Make'], ['equip.model', 'Model'], ['equip.serial', 'Serial / ID #']]
+                    : [['equip.manufacturer', 'Manufacturer'], ['equip.model', 'Model'], ['equip.serial', 'Serial #']])];
     const missing = need.filter(([k]) => !String(get(cert, k) ?? '').trim()).map(([, l]) => l);
     if (t === 'mg' && !unitId()) missing.push('Serial # or Asset ID / Location');
     if (missing.length) w.push('Missing: ' + missing.join(', '));
@@ -1202,6 +1424,25 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       if (st.tubes.some(x => !x.complete)) w.push('Some pull-force readings are blank');
       failed = st.overall === 'FAIL';
       if (failed) w.push('One or more tubes are below the minimum pull' + (cert.asLeft === 'In Tolerance' ? ', but As Left says In Tolerance' : ''));
+    } else if (isInst(t)) {
+      const I = cert.inst;
+      I.refs.forEach((r, i) => {
+        const name = r.instrument || `Reference ${i + 1}`;
+        if (!r.instrument || !r.serial || !r.certNo) w.push(`${name} needs an instrument, serial # and cal cert #`);
+        if (!r.calDue) w.push(`${name} cal due date is blank`);
+        else if (cert.valDate && r.calDue < cert.valDate) w.push(`${name} calibration was past due on the date of service`);
+      });
+      if (!I.rows.length) w.push('Add at least one reading');
+      if (I.rows.some(r => r.ref === '' || r.found === '' || r.tol === '')) w.push('Some readings or tolerances are blank');
+      if (I.rows.some(r => r.tol !== '' && num(r.tol) == null)) w.push('A tolerance is not a number');
+      const st = I.rows.map(r => instRow(r, I.adjusted));
+      if (st.some(x => x.foundOk === false) && cert.asFound === 'In Tolerance') w.push('An As Found reading is out of tolerance, but As Found says In Tolerance');
+      failed = st.some(x => x.result === 'FAIL');
+      if (failed && cert.asLeft === 'In Tolerance') w.push('A reading is out of tolerance, but As Left says In Tolerance');
+      if (I.adjusted && I.rows.every(r => r.left === '')) w.push('"Device was adjusted" is ticked: enter the As Left readings');
+      if (I.adjusted && !cert.findings.trim()) w.push('Describe the adjustment under Remarks');
+      if (!I.uncertainty.trim()) w.push('Measurement uncertainty is blank');
+      if (!cert.equip.accuracy.trim()) w.push('Manufacturer accuracy is blank');
     } else {
       cert.standards.forEach(s => { if (!s.size || !s.cert) w.push(`${s.type} standard needs a size and cert #`); });
       const res = cert.tests.map(tp => rowResult(tp.res));
@@ -1228,6 +1469,9 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const dl = rows => `<dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${show(v)}</dd>`).join('')}</dl>`;
 
   function equipmentCard(c) {
+    if (isInst(c.type)) return dl([['Description', c.equip.description], ['Make', c.equip.manufacturer], ['Model', c.equip.model],
+      ['Serial / ID #', c.equip.serial], ['Location in Plant', c.equip.assetId], ...(c.type === 'tp' ? [['Device Type', c.equip.probeKind === ROOM ? 'Fridge / freezer / room' : c.equip.probeKind]] : []),
+      ['Mfr. Accuracy', c.equip.accuracy], ['Tolerance Applied', c.equip.tolerance]]);
     if (c.type === 'mg') return dl([['Magnet Type', c.equip.magnetType], ['Manufacturer', c.equip.manufacturer],
       ['Model / Element', c.equip.element], ['Serial #', c.equip.serial], ['Asset ID / Location', c.equip.assetId],
       ['Tubes', [c.magnet.tubes, c.equip.tubeDiameter && `× ${c.equip.tubeDiameter} dia.`].filter(Boolean).join(' ')]]);
@@ -1237,6 +1481,12 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       ['Reject Device', c.equip.rejectDevice]]);
   }
   function conditionsCard(c) {
+    if (isInst(c.type)) {
+      const I = c.inst;
+      return dl([['Procedure / SOP', c.cond.procedure], ['Method', I.method], ['Performed', c.cond.location],
+        ['Ambient Temp.', withUnit(I.ambientTemp, I.unit)], ['Ambient Humidity', withUnit(I.ambientRH, '%RH')],
+        ['Stabilization', I.stabilization]]);
+    }
     if (c.type === 'mg') {
       const lim = num(c.magnet.limit);
       return dl([['Location', c.cond.location], ['Product / Line', c.cond.product],
@@ -1247,6 +1497,13 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       ['Belt Speed', c.cond.beltSpeed], ['Acceptance Criteria', c.cond.criteria]]);
   }
   function standardsCard(c) {
+    if (isInst(c.type)) {
+      const I = c.inst;
+      return `<table class="inst-table"><tr><th>Instrument</th><th>Serial</th><th>Cal Cert #</th><th>Cal / Due</th><th>Accuracy</th></tr>
+        ${I.refs.map(r => `<tr><td>${show(r.instrument)}</td><td>${show(r.serial)}</td><td>${show(r.certNo)}</td>
+          <td>${r.calDate || r.calDue ? `${esc(fmtDate(r.calDate)) || '—'}<br>${esc(fmtDate(r.calDue)) || '—'}` : show('')}</td><td>${show(r.accuracy)}</td></tr>`).join('')}</table>
+        ${I.traceability.trim() ? `<div class="trace">${esc(I.traceability.trim())}</div>` : ''}`;
+    }
     if (c.type === 'mg') {
       const m = c.magnet;
       return `<table><tr><th>Standard</th><th>ID / Size</th><th>Cert / Cal.</th></tr>
@@ -1259,6 +1516,25 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
         <td>${show(st.cert)}</td><td>${show(st.condition)}</td></tr>`).join('')}</table>`;
   }
   function resultsBlock(c) {
+    if (isInst(c.type)) {
+      const I = c.inst, th = c.type === 'th', u = I.unit;
+      const val = v => v === '' || v == null ? show('') : esc(v);
+      return `<h2>${I.adjusted ? 'Calibration' : 'Verification'} Results <em>— error = device − reference</em></h2>
+      <div class="card"><table class="inst-table">
+        <tr><th class="c">Point</th>${th ? '<th>Parameter</th>' : ''}<th>Nominal</th><th class="c">Reference${th ? '' : ` (${esc(u)})`}</th>
+          <th class="c">As Found${th ? '' : ` (${esc(u)})`}</th><th class="c">Error</th><th class="c">Tolerance</th>
+          <th class="c">As Left${th ? '' : ` (${esc(u)})`}</th><th class="c">Result</th></tr>
+        ${I.rows.map(r => { const st = instRow(r, I.adjusted);
+          return `<tr><td class="c">${val(r.point)}</td>${th ? `<td>${r.param === 'RH' ? 'RH, %RH' : 'Temp, ' + esc(u)}</td>` : ''}<td>${val(r.nominal)}</td>
+            <td class="c">${val(r.ref)}</td><td class="c">${val(r.found)}</td>
+            <td class="c${st.foundOk === false ? ' bad' : ''}">${st.found ? fmtErr(st.found) : show('')}</td>
+            <td class="c">${r.tol === '' ? show('') : '±' + esc(r.tol) + ' ' + esc(rowUnit(r, u))}</td>
+            <td class="c">${I.adjusted ? val(r.left) : '<span class="na">N/A</span>'}</td>
+            <td class="c">${verdict(st.result)}</td></tr>`; }).join('')}
+      </table>
+      <div class="unc">Expanded measurement uncertainty: <b>${I.uncertainty.trim() ? esc(I.uncertainty.trim()) : '—'}</b> (k=2, approx. 95% confidence).${I.adjusted ? '' : ' As Left: N/A – no adjustment.'}</div>
+      </div>`;
+    }
     if (c.type === 'mg') {
       const st = magnetStats(), m = c.magnet;
       const head = `<tr><th class="c">Tube</th>${Array.from({ length: m.points }, (_, j) => `<th class="c">P${j + 1}</th>`).join('')}
@@ -1289,8 +1565,9 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   }
 
   function render() {
-    const c = cert, s = db.settings, T = TYPES[c.type];
+    const c = cert, s = db.settings, T = TYPES[c.type], inst = isInst(c.type), adj = inst && c.inst.adjusted;
     const due = addMonths(c.valDate, c.intervalMonths);
+    const kind = adj ? 'Calibration' : 'Verification';
     const sig = s.signature ? `<img src="${s.signature}" alt="">` : '';
     const addr = [c.client.address1, c.client.cityStateZip].filter(Boolean).join('\n');
     $('#cert').innerHTML = `
@@ -1301,47 +1578,49 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
         <img src="${LOGO}" alt="">
         <div class="brand"><b>WHEELER</b><span>FOOD SAFETY SERVICES</span>
           <small>Independent &amp; Audit-Ready Equipment Validation · A Meldrum Company</small></div>
-        <div class="doc"><h1>Certificate of Validation</h1>
+        <div class="doc"><h1>Certificate of ${inst ? kind : 'Validation'}</h1>
           <div class="no">No. ${show(c.certNo)}</div>
-          <div class="meta">${T.title} · Page 1 of 1</div></div>
+          <div class="meta">${inst ? `${esc(titleCase(c.equip.description) || T.title)} ${kind}` : T.title} · Page 1 of 1</div></div>
       </header>
       <div class="accent"></div>
 
       <div class="status">
-        <div class="chip"><label>Validation Date</label><strong>${show(fmtDate(c.valDate, true))}</strong></div>
-        <div class="chip"><label>Next Validation Due</label><strong>${show(fmtDate(due, true))}</strong></div>
+        <div class="chip"><label>${inst ? 'Date of Service' : 'Validation Date'}</label><strong>${show(fmtDate(c.valDate, true))}</strong></div>
+        <div class="chip"><label>${inst ? 'Recommended Next Due' : 'Next Validation Due'}</label><strong>${show(fmtDate(due, true))}</strong></div>
         <div class="chip ${chipClass(c.asFound)}"><label>As Found</label><strong>${esc(c.asFound)}</strong></div>
-        <div class="chip ${chipClass(c.asLeft)}"><label>As Left</label><strong>${esc(c.asLeft)}${c.asLeft === 'In Tolerance' ? ' · PASS' : ''}</strong></div>
+        <div class="chip ${chipClass(c.asLeft)}"><label>As Left</label><strong>${esc(c.asLeft)}${c.asLeft === 'In Tolerance' ? (adj ? ' · ADJUSTED' : ' · PASS') : ''}</strong></div>
       </div>
 
       <div class="cols">
         <div><h2>Client</h2><div class="card">${dl([['Company', c.client.company], ['Site Address', addr],
           ['Site Contact', c.client.contact], ['Service Order', c.client.serviceOrder], ['Client PO #', c.client.po]])}</div></div>
-        <div><h2>Equipment</h2><div class="card">${equipmentCard(c)}</div></div>
+        <div><h2>${inst ? 'Device Under Test' : 'Equipment'}</h2><div class="card">${equipmentCard(c)}</div></div>
       </div>
 
       <div class="cols">
-        <div><h2>Test Conditions</h2><div class="card">${conditionsCard(c)}</div></div>
-        <div><h2>Reference Standards (Traceable)</h2><div class="card">${standardsCard(c)}</div></div>
+        <div><h2>${inst ? 'Method &amp; Conditions' : 'Test Conditions'}</h2><div class="card">${conditionsCard(c)}</div></div>
+        <div><h2>Reference Standards (${inst ? 'NIST-Traceable' : 'Traceable'})</h2><div class="card">${standardsCard(c)}</div></div>
       </div>
 
       ${resultsBlock(c)}
 
       <div class="cols">
-        <div><h2>${c.type === 'mg' ? 'Physical Inspection' : 'Fail-Safe &amp; System Checks'}</h2><div class="card"><table>
+        <div><h2>${c.type === 'mg' ? 'Physical Inspection' : inst ? 'Condition Checks' : 'Fail-Safe &amp; System Checks'}</h2><div class="card"><table>
           ${c.checkItems.map(ch => `<tr><td>${show(ch.label)}</td><td class="c">${cell(ch.value)}</td></tr>`).join('')
             || '<tr><td><span class="empty">No checks recorded.</span></td></tr>'}
         </table></div></div>
-        <div><h2>Findings &amp; Corrective Action</h2><div class="card notes">${c.findings.trim() ? esc(c.findings.trim()) : '<span class="empty">No findings.</span>'}</div></div>
+        <div><h2>${inst ? 'Remarks' : 'Findings &amp; Corrective Action'}</h2><div class="card notes">${c.findings.trim() ? esc(c.findings.trim()) : `<span class="empty">${inst ? 'None.' : 'No findings.'}</span>`}</div></div>
       </div>
 
-      <div class="card fine">
+      <div class="card fine">${inst ? `
+        <p>This ${T.noun} was ${adj ? 'calibrated (adjusted, then verified)' : 'verified'} by comparison against the reference standards listed above, in accordance with the Wheeler Food Safety Service LLC Quality Assurance Manual${c.cond.procedure ? ` (${esc(c.cond.procedure)})` : ''}. Error is the device reading minus the reference reading; a point passes when the error is within the stated tolerance. Reference standards are NIST-traceable; records of work performed and traceability are maintained by Wheeler Food Safety Service LLC.</p>
+        <p>Results apply only to the instrument identified above at the time of service. Drift, damage and environmental conditions may affect accuracy before the recommended due date, which does not imply continued accuracy. Routine checks per the client's food safety plan remain required. This certificate may not be reproduced except in full without written approval of Wheeler Food Safety Service LLC.</p>` : `
         <p>This ${T.noun} was validated in accordance with the Wheeler Food Safety Service LLC Quality Assurance Manual${c.cond.procedure ? ` (${esc(c.cond.procedure)})` : ''} against manufacturer specifications, ${c.type === 'mg' ? 'the acceptance criteria stated above' : "the client's stated sensitivity requirements"}, and applicable food safety requirements. Records of work performed and traceability of all test standards are maintained by Wheeler Food Safety Service LLC.</p>
-        <p>Results apply only to the equipment identified above at the time of service. Wear, environmental conditions and product variability may affect performance before the due date; the due date does not imply continued compliance. Routine ${c.type === 'mg' ? 'inspection and cleaning' : 'operator verification'} per the client's food safety plan remains required. This certificate may not be reproduced except in full without written approval of Wheeler Food Safety Service LLC.</p>
+        <p>Results apply only to the equipment identified above at the time of service. Wear, environmental conditions and product variability may affect performance before the due date; the due date does not imply continued compliance. Routine ${c.type === 'mg' ? 'inspection and cleaning' : 'operator verification'} per the client's food safety plan remains required. This certificate may not be reproduced except in full without written approval of Wheeler Food Safety Service LLC.</p>`}
       </div>
 
       <div class="sign${s.showQr ? ' with-qr' : ''}">
-        <div class="sig"><div class="line">${sig}</div><b>${show(c.techName)}</b>, Validation Technician<br>Performed ${show(fmtDate(c.techDate))}</div>
+        <div class="sig"><div class="line">${sig}</div><b>${show(c.techName)}</b>, ${inst ? 'Technician' : 'Validation Technician'}<br>Performed ${show(fmtDate(c.techDate))}</div>
         <div class="sig"><div class="line">${sig}</div><b>${show(c.reviewerName)}</b>, ${esc(s.reviewerTitle)}<br>Reviewed &amp; issued ${show(fmtDate(c.issueDate))}</div>
         ${s.showQr ? `<div class="qr">${qrSvg(VERIFY_URL + c.verifyCode)}Scan to verify<br>wheelerfs.com/verify</div>` : ''}
       </div>
@@ -1355,6 +1634,10 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     </div>`;
     fitPage();
 
+    if (inst) {   // live error next to each reading
+      c.inst.rows.forEach((r, i) => { const el = $('#instErr' + i); if (!el) return; const st = instRow(r, c.inst.adjusted);
+        el.textContent = st.found ? fmtErr(st.found) + (st.left ? ' → ' + fmtErr(st.left) : '') : ''; el.className = 'err ' + (st.result === 'FAIL' ? 'bad' : st.result === 'PASS' ? 'good' : ''); });
+    }
     if (c.type === 'mg') {   // live minimums next to the reading grid
       const st = magnetStats();
       st.tubes.forEach((t, i) => { const el = $('#magMin' + i); if (el) { el.textContent = t.complete ? lbs(t.min) : ''; el.className = 'mag-min ' + (t.result === 'FAIL' ? 'bad' : t.result === 'PASS' ? 'good' : ''); } });
@@ -1427,7 +1710,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const LBL_PX = 10;   // drawing pixels per point: 4× the printer's 2.5 dots per point
   const dot = v => Math.round(v * 2.5) / 2.5;   // snap a position or size to whole printer dots
   const LBL_FONT = 'Arial, "Liberation Sans", Helvetica, sans-serif';
-  const LBL_TYPE = { md: 'METAL DETECTOR', xr: 'X-RAY SYSTEM', mg: 'MAGNET' };
+  const LBL_TYPE = { md: 'METAL DETECTOR', xr: 'X-RAY SYSTEM', mg: 'MAGNET', th: 'THERMOHYGROMETER', tp: 'TEMP PROBE', tpf: 'TEMP GAUGE', tpr: 'THERMOMETER' };
   const LBL_NS = ['main', 'style', 'text', 'draw', 'image', 'barcode', 'database', 'table', 'cable']
     .map(k => `xmlns:${k === 'main' ? 'pt' : k}="http://schemas.brother.info/ptouch/2007/lbx/${k}"`).join(' ');
 
@@ -1527,24 +1810,25 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const due = d.nextDue ? (([y, mo]) => new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'short' }).toUpperCase() + ' ' + y)(d.nextDue.split('-').map(Number)) : '—';
     const initials = (d.tech || '').trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase()).join('');
     const unit = d.serial ? 'S/N  ' + d.serial : d.assetId ? 'ID  ' + d.assetId : '';   // serial only; asset ID when there's none
-    const validated = `Validated ${fmtDate(d.valDate)}${initials ? '  ·  ' + initials : ''}`;
+    const inst = isInst(d.type), dueTitle = inst ? 'NEXT VERIFICATION DUE' : 'NEXT VALIDATION DUE';
+    const validated = `${inst ? 'Verified' : 'Validated'} ${fmtDate(d.valDate)}${initials ? '  ·  ' + initials : ''}`;
     const MW = 94;   // middle column width, x 54.4–148.4
-    text(54.4, 8.4, MW, 7.2, 'NEXT VALIDATION DUE', lblFit('NEXT VALIDATION DUE', MW, 5.8, true), true);
+    text(54.4, 8.4, MW, 7.2, dueTitle, lblFit(dueTitle, MW, 5.8, true), true);
     text(53.8, 14.4, MW, 23, due, lblFit(due, MW - 2, 23, true), true);
     text(54.4, 37.4, MW, 7.4, d.certNo, lblFit(d.certNo, MW, 6.4, true), true);
     text(54.4, 44.6, MW, 7.4, unit, lblFit(unit, MW, 5.9, false));
     text(54.4, 51.8, MW, 7.4, validated, lblFit(validated, MW, 5.9, false));
 
     // result block, x 150.4–211.2
-    const result = { 'In Tolerance': 'PASS', 'Out of Tolerance': 'FAIL', 'Removed from Service': 'OUT OF SERVICE' }[d.asLeft] || 'VALIDATED';
+    const result = { 'In Tolerance': 'PASS', 'Out of Tolerance': 'FAIL', 'Removed from Service': 'OUT OF SERVICE' }[d.asLeft] || (inst ? 'VERIFIED' : 'VALIDATED');
     const [sc, sg] = lblCanvas(60.8, 31.2);
     sg.fillStyle = '#000'; sg.beginPath(); sg.roundRect(0, 0, sc.width, sc.height, 3.2 * LBL_PX); sg.fill();
     const white = { color: '#fff', maxW: 56 };
-    lblCentre(sg, LBL_TYPE[d.type] || LBL_TYPE.md, 30.4, 1.6, 5.0, { ...white, spacing: 0.35, stroke: 0.14 });
+    lblCentre(sg, LBL_TYPE[priceGroup(d.type, d.kind)] || LBL_TYPE.md, 30.4, 1.6, 5.0, { ...white, spacing: 0.35, stroke: 0.14 });
     if (result.length > 4) lblCentre(sg, result, 30.4, 9.4, 8.0, { ...white, spacing: 0.3, stroke: 0.1 });
     else lblCentre(sg, result, 30.4, 6.4, 13.5, { ...white, spacing: 0.7 });
-    lblCentre(sg, 'CRITICAL', 30.4, 19.6, 5.2, { ...white, spacing: 0.4, stroke: 0.16 });
-    lblCentre(sg, 'CONTROL POINT', 30.4, 25.2, 5.2, { ...white, spacing: 0.4, stroke: 0.16 });
+    lblCentre(sg, inst ? 'MONITORING' : 'CRITICAL', 30.4, 19.6, 5.2, { ...white, spacing: 0.4, stroke: 0.16 });
+    lblCentre(sg, inst ? 'INSTRUMENT' : 'CONTROL POINT', 30.4, 25.2, 5.2, { ...white, spacing: 0.4, stroke: 0.16 });
     image(sc, 150.4, 8.4, 60.8, 31.2, 'result.png');
 
     // business name and phone as real text, centred under the block
@@ -1597,11 +1881,11 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   }
 
   const labelName = no => `${no} label.lbx`.replace(/[\\/:*?"<>|]/g, '');
-  const labelFromRow = r => ({ certNo: r.cert_no, code: r.verify_code, type: r.cert_type || 'md', asLeft: r.as_left, serial: r.serial,
+  const labelFromRow = r => ({ certNo: r.cert_no, code: r.verify_code, type: r.cert_type || 'md', kind: r.probe_kind, asLeft: r.as_left, serial: r.serial,
     assetId: r.asset_id, valDate: r.validation_date, nextDue: r.next_due, tech: r.tech_name });
   $('#btnLabel').addEventListener('click', async () => {
     if (!cert.certNo) return alert('Give the certificate a number first (Auto next to Certificate No.).');
-    saveBlob(labelName(cert.certNo), await buildLabel({ certNo: cert.certNo, code: cert.verifyCode, type: cert.type, asLeft: cert.asLeft,
+    saveBlob(labelName(cert.certNo), await buildLabel({ certNo: cert.certNo, code: cert.verifyCode, type: cert.type, kind: cert.equip.probeKind, asLeft: cert.asLeft,
       serial: cert.equip.serial, assetId: cert.equip.assetId, valDate: cert.valDate, nextDue: addMonths(cert.valDate, cert.intervalMonths), tech: cert.techName }));
     toast(cert.publishedAt ? 'Label saved. Open it in P-touch Editor and print.'
       : 'Label saved. Open it in P-touch Editor to print; publish the certificate so its QR code works.');
@@ -2006,7 +2290,9 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   // ---------- records: due dates, published certificates, backup ----------
   const dlgR = $('#dlgRecords');
   let recTab = 'due', recFilter = { due: '60', q: '', status: 'all' }, recOffline = false;
-  const TAG = { md: 'Metal detector', xr: 'X-ray', mg: 'Magnet' };
+  const TAG = { md: 'Metal detector', xr: 'X-ray', mg: 'Magnet', th: 'Thermohygrometer', tp: 'Temperature probe' };
+  // "validation" for metal detectors, X-ray and magnets; "verification" for instruments; neutral for a mix
+  const jobWord = rows => rows.every(x => isInst(x.cert_type)) ? 'verification' : rows.some(x => isInst(x.cert_type)) ? '' : 'validation';
   const daysUntil = iso => { if (!iso) return null; const [y, m, d] = iso.split('-').map(Number);
     const t = new Date(); t.setHours(0, 0, 0, 0); return Math.round((new Date(y, m - 1, d) - t) / 864e5); };
   const dueTag = iso => { const d = daysUntil(iso); if (d === null) return '';
@@ -2025,7 +2311,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   async function loadRecords() {
     try {
       const { data, error } = await (await supa()).from('certificates')
-        .select('id, cert_no, validation_date, next_due, manufacturer, model, serial, asset_id, as_found, as_left, status, pdf_path, customer_id, updated_at, verify_code, tech_name:data->>techName, cert_type:data->>certType, service_order:data->client->>serviceOrder, po:data->client->>po, customers(name, details)')
+        .select('id, cert_no, validation_date, next_due, manufacturer, model, serial, asset_id, as_found, as_left, status, pdf_path, customer_id, updated_at, verify_code, tech_name:data->>techName, cert_type:data->>certType, probe_kind:data->equip->>probeKind, service_order:data->client->>serviceOrder, po:data->client->>po, customers(name, details)')
         .order('validation_date', { ascending: false }).order('cert_no', { ascending: false });
       if (error) throw error;
       db.recordsCache = { rows: data, at: new Date().toISOString() }; persist();
@@ -2247,7 +2533,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       const txt = (t, x, y, size = 10, f = font, color = navy) => pg.drawText(String(t ?? ''), { x, y, size, font: f, color });
       pg.drawImage(logo, { x: 50, y: 712, width: 44 * logo.width / logo.height, height: 44 });
       txt('WHEELER', 104, 738, 20, bold); txt('FOOD SAFETY SERVICES', 104, 722, 8.5, bold, green);
-      txt('Validation Summary', 562 - bold.widthOfTextAtSize('Validation Summary', 16), 738, 16, bold);
+      const word = jobWord(rows), heading = word ? word[0].toUpperCase() + word.slice(1) + ' Summary' : 'Service Summary';
+      txt(heading, 562 - bold.widthOfTextAtSize(heading, 16), 738, 16, bold);
       const sub = r.service_order ? `Service Order ${r.service_order}` : fmtDate(r.validation_date, true);
       txt(sub, 562 - font.widthOfTextAtSize(sub, 10), 722, 10, font, muted);
       pg.drawRectangle({ x: 50, y: 700, width: 512, height: 2.5, color: navy });
@@ -2256,7 +2543,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       [cl.address1, cl.cityStateZip, cl.contact && 'Attn: ' + cl.contact].filter(Boolean).forEach((t, i) => txt(t, 50, 656 - i * 13, 9.5, font, muted));
       const dates = [...new Set(rows.map(x => x.validation_date))].sort();
       const passed = rows.filter(x => x.as_left === 'In Tolerance').length;
-      const facts = [['Validated', dates.map(d => fmtDate(d, true)).join(', ')], ['Units', `${rows.length} (${passed} passed)`],
+      const facts = [[word === 'verification' ? 'Verified' : word ? 'Validated' : 'Serviced', dates.map(d => fmtDate(d, true)).join(', ')], ['Units', `${rows.length} (${passed} passed)`],
                      ['Next due', fmtDate(rows.map(x => x.next_due).filter(Boolean).sort()[0], true) || '—']];
       facts.forEach(([k, v], i) => { txt(k, 360, 672 - i * 14, 9, font, muted); txt(fit(v, bold, 9.5, 140), 422, 672 - i * 14, 9.5, bold); });
       let y = 600;
@@ -2294,14 +2581,15 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const failed = rows.filter(x => x.as_left !== 'In Tolerance');
     const due = rows.map(x => x.next_due).filter(Boolean).sort()[0];
     const visit = [...new Set(rows.map(x => x.validation_date))].sort().map(d => fmtDate(d, true)).join(' and ');
-    const subject = `Your validation certificates${r.service_order ? ' – Service Order ' + r.service_order : ''} – ${r.customers?.name || ''}`;
+    const word = jobWord(rows);
+    const subject = `Your ${word ? word + ' ' : ''}certificates${r.service_order ? ' – Service Order ' + r.service_order : ''} – ${r.customers?.name || ''}`;
     const body = [
       `Hi ${first || 'there'},`, '',
-      `Attached are the validation certificates from our visit on ${visit} (${what}).` +
+      `Attached are the ${word ? word + ' ' : ''}certificates from our visit on ${visit} (${what}).` +
         (failed.length ? ` ${failed.length} unit${failed.length > 1 ? 's were' : ' was'} not left in tolerance: ${failed.map(x => x.cert_no).join(', ')}. Please see the notes on ${failed.length > 1 ? 'those certificates' : 'that certificate'}.` : ' Everything passed.'),
       '', 'Certificates:', ...rows.map(x => `  • ${x.cert_no}: ${[x.model, x.serial ? 'S/N ' + x.serial : x.asset_id].filter(Boolean).join(', ')} (${resultText(x)})`),
       '', `You can also view and download all of your certificates any time at https://wheelerfs.com/portal. Sign in with ${to.length === 1 ? 'this' : 'your'} email address; no password is needed.`,
-      ...(due ? ['', `Your next validation is due ${fmtDate(due, true)}. I'll reach out before then to schedule.`] : []),
+      ...(due ? ['', `Your next ${word || 'service'} is due ${fmtDate(due, true)}. I'll reach out before then to schedule.`] : []),
       '', 'Thank you,', db.settings.techName || 'Jordan Wheeler', 'Wheeler Food Safety Service', '385-201-5609 · wheelerfs.com'].join('\n');
     const a = document.createElement('a');
     a.href = `mailto:${to.map(encodeURIComponent).join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -2642,7 +2930,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       '', ...items, '', 'To approve, sign and return the quote, or reply to this email with your PO number and we\'ll get you scheduled.' ]
     : [ `Hi ${first || 'there'},`, '', `Attached is invoice ${d.number} for ${money(t.total)}${d.serviceDate ? ` for our service on ${fmtDate(d.serviceDate, true)}` : ''}${d.po ? ` (PO ${d.po})` : ''}.` +
         (t.paid ? ` ${money(t.paid)} has been received; the balance is ${money(t.balance)}.` : '') + ` Payment is due ${fmtDate(dueDate(d), true)} (${d.terms}).`,
-      '', ...items, ...(d.certNos?.length ? ['', `The validation certificates (${d.certNos.join(', ')}) are attached and also available any time at https://wheelerfs.com/portal.`] : []),
+      '', ...items, ...(d.certNos?.length ? ['', `The certificates (${d.certNos.join(', ')}) are attached and also available any time at https://wheelerfs.com/portal.`] : []),
       '', 'How to pay:', ...b.payInstructions.split('\n').map(x => '  ' + x), ...(b.cardLink ? ['  Pay by card: ' + b.cardLink] : []) ])
       .concat(['', 'Thank you,', db.settings.techName || 'Jordan Wheeler', 'Wheeler Food Safety Service', '385-201-5609 · wheelerfs.com']).join('\n');
     const a = document.createElement('a');
@@ -2669,10 +2957,11 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       serviceDate: rows.map(x => x.validation_date).sort()[0] || '', certNos: rows.map(x => x.cert_no) });
     const price = (type, role) => db.settings.prices.find(p => p.certType === type && p.role === role) || db.settings.prices.find(p => p.certType === type);
     bill.lines = [];
-    for (const type of ['md', 'xr', 'mg']) rows.filter(x => (x.cert_type || 'md') === type).forEach((x, i) => {
+    // instruments: first device of each kind at the first-device price, the rest at the additional price
+    for (const type of ['md', 'xr', 'mg', 'th', 'tp', 'tpf', 'tpr']) rows.filter(x => priceGroup(x.cert_type || 'md', x.probe_kind) === type).forEach((x, i) => {
       const p = price(type, i === 0 ? 'first' : 'additional');
       bill.lines.push({ item: p?.id || '', qty: 1, price: p?.price || '', taxable: p ? p.taxable !== false : true,
-        description: `${p?.name || TAG[type] + ' validation'}: ${x.cert_no}${x.serial ? ', S/N ' + x.serial : x.asset_id ? ', ' + x.asset_id : ''}` });
+        description: `${p?.name || (TAG[type] || 'Temperature device') + (TAG[type] && !isInst(type) ? ' validation' : ' verification')}: ${x.cert_no}${x.serial ? ', S/N ' + x.serial : x.asset_id ? ', ' + x.asset_id : ''}` });
     });
     if (!bill.lines.length) bill.lines = blankBill('invoice').lines;
     dlgR.close(); setMode('billing');
@@ -2693,7 +2982,11 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
         ${db.settings.prices.map((p, i) => `<tr><td><input data-price="${i}" data-f="name" value="${esc(p.name)}" style="min-width:300px"></td>
           <td><input data-price="${i}" data-f="price" type="number" step="0.01" value="${esc(p.price)}" style="width:100px"></td>
           <td><select data-price="${i}" data-f="use">${[['', '—'], ['md:first', 'Metal detector · first unit'], ['md:additional', 'Metal detector · additional'],
-            ['xr:first', 'X-ray · first unit'], ['xr:additional', 'X-ray · additional'], ['mg:first', 'Magnet · first unit'], ['mg:additional', 'Magnet · additional']]
+            ['xr:first', 'X-ray · first unit'], ['xr:additional', 'X-ray · additional'], ['mg:first', 'Magnet · first unit'], ['mg:additional', 'Magnet · additional'],
+            ['th:first', 'Thermohygrometer · first'], ['th:additional', 'Thermohygrometer · additional'],
+            ['tp:first', 'Removable probe · first'], ['tp:additional', 'Removable probe · additional'],
+            ['tpf:first', 'Fixed gauge · first'], ['tpf:additional', 'Fixed gauge · additional'],
+            ['tpr:first', 'Fridge/room thermometer · first'], ['tpr:additional', 'Fridge/room thermometer · additional']]
             .map(([v, l]) => `<option value="${v}"${v === (p.certType ? p.certType + ':' + p.role : '') ? ' selected' : ''}>${l}</option>`).join('')}</select></td>
           <td style="text-align:center"><input type="checkbox" data-price="${i}" data-f="taxable"${p.taxable !== false ? ' checked' : ''} style="width:auto"></td>
           <td class="acts"><button type="button" class="small" data-del-price="${i}">✕</button></td></tr>`).join('')}</table>

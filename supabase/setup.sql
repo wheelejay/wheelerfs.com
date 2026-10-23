@@ -155,12 +155,15 @@ alter table public.customers add column if not exists details jsonb not null def
 create table if not exists public.equipment (
   id          uuid primary key default gen_random_uuid(),
   customer_id uuid not null references public.customers (id) on delete cascade,
-  type        text not null default 'md' check (type in ('md', 'xr', 'mg')),
+  type        text not null default 'md' check (type in ('md', 'xr', 'mg', 'th', 'tp')),
   data        jsonb not null default '{}'::jsonb,   -- make, model, serial, test point names, ...
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
 create index if not exists equipment_customer_idx on public.equipment (customer_id);
+-- equipment types: md metal detector, xr X-ray, mg magnet, th thermohygrometer, tp temperature probe
+alter table public.equipment drop constraint if exists equipment_type_check;
+alter table public.equipment add constraint equipment_type_check check (type in ('md', 'xr', 'mg', 'th', 'tp'));
 
 create table if not exists public.app_settings (
   key        text primary key,
