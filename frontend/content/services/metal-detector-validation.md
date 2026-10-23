@@ -30,7 +30,7 @@ Your metal detector is a critical control, and auditors want proof that it works
 
 ## Looking for metal detector calibration?
 
-Many plants ask for "metal detector calibration", and some providers sell it under that name. What auditors actually look for is validation: proof that the detector finds and rejects the test piece sizes your food safety plan specifies, in your real products. Our validation includes the calibration work too. If a detector fails, we adjust its settings and retest until it passes, and the report records both the as-found and as-left settings. So if your auditor or customer asked for a metal detector calibration, this is the service that covers it, with the documentation to prove it.
+Many plants ask for "metal detector calibration", and some providers sell it under that name. What auditors actually look for is validation: proof that the detector finds and rejects the test piece sizes your food safety plan specifies, in your real products. Our validation includes the calibration work too. If a detector fails, we adjust its settings and retest until it passes, and the report records both the as-found and as-left settings. So if your auditor or customer asked for a metal detector calibration, this is the service that covers it, with the documentation to prove it. Read more: [Metal Detector Calibration vs. Validation: What's the Difference?](/blog/metal-detector-calibration-vs-validation)
 
 ## Where we work
 

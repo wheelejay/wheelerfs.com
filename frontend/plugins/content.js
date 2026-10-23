@@ -88,11 +88,17 @@ function loadCollection(root, dir, includeDrafts, { dated = true } = {}) {
 }
 
 function loadContent(root, includeDrafts) {
-  return {
+  const content = {
     posts: loadCollection(root, 'blog', includeDrafts),
     episodes: loadCollection(root, 'podcast', includeDrafts),
     services: loadCollection(root, 'services', includeDrafts, { dated: false }),
   };
+  // A link to a post that isn't published yet (scheduled or draft) shows as plain
+  // text until the post goes live, so pages can link ahead without a broken link.
+  const live = new Set(content.posts.map((p) => p.slug));
+  const unlink = (html) => html.replace(/<a href="\/blog\/([\w-]+)\/(?:#[^"]*)?">([\s\S]*?)<\/a>/g, (m, slug, text) => (live.has(slug) ? m : text));
+  for (const list of Object.values(content)) for (const item of list) item.html = unlink(item.html);
+  return content;
 }
 
 // GitHub Pages serves /blog/post from blog/post/index.html by redirecting to
