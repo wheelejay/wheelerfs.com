@@ -141,7 +141,7 @@ function Certificates({ session }) {
 }
 
 const Portal = () => {
-  usePageMeta({ title: 'Customer portal | Wheeler Food Safety', description: 'Download your validation and verification certificates.' });
+  usePageMeta({ title: 'Customer portal | Wheeler Food Safety', description: 'Download your validation and calibration certificates.' });
   const [session, setSession] = useState(undefined);
 
   useEffect(() => {
@@ -153,7 +153,7 @@ const Portal = () => {
   return (
     <main className="content-page portal">
       <h1>Customer portal</h1>
-      <p className="content-intro">Your validation and verification certificates and upcoming due dates, available any time for audits.</p>
+      <p className="content-intro">Your validation and calibration certificates and upcoming due dates, available any time for audits.</p>
       {session === undefined ? <p>Loading…</p> : session ? <Certificates session={session} /> : <SignIn />}
     </main>
   );

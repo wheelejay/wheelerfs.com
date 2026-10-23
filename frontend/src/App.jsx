@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { posts, episodes, services } from 'virtual:content';
 import Layout from './components/Layout';
 import Home from './pages/Home';
@@ -61,6 +61,8 @@ const App = () => (
           />
         </>
       )}
+      {/* renamed page (verification → calibration) */}
+      <Route path="services/thermometer-hygrometer-verification" element={<Navigate to="/services/thermometer-hygrometer-calibration" replace />} />
       <Route path="portal" element={lazyPage(<Portal />)} />
       <Route path="verify" element={lazyPage(<Verify />)} />
       <Route path="*" element={<NotFound />} />

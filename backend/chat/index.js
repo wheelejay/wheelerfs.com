@@ -132,7 +132,7 @@ const PRICES = {
   magnets: { label: 'Magnet', first: 350, additional: 150 },
 };
 
-// Thermometer and hygrometer verification is priced per kind of device: the first
+// Thermometer and hygrometer calibration is priced per kind of device: the first
 // device of each kind at its first-device price, the rest at the additional price.
 const INSTRUMENT_PRICES = {
   thermohygrometers: { label: 'Thermohygrometer', first: 195, additional: 60 },

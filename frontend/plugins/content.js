@@ -171,11 +171,11 @@ function homeHtml(services, posts) {
   return [
     '<main>',
     '<h1>Food Safety Validation Services</h1>',
-    '<p>Serving Utah food manufacturers and related industries with professional metal detector, X-ray system, magnet, and temperature validation services.</p>',
-    '<section id="services"><h2>Professional Validation Services</h2>',
+    '<p>Serving Utah food manufacturers and related industries with metal detector, X-ray system, and magnet validation, temperature mapping, and thermometer and hygrometer calibration.</p>',
+    '<section id="services"><h2>Professional Validation &amp; Calibration Services</h2>',
     '<p>Independent, third-party validation that keeps your foreign material and temperature controls audit-ready for FDA, USDA, SQF, and BRCGS.</p>',
     `<ul>${serviceItems}</ul></section>`,
-    '<section id="pricing"><h2>Professional Validation Pricing</h2>',
+    '<section id="pricing"><h2>Validation &amp; Calibration Pricing</h2>',
     '<p>Mixed equipment on one visit: the most expensive unit is billed at its first-unit price, and every other metal detector, X-ray system, or magnet at its additional-unit price. Annual service contracts save 5% (2 visits a year), 10% (quarterly), or 20% (monthly).</p></section>',
     '<section id="why-us"><h2>Why Choose Wheeler Food Safety?</h2><ul>',
     '<li>Specialized expertise in metal detectors, X-ray systems, magnets, and temperature mapping</li>',
@@ -238,6 +238,17 @@ function prerender(outDir, { posts, episodes, services }) {
     const dir = path.join(outDir, page.route);
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'index.html'), renderPage(template, page));
+  }
+
+  // Renamed pages: the old address sends visitors (and search engines) to the new one
+  const redirects = { '/services/thermometer-hygrometer-verification': '/services/thermometer-hygrometer-calibration' };
+  for (const [from, to] of Object.entries(redirects)) {
+    const dir = path.join(outDir, from);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'index.html'), `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Moved | ${SITE_NAME}</title><link rel="canonical" href="${pageUrl(to)}"><meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="0; url=${to}/"><script>location.replace(${JSON.stringify(to + '/')} + location.search + location.hash)</script>
+</head><body><p>This page has moved to <a href="${to}/">${pageUrl(to)}</a>.</p></body></html>\n`);
   }
 
   // Customer portal and QR verification: real pages so they load with a 200,
