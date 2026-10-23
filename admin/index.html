@@ -322,8 +322,8 @@
             <option value="md">Metal detector</option>
             <option value="xr">X-ray inspection system</option>
             <option value="mg">Magnet (pull test)</option>
-            <option value="th">Thermohygrometer (verification)</option>
-            <option value="tp">Temperature probe (verification)</option>
+            <option value="th">Thermohygrometer (calibration)</option>
+            <option value="tp">Temperature probe / gauge / thermometer (calibration)</option>
           </select></label>
       </div>
       <div class="row">
@@ -641,7 +641,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const SUPABASE_KEY = 'sb_publishable_EjnwXzqk_jyHS0lVvfRbAw_zMs6S6e2';
   const SUPABASE_JS = HOSTED ? 'supabase.js' : 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js';
   const VERIFY_URL = 'https://wheelerfs.com/verify/?c=';
-  const BUILD = '2026-10-23 05:25';   // the website build writes the deploy time here (see frontend/plugins/content.js)
+  const BUILD = '2026-10-23 05:45';   // the website build writes the deploy time here (see frontend/plugins/content.js)
   const buildText = () => BUILD.startsWith('__') ? 'local file' : BUILD + ' UTC';
 
   // ---------- certificate types ----------
@@ -653,8 +653,9 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     tp: { label: 'Temperature probe', prefix: 'WFS-TP', title: 'Temperature Probe', noun: 'temperature probe' },
   };
   // Thermohygrometers and temperature probes are measuring instruments: they get a
-  // "verification" (or "calibration" when adjusted) against reference standards
-  // instead of a validation with test pieces.
+  // calibration (compared against traceable reference standards, error recorded;
+  // adjusting the device is a separate, optional step) instead of a validation with
+  // test pieces. The pass/fail column covers the verification.
   const isInst = t => t === 'th' || t === 'tp';
   const TRACE = 'Reference standards are calibrated by an A2LA-accredited laboratory (ISO/IEC 17025) with traceability to the National Institute of Standards and Technology (NIST).';
   // temperature certificates cover removable probes, fixed gauges and fridge/freezer/room thermometers
@@ -714,8 +715,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     xr: [...labels(CHECKS.xr), 'Belt stop on detect', 'Reject timing at line speed', 'Stack light / audible alarm', 'Lead curtains intact',
          'Image calibration / learn current', 'Correct product program selected', 'Settings password-protected', 'Emergency stop'],
     mg: [...labels(CHECKS.mg), 'Magnet cleaned before testing', 'No ferrous fines left after cleaning', 'Easy-clean mechanism works', 'Identification label legible'],
-    th: [...labels(CHECKS.th), 'Clock / date set correctly', 'Logging & alarms working', 'Min/max memory cleared', 'Verification label applied'],
-    tp: [...labels(CHECKS.tp), 'Probe connector secure', 'Display / transmitter reads in correct units', 'Verification label applied', 'Thermowell clean (fixed probes)'],
+    th: [...labels(CHECKS.th), 'Clock / date set correctly', 'Logging & alarms working', 'Min/max memory cleared', 'Calibration label applied'],
+    tp: [...labels(CHECKS.tp), 'Probe connector secure', 'Display / transmitter reads in correct units', 'Calibration label applied', 'Thermowell clean (fixed probes)'],
   };
   const XR_EXTRA = ['Glass', 'Ceramic', 'Calcified bone', 'Dense plastic', 'Rubber', 'Stone', 'Other'];
   // metal detectors: name the non-ferrous metal when a client asks for it, and add extra metal standards
@@ -730,14 +731,23 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
                         { type: 'Non-Ferrous', size: '', cert: '', condition: 'Intact' },
                         { type: 'Stainless 316', size: '', cert: '', condition: 'Intact' }];
   const INST_PRICES = [
-    { id: 'th1', name: 'Thermohygrometer verification (RH + temp) – first device', price: 195, certType: 'th', role: 'first', taxable: true },
-    { id: 'th2', name: 'Thermohygrometer verification – additional device, same visit', price: 60, certType: 'th', role: 'additional', taxable: true },
-    { id: 'tp1', name: 'Temperature probe verification, removable – first device', price: 175, certType: 'tp', role: 'first', taxable: true },
-    { id: 'tp2', name: 'Temperature probe verification, removable – additional device, same visit', price: 90, certType: 'tp', role: 'additional', taxable: true },
-    { id: 'tpf1', name: 'Fixed temperature gauge verification (in place) – first device', price: 175, certType: 'tpf', role: 'first', taxable: true },
-    { id: 'tpf2', name: 'Fixed temperature gauge verification – additional device, same visit', price: 90, certType: 'tpf', role: 'additional', taxable: true },
-    { id: 'tpr1', name: 'Fridge, freezer or room thermometer verification – first device', price: 125, certType: 'tpr', role: 'first', taxable: true },
-    { id: 'tpr2', name: 'Fridge, freezer or room thermometer verification – additional device, same visit', price: 40, certType: 'tpr', role: 'additional', taxable: true }];
+    { id: 'th1', name: 'Thermohygrometer calibration (RH + temp) – first device', price: 195, certType: 'th', role: 'first', taxable: true },
+    { id: 'th2', name: 'Thermohygrometer calibration – additional device, same visit', price: 60, certType: 'th', role: 'additional', taxable: true },
+    { id: 'tp1', name: 'Temperature probe calibration, removable – first device', price: 175, certType: 'tp', role: 'first', taxable: true },
+    { id: 'tp2', name: 'Temperature probe calibration, removable – additional device, same visit', price: 90, certType: 'tp', role: 'additional', taxable: true },
+    { id: 'tpf1', name: 'Temperature gauge calibration (in place) – first device', price: 175, certType: 'tpf', role: 'first', taxable: true },
+    { id: 'tpf2', name: 'Temperature gauge calibration (in place) – additional device, same visit', price: 90, certType: 'tpf', role: 'additional', taxable: true },
+    { id: 'tpr1', name: 'Thermometer calibration (fridge, freezer or room) – first device', price: 125, certType: 'tpr', role: 'first', taxable: true },
+    { id: 'tpr2', name: 'Thermometer calibration (fridge, freezer or room) – additional device, same visit', price: 40, certType: 'tpr', role: 'additional', taxable: true }];
+  const OLD_INST_NAMES = [
+    'Thermohygrometer verification (RH + temp) – first device',
+    'Thermohygrometer verification – additional device, same visit',
+    'Temperature probe verification, removable – first device',
+    'Temperature probe verification, removable – additional device, same visit',
+    'Fixed temperature gauge verification (in place) – first device',
+    'Fixed temperature gauge verification – additional device, same visit',
+    'Fridge, freezer or room thermometer verification – first device',
+    'Fridge, freezer or room thermometer verification – additional device, same visit'];
   const defaults = {
     settings: { techName: 'Jordan Wheeler', reviewerTitle: 'Owner / Authorized Signatory', intervalMonths: 6,
                 procedure: '', criteria: "Client HACCP / food safety plan specification", signature: '', showQr: true,
@@ -774,6 +784,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     if (!Array.isArray(out.prices) || !out.prices.length) out.prices = structuredClone(defaults.settings.prices);
     // price items added in later versions appear once in existing price lists (deleting one keeps it deleted)
     out.priceAdded ||= [];
+    // instrument items were first named "… verification"; rename them unless you changed the name
+    for (const p of out.prices) { const item = INST_PRICES.find(x => x.id === p.id); if (item && OLD_INST_NAMES.includes(p.name)) p.name = item.name; }
     for (const item of INST_PRICES) if (!out.priceAdded.includes(item.id)) {
       const at = out.prices.findIndex(p => p.id === 'tm');   // before "Temperature mapping", or at the end
       if (!out.prices.some(p => p.id === item.id)) out.prices.splice(at < 0 ? out.prices.length : at, 0, structuredClone(item));
@@ -1065,7 +1077,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
 
     $('#resLegend').textContent = 'Readings';
     $('#resFields').innerHTML = `<label class="check" style="margin:0 0 8px"><input type="checkbox" id="instAdjusted"${I.adjusted ? ' checked' : ''}>
-        Device was adjusted (the certificate becomes a Certificate of Calibration and shows As Left readings)</label>
+        Device was adjusted (adds As Left readings; the certificate shows as found and as left)</label>
       <div style="overflow-x:auto"><table class="grid-results inst-grid">
         <tr><th style="width:34px">Pt</th>${th ? '<th style="width:64px">Param</th>' : ''}<th>Nominal</th><th style="width:58px">Ref</th>
           <th style="width:58px">As found</th><th style="width:48px">± Tol</th>${I.adjusted ? '<th style="width:58px">As left</th>' : ''}<th>Error</th><th></th></tr>
@@ -1519,7 +1531,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     if (isInst(c.type)) {
       const I = c.inst, th = c.type === 'th', u = I.unit;
       const val = v => v === '' || v == null ? show('') : esc(v);
-      return `<h2>${I.adjusted ? 'Calibration' : 'Verification'} Results <em>— error = device − reference</em></h2>
+      return `<h2>Calibration Results <em>— error = device − reference${I.adjusted ? '; device adjusted, as found and as left shown' : ''}</em></h2>
       <div class="card"><table class="inst-table">
         <tr><th class="c">Point</th>${th ? '<th>Parameter</th>' : ''}<th>Nominal</th><th class="c">Reference${th ? '' : ` (${esc(u)})`}</th>
           <th class="c">As Found${th ? '' : ` (${esc(u)})`}</th><th class="c">Error</th><th class="c">Tolerance</th>
@@ -1567,7 +1579,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   function render() {
     const c = cert, s = db.settings, T = TYPES[c.type], inst = isInst(c.type), adj = inst && c.inst.adjusted;
     const due = addMonths(c.valDate, c.intervalMonths);
-    const kind = adj ? 'Calibration' : 'Verification';
+    const kind = 'Calibration';   // instruments: a calibration whether or not the device was adjusted
     const sig = s.signature ? `<img src="${s.signature}" alt="">` : '';
     const addr = [c.client.address1, c.client.cityStateZip].filter(Boolean).join('\n');
     $('#cert').innerHTML = `
@@ -1613,7 +1625,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       </div>
 
       <div class="card fine">${inst ? `
-        <p>This ${T.noun} was ${adj ? 'calibrated (adjusted, then verified)' : 'verified'} by comparison against the reference standards listed above, in accordance with the Wheeler Food Safety Service LLC Quality Assurance Manual${c.cond.procedure ? ` (${esc(c.cond.procedure)})` : ''}. Error is the device reading minus the reference reading; a point passes when the error is within the stated tolerance. Reference standards are NIST-traceable; records of work performed and traceability are maintained by Wheeler Food Safety Service LLC.</p>
+        <p>This ${esc((c.equip.description || T.noun).toLowerCase())} was calibrated by comparison against the NIST-traceable reference standards listed above, in accordance with the Wheeler Food Safety Service LLC Quality Assurance Manual${c.cond.procedure ? ` (${esc(c.cond.procedure)})` : ''}. Error is the device reading minus the reference reading; the pass/fail result verifies each point against the stated tolerance. ${adj ? 'The device was adjusted; as-found and as-left readings are both recorded.' : 'No adjustment was made.'} Records of work performed and traceability are maintained by Wheeler Food Safety Service LLC.</p>
         <p>Results apply only to the instrument identified above at the time of service. Drift, damage and environmental conditions may affect accuracy before the recommended due date, which does not imply continued accuracy. Routine checks per the client's food safety plan remain required. This certificate may not be reproduced except in full without written approval of Wheeler Food Safety Service LLC.</p>` : `
         <p>This ${T.noun} was validated in accordance with the Wheeler Food Safety Service LLC Quality Assurance Manual${c.cond.procedure ? ` (${esc(c.cond.procedure)})` : ''} against manufacturer specifications, ${c.type === 'mg' ? 'the acceptance criteria stated above' : "the client's stated sensitivity requirements"}, and applicable food safety requirements. Records of work performed and traceability of all test standards are maintained by Wheeler Food Safety Service LLC.</p>
         <p>Results apply only to the equipment identified above at the time of service. Wear, environmental conditions and product variability may affect performance before the due date; the due date does not imply continued compliance. Routine ${c.type === 'mg' ? 'inspection and cleaning' : 'operator verification'} per the client's food safety plan remains required. This certificate may not be reproduced except in full without written approval of Wheeler Food Safety Service LLC.</p>`}
@@ -1810,8 +1822,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     const due = d.nextDue ? (([y, mo]) => new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'short' }).toUpperCase() + ' ' + y)(d.nextDue.split('-').map(Number)) : '—';
     const initials = (d.tech || '').trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase()).join('');
     const unit = d.serial ? 'S/N  ' + d.serial : d.assetId ? 'ID  ' + d.assetId : '';   // serial only; asset ID when there's none
-    const inst = isInst(d.type), dueTitle = inst ? 'NEXT VERIFICATION DUE' : 'NEXT VALIDATION DUE';
-    const validated = `${inst ? 'Verified' : 'Validated'} ${fmtDate(d.valDate)}${initials ? '  ·  ' + initials : ''}`;
+    const inst = isInst(d.type), dueTitle = inst ? 'NEXT CALIBRATION DUE' : 'NEXT VALIDATION DUE';
+    const validated = `${inst ? 'Calibrated' : 'Validated'} ${fmtDate(d.valDate)}${initials ? '  ·  ' + initials : ''}`;
     const MW = 94;   // middle column width, x 54.4–148.4
     text(54.4, 8.4, MW, 7.2, dueTitle, lblFit(dueTitle, MW, 5.8, true), true);
     text(53.8, 14.4, MW, 23, due, lblFit(due, MW - 2, 23, true), true);
@@ -1820,7 +1832,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     text(54.4, 51.8, MW, 7.4, validated, lblFit(validated, MW, 5.9, false));
 
     // result block, x 150.4–211.2
-    const result = { 'In Tolerance': 'PASS', 'Out of Tolerance': 'FAIL', 'Removed from Service': 'OUT OF SERVICE' }[d.asLeft] || (inst ? 'VERIFIED' : 'VALIDATED');
+    const result = { 'In Tolerance': 'PASS', 'Out of Tolerance': 'FAIL', 'Removed from Service': 'OUT OF SERVICE' }[d.asLeft] || (inst ? 'CALIBRATED' : 'VALIDATED');
     const [sc, sg] = lblCanvas(60.8, 31.2);
     sg.fillStyle = '#000'; sg.beginPath(); sg.roundRect(0, 0, sc.width, sc.height, 3.2 * LBL_PX); sg.fill();
     const white = { color: '#fff', maxW: 56 };
@@ -2291,8 +2303,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const dlgR = $('#dlgRecords');
   let recTab = 'due', recFilter = { due: '60', q: '', status: 'all' }, recOffline = false;
   const TAG = { md: 'Metal detector', xr: 'X-ray', mg: 'Magnet', th: 'Thermohygrometer', tp: 'Temperature probe' };
-  // "validation" for metal detectors, X-ray and magnets; "verification" for instruments; neutral for a mix
-  const jobWord = rows => rows.every(x => isInst(x.cert_type)) ? 'verification' : rows.some(x => isInst(x.cert_type)) ? '' : 'validation';
+  // "validation" for metal detectors, X-ray and magnets; "calibration" for instruments; neutral for a mix
+  const jobWord = rows => rows.every(x => isInst(x.cert_type)) ? 'calibration' : rows.some(x => isInst(x.cert_type)) ? '' : 'validation';
   const daysUntil = iso => { if (!iso) return null; const [y, m, d] = iso.split('-').map(Number);
     const t = new Date(); t.setHours(0, 0, 0, 0); return Math.round((new Date(y, m - 1, d) - t) / 864e5); };
   const dueTag = iso => { const d = daysUntil(iso); if (d === null) return '';
@@ -2543,7 +2555,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       [cl.address1, cl.cityStateZip, cl.contact && 'Attn: ' + cl.contact].filter(Boolean).forEach((t, i) => txt(t, 50, 656 - i * 13, 9.5, font, muted));
       const dates = [...new Set(rows.map(x => x.validation_date))].sort();
       const passed = rows.filter(x => x.as_left === 'In Tolerance').length;
-      const facts = [[word === 'verification' ? 'Verified' : word ? 'Validated' : 'Serviced', dates.map(d => fmtDate(d, true)).join(', ')], ['Units', `${rows.length} (${passed} passed)`],
+      const facts = [[word === 'calibration' ? 'Calibrated' : word ? 'Validated' : 'Serviced', dates.map(d => fmtDate(d, true)).join(', ')], ['Units', `${rows.length} (${passed} passed)`],
                      ['Next due', fmtDate(rows.map(x => x.next_due).filter(Boolean).sort()[0], true) || '—']];
       facts.forEach(([k, v], i) => { txt(k, 360, 672 - i * 14, 9, font, muted); txt(fit(v, bold, 9.5, 140), 422, 672 - i * 14, 9.5, bold); });
       let y = 600;
@@ -2961,7 +2973,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     for (const type of ['md', 'xr', 'mg', 'th', 'tp', 'tpf', 'tpr']) rows.filter(x => priceGroup(x.cert_type || 'md', x.probe_kind) === type).forEach((x, i) => {
       const p = price(type, i === 0 ? 'first' : 'additional');
       bill.lines.push({ item: p?.id || '', qty: 1, price: p?.price || '', taxable: p ? p.taxable !== false : true,
-        description: `${p?.name || (TAG[type] || 'Temperature device') + (TAG[type] && !isInst(type) ? ' validation' : ' verification')}: ${x.cert_no}${x.serial ? ', S/N ' + x.serial : x.asset_id ? ', ' + x.asset_id : ''}` });
+        description: `${p?.name || (TAG[type] || 'Temperature device') + (TAG[type] && !isInst(type) ? ' validation' : ' calibration')}: ${x.cert_no}${x.serial ? ', S/N ' + x.serial : x.asset_id ? ', ' + x.asset_id : ''}` });
     });
     if (!bill.lines.length) bill.lines = blankBill('invoice').lines;
     dlgR.close(); setMode('billing');
