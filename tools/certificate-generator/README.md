@@ -56,8 +56,10 @@ link, quote terms and the footer address are in Settings.
      and aluminum. Each extra standard gets its own results column; ✕ removes it.
    * **X-ray:** same test points as metal detectors, plus optional contaminant standards
      (glass, ceramic, calcified bone, …) with **+ Add contaminant**.
-   * **Thermohygrometer / Temperature probe** (`WFS-TH-…`, `WFS-TP-…`): a **Certificate of Verification**
-     (or **Calibration** when you tick *Device was adjusted*, which adds As Left readings). Enter the
+   * **Thermohygrometer / Temperature probe** (`WFS-TH-…`, `WFS-TP-…`): a **Certificate of Calibration**:
+     the device is compared against traceable references and its error recorded; adjusting it is a
+     separate, optional step (tick *Device was adjusted* to add As Left readings). The pass/fail column
+     covers the verification. Metal detectors, X-ray and magnets stay *validations*. Enter the
      device under test (make, model, serial, location, manufacturer accuracy, tolerance applied),
      method & conditions, one or more NIST-traceable reference standards with cal dates, the expanded
      uncertainty, and a reading per point: reference, as found and ± tolerance. Error (device −
@@ -65,7 +67,7 @@ link, quote terms and the footer address are in Settings.
      points, RH and temperature at each (+ Add point for 33 %RH MgCl₂); removable probes start with the
      ice point and an operating temperature, fixed gauges with their lower and upper setpoints, and
      fridge / freezer / room thermometers with one in-place point (pick the *Device type*; the
-     certificate title follows it, e.g. "Thermometer Verification"). Each device type has its own
+     certificate title follows it, e.g. "Thermometer Calibration"). Each device type has its own
      first-device / additional-device price in the price list, which "Invoice" from Records uses.
      Interval defaults to 12 months. Saving the equipment remembers each unit's own points and tolerances.
    * **Magnet:** set the number of tubes (up to 24) and test points per tube (up to 8), enter

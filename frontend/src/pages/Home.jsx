@@ -68,11 +68,11 @@ const Home = () => {
       desc: 'Comprehensive temperature mapping for ambient/cold rooms and high temperature with validated loggers.'
     },
     {
-      slug: 'thermometer-hygrometer-verification',
+      slug: 'thermometer-hygrometer-calibration',
       icon: '/icons/thermometer.png',
       alt: 'Thermometer Icon',
-      title: 'Thermometer & Hygrometer Verification',
-      desc: 'NIST-traceable verification of thermohygrometers, temperature probes, gauges, and fridge and freezer thermometers.'
+      title: 'Thermometer & Hygrometer Calibration',
+      desc: 'NIST-traceable calibration of thermohygrometers, temperature probes, gauges, and fridge and freezer thermometers.'
     }
   ];
 
@@ -126,7 +126,7 @@ const Home = () => {
       ]
     },
     {
-      title: 'Thermometer & Hygrometer Verification',
+      title: 'Thermometer & Hygrometer Calibration',
       price: 'From $125',
       sub: 'First device of each kind',
       add: 'Less for each additional device',
@@ -144,7 +144,7 @@ const Home = () => {
   {/* Hero Section */}
   <section className="hero" tabIndex={-1} style={{ background: '#fff' }}>
           <h1 style={{ fontSize: '3.8rem', fontWeight: 800, lineHeight: 1.1 }}>Food Safety Validation <span style={{ color: '#16A34A' }}>Services</span></h1>
-          <p style={{ fontSize: '1.2rem', color: '#01426A' }}>Serving Utah food manufacturers and related industries with professional metal detector, X-ray system, magnet, and temperature validation services.</p>
+          <p style={{ fontSize: '1.2rem', color: '#01426A' }}>Serving Utah food manufacturers and related industries with metal detector, X-ray system, and magnet validation, temperature mapping, and thermometer and hygrometer calibration.</p>
           <a href="#contact" className="btn" style={{ fontSize: '1.25rem', padding: '1.1rem 2.2rem' }}>
             Contact Us
           </a>
@@ -152,7 +152,7 @@ const Home = () => {
 
         {/* Services Section */}
   <section id="services" className="services" style={{ background: '#f7fafc' }}>
-          <h2>Professional Validation Services</h2>
+          <h2>Professional Validation &amp; Calibration Services</h2>
           <h3 style={{ textAlign: 'center', color: '#01426A', fontSize: '1.18rem', marginBottom: '2.2rem', fontWeight: 500 }}>Comprehensive food safety validation services to ensure your equipment meets industry standards and regulatory requirements.</h3>
           <div className="service-cards">
             {serviceCards.map(card => (
@@ -168,8 +168,8 @@ const Home = () => {
 
          {/* Pricing Section (moved below services, card style updated) */}
   <section id="pricing" className="pricing-section" style={{ background: '#fff', padding: '6.5rem 0 2.5rem 0', borderBottom: '1.5px solid #e0e7ef' }}>
-          <h2 style={{ textAlign: 'center', color: '#00182b', fontSize: '2.6rem', fontWeight: 800, marginBottom: '0.7rem' }}>Professional Validation Pricing</h2>
-          <p style={{ textAlign: 'center', color: '#01426A', fontSize: '1.18rem', marginBottom: '2.2rem', fontWeight: 500 }}>Competitive pricing for food safety validation services. Discounts available for multiple units and annual contracts.</p>
+          <h2 style={{ textAlign: 'center', color: '#00182b', fontSize: '2.6rem', fontWeight: 800, marginBottom: '0.7rem' }}>Validation &amp; Calibration Pricing</h2>
+          <p style={{ textAlign: 'center', color: '#01426A', fontSize: '1.18rem', marginBottom: '2.2rem', fontWeight: 500 }}>Competitive pricing for food safety validation and calibration services. Discounts available for multiple units and annual contracts.</p>
           <div className="service-cards pricing-cards">
             {pricingCards.map(card => (
               <div className="card" key={card.title} style={{
