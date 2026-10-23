@@ -156,7 +156,7 @@ const Home = () => {
           <h3 style={{ textAlign: 'center', color: '#01426A', fontSize: '1.18rem', marginBottom: '2.2rem', fontWeight: 500 }}>Comprehensive food safety validation services to ensure your equipment meets industry standards and regulatory requirements.</h3>
           <div className="service-cards">
             {serviceCards.map(card => (
-              <Link to={`/services/${card.slug}`} className="card service-card" key={card.title}>
+              <Link to={`/services/${card.slug}/`} className="card service-card" key={card.title}>
                 <img src={card.icon} alt={card.alt} className="service-card-icon" />
                 <h3>{card.title}</h3>
                 <p>{card.desc}</p>
@@ -247,7 +247,7 @@ const Home = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                 <div><strong style={{ color: '#01426A', fontSize: '1.12rem' }}>Specialized Expertise</strong> – Focused on metal detectors, X-ray systems, magnets, and temperature devices</div>
                 <div><strong style={{ color: '#01426A', fontSize: '1.12rem' }}>Independent &amp; Audit-Ready</strong> – Unbiased results with clear documentation for FDA, USDA, and GFSI compliance</div>
-                <div><strong style={{ color: '#01426A', fontSize: '1.12rem' }}>Local &amp; Responsive</strong> – Utah-based service that minimizes downtime and keeps production moving</div>
+                <div><strong style={{ color: '#01426A', fontSize: '1.12rem' }}>Local &amp; Responsive</strong> – Utah-based service from Logan and Ogden to Salt Lake City and Provo, that minimizes downtime and keeps production moving</div>
               </div>
             </div>
           </div>

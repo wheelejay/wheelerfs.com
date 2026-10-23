@@ -21,7 +21,7 @@ const ContentDetail = ({ items, basePath, backLabel, siteLabel, relatedLabel }) 
   return (
     <main className="content-page">
       <article>
-        <Link to={basePath} className="content-back">← {backLabel}</Link>
+        <Link to={`${basePath}/`} className="content-back">← {backLabel}</Link>
         {item.icon && <img src={item.icon} alt="" className="service-page-icon" />}
         <h1>
           {item.title}
@@ -58,7 +58,7 @@ const ContentDetail = ({ items, basePath, backLabel, siteLabel, relatedLabel }) 
             <h2>{relatedLabel}</h2>
             <ul>
               {related.map((r) => (
-                <li key={r.slug}><Link to={`${basePath}/${r.slug}`}>{r.title}</Link></li>
+                <li key={r.slug}><Link to={`${basePath}/${r.slug}/`}>{r.title}</Link></li>
               ))}
             </ul>
           </section>

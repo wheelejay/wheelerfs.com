@@ -1,14 +1,18 @@
 ---
 title: What Happens During a Metal Detector or X-Ray Validation (and How to Prepare)
-seoTitle: Metal Detector & X-Ray Validation: What to Expect
+seoTitle: Metal Detector Validation Day: Prep Checklist
 date: 2026-10-07
-excerpt: What happens during a metal detector or X-ray validation, step by step, plus a short checklist so your visit runs smoothly and your audit file is complete.
+excerpt: Getting a metal detector or X-ray validated? See each step of the visit, what happens if a unit fails, and a 5-point checklist to prepare your line.
 draft: false
 ---
 
 If you've never had a third-party validation done on your metal detectors or X-ray systems, it's fair to wonder what actually happens when the technician shows up. How long will the line be tied up? What do you need to have ready? What happens if something fails?
 
 Here's exactly how we run a validation at Wheeler Food Safety, step by step, so there are no surprises on the day.
+
+## How long does it take?
+
+Plan on **about an hour per metal detector**. That covers the pre-checks, running every test piece in your product, the fail-safe checks, and recording the results. A line with several products, or a detector that needs adjusting, can take longer, and X-ray systems vary with the system and product. We'll give you a time estimate when we schedule, so you can plan production around the visit.
 
 ## Before we arrive
 

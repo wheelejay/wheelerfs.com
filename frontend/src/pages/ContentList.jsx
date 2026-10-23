@@ -16,7 +16,7 @@ const ContentList = ({ items, basePath, title, intro, metaTitle, emptyMessage })
         <ul className="content-list">
           {items.map((item) => (
             <li key={item.slug}>
-              <Link to={`${basePath}/${item.slug}`} className="content-list-item">
+              <Link to={`${basePath}/${item.slug}/`} className="content-list-item">
                 <time dateTime={item.date}>{formatDate(item.date)}</time>
                 <h2>
                   {item.title}

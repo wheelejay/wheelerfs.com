@@ -49,6 +49,10 @@ function labelTableCells(html) {
 // Today's date in Utah, as YYYY-MM-DD
 const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
 
+// Links between pages point at the final address (/blog/post/), not the one
+// GitHub Pages redirects from (/blog/post), so search engines see one URL per page.
+const slashLinks = (html) => html.replace(/href="(\/[\w\-/]*\w)(#[^"]*)?"/g, (_, p, hash = '') => `href="${p}/${hash}"`);
+
 // Blog posts and episodes need a date and are listed newest first. Service
 // pages have no date and are listed by their `order` number instead.
 function loadCollection(root, dir, includeDrafts, { dated = true } = {}) {
@@ -76,7 +80,7 @@ function loadCollection(root, dir, includeDrafts, { dated = true } = {}) {
         price: data.price || '',
         priceNote: data.priceNote || '',
         order: Number(data.order) || 0,
-        html: labelTableCells(marked.parse(body)),
+        html: slashLinks(labelTableCells(marked.parse(body))),
       };
     })
     .filter((item) => includeDrafts || (!item.draft && !(dated && item.date > today())))
@@ -133,7 +137,7 @@ const relatedHtml = (posts, post) => {
   const items = relatedPosts(posts, post);
   if (!items.length) return '';
   return `<section><h2>More from the blog</h2><ul>${items
-    .map((i) => `<li><a href="/blog/${i.slug}">${escapeHtml(i.title)}</a></li>`)
+    .map((i) => `<li><a href="/blog/${i.slug}/">${escapeHtml(i.title)}</a></li>`)
     .join('')}</ul></section>`;
 };
 
@@ -155,18 +159,18 @@ const postJsonLd = (p) => ({
 const listHtml = (heading, items, base) =>
   `<h1>${escapeHtml(heading)}</h1>` +
   items
-    .map((i) => `<article><h2><a href="${base}/${i.slug}">${escapeHtml(i.title)}</a></h2><p>${escapeHtml(i.excerpt)}</p></article>`)
+    .map((i) => `<article><h2><a href="${base}/${i.slug}/">${escapeHtml(i.title)}</a></h2><p>${escapeHtml(i.excerpt)}</p></article>`)
     .join('');
 
 // Text version of the homepage for search engines. The live page is built by
 // React (src/pages/Home.jsx); keep the wording here roughly in step with it.
 function homeHtml(services, posts) {
   const serviceItems = services
-    .map((s) => `<li><h3><a href="/services/${s.slug}">${escapeHtml(s.title)}</a></h3><p>${escapeHtml(s.excerpt)}</p>${s.price ? `<p>${escapeHtml(s.price)} ${escapeHtml(s.priceNote)}</p>` : ''}</li>`)
+    .map((s) => `<li><h3><a href="/services/${s.slug}/">${escapeHtml(s.title)}</a></h3><p>${escapeHtml(s.excerpt)}</p>${s.price ? `<p>${escapeHtml(s.price)} ${escapeHtml(s.priceNote)}</p>` : ''}</li>`)
     .join('');
   const postItems = posts
     .slice(0, 5)
-    .map((p) => `<li><a href="/blog/${p.slug}">${escapeHtml(p.title)}</a></li>`)
+    .map((p) => `<li><a href="/blog/${p.slug}/">${escapeHtml(p.title)}</a></li>`)
     .join('');
   return [
     '<main>',
@@ -180,7 +184,7 @@ function homeHtml(services, posts) {
     '<section id="why-us"><h2>Why Choose Wheeler Food Safety?</h2><ul>',
     '<li>Specialized expertise in metal detectors, X-ray systems, magnets, and temperature mapping</li>',
     '<li>Independent, audit-ready documentation for FDA, USDA, and GFSI schemes</li>',
-    '<li>Local to Utah, based in Sandy, to minimize downtime</li>',
+    '<li>Local to Utah, based in Sandy and serving plants from Logan and Ogden to Salt Lake City and Provo, to minimize downtime</li>',
     '</ul></section>',
     postItems ? `<section><h2>From the blog</h2><ul>${postItems}</ul></section>` : '',
     '<section id="contact"><h2>Contact Us</h2>',
