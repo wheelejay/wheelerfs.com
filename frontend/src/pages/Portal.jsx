@@ -3,7 +3,7 @@ import usePageMeta from '../usePageMeta';
 import { supabase, formatDay, daysUntil } from '../supabase';
 
 const DUE_SOON_DAYS = 30;
-const TYPE_LABELS = { md: 'Metal detector', xr: 'X-ray', mg: 'Magnet' };
+const TYPE_LABELS = { md: 'Metal detector', xr: 'X-ray', mg: 'Magnet', th: 'Thermohygrometer', tp: 'Temperature probe' };
 
 function DueBadge({ iso }) {
   const d = daysUntil(iso);
@@ -109,7 +109,7 @@ function Certificates({ session }) {
           <div className="portal-table-wrap">
             <table className="portal-table">
               <thead>
-                <tr><th>Certificate</th><th>Equipment</th><th>Validated</th><th>Next due</th><th></th></tr>
+                <tr><th>Certificate</th><th>Equipment</th><th>Service date</th><th>Next due</th><th></th></tr>
               </thead>
               <tbody>
                 {g.rows.map((r) => (
@@ -120,7 +120,7 @@ function Certificates({ session }) {
                       {[r.manufacturer, r.model].filter((v) => v && v !== 'N/A').join(' ')}
                       <small>{[r.asset_id, r.serial && `S/N ${r.serial}`].filter(Boolean).join(' · ')}</small>
                     </td>
-                    <td data-label="Validated">{formatDay(r.validation_date)}</td>
+                    <td data-label="Service date">{formatDay(r.validation_date)}</td>
                     <td data-label="Next due">{formatDay(r.next_due)} {g.latest.has(r.id) && <DueBadge iso={r.next_due} />}</td>
                     <td>
                       {r.pdf_path && (
@@ -141,7 +141,7 @@ function Certificates({ session }) {
 }
 
 const Portal = () => {
-  usePageMeta({ title: 'Customer portal | Wheeler Food Safety', description: 'Download your validation certificates.' });
+  usePageMeta({ title: 'Customer portal | Wheeler Food Safety', description: 'Download your validation and verification certificates.' });
   const [session, setSession] = useState(undefined);
 
   useEffect(() => {
@@ -153,7 +153,7 @@ const Portal = () => {
   return (
     <main className="content-page portal">
       <h1>Customer portal</h1>
-      <p className="content-intro">Your validation certificates and upcoming due dates, available any time for audits.</p>
+      <p className="content-intro">Your validation and verification certificates and upcoming due dates, available any time for audits.</p>
       {session === undefined ? <p>Loading…</p> : session ? <Certificates session={session} /> : <SignIn />}
     </main>
   );

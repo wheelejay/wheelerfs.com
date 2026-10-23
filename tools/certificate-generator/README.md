@@ -56,6 +56,15 @@ link, quote terms and the footer address are in Settings.
      and aluminum. Each extra standard gets its own results column; ✕ removes it.
    * **X-ray:** same test points as metal detectors, plus optional contaminant standards
      (glass, ceramic, calcified bone, …) with **+ Add contaminant**.
+   * **Thermohygrometer / Temperature probe** (`WFS-TH-…`, `WFS-TP-…`): a **Certificate of Verification**
+     (or **Calibration** when you tick *Device was adjusted*, which adds As Left readings). Enter the
+     device under test (make, model, serial, location, manufacturer accuracy, tolerance applied),
+     method & conditions, one or more NIST-traceable reference standards with cal dates, the expanded
+     uncertainty, and a reading per point: reference, as found and ± tolerance. Error (device −
+     reference) and Pass/Fail are calculated. Thermohygrometers start with ambient and 75 %RH (NaCl)
+     points, RH and temperature at each (+ Add point for 33 %RH MgCl₂); removable probes start with the
+     ice point and an operating temperature, fixed probes with their lower and upper setpoints.
+     Interval defaults to 12 months. Saving the equipment remembers each unit's own points and tolerances.
    * **Magnet:** set the number of tubes (up to 24) and test points per tube (up to 8), enter
      each pull reading in lbs. A tube passes only if *every* reading meets the minimum pull;
      the certificate shows each tube's minimum and average.
