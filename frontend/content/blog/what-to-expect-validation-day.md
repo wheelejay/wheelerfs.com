@@ -10,6 +10,10 @@ If you've never had a third-party validation done on your metal detectors or X-r
 
 Here's exactly how we run a validation at Wheeler Food Safety, step by step, so there are no surprises on the day.
 
+## How long does it take?
+
+Plan on **about an hour per metal detector**. That covers the pre-checks, running every test piece in your product, the fail-safe checks, and recording the results. A line with several products, or a detector that needs adjusting, can take longer, and X-ray systems vary with the system and product. We'll give you a time estimate when we schedule, so you can plan production around the visit.
+
 ## Before we arrive
 
 Every validation starts with your requirements, not ours. Before testing, we review:
