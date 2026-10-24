@@ -34,7 +34,7 @@ Many plants ask for "metal detector calibration", and some providers sell it und
 
 ## Where we work
 
-Most detectors take about an hour each, so we can usually work around your production schedule. We validate metal detectors at food plants across Utah, from Logan and Ogden to Salt Lake City and Provo. Every unit gets a signed Certificate of Validation with a QR code anyone can scan to confirm it's genuine.
+Most detectors take about an hour each, so we can usually work around your production schedule. We validate metal detectors at food plants across Utah, from Logan and Ogden to Salt Lake City, Provo, and Spanish Fork. Every unit gets a signed Certificate of Validation with a QR code anyone can scan to confirm it's genuine.
 
 ## Pricing
 
