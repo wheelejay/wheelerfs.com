@@ -38,7 +38,7 @@ const App = () => (
       />
       <Route
         path="blog/:slug"
-        element={<ContentDetail items={posts} basePath="/blog" backLabel="All posts" siteLabel="Wheeler Food Safety" relatedLabel="More from the blog" />}
+        element={<ContentDetail items={posts} basePath="/blog" backLabel="All posts" siteLabel="Wheeler Food Safety" relatedLabel="More from the blog" showAuthor />}
       />
       {episodes.length > 0 && (
         <>

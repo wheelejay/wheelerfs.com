@@ -135,6 +135,9 @@ function renderPage(template, { route, title, description, body = '', type = 'we
 }
 
 const AUTHOR = 'Jordan Wheeler';
+// keep in step with AUTHOR_BIO in src/siteInfo.js
+const AUTHOR_BIO = 'Jordan Wheeler holds HACCP Manager, HARPC, and PCQI (Preventive Controls Qualified Individual) certifications and is an SQF Practitioner. Jordan validates metal detectors, X-ray systems, and magnets and calibrates temperature and humidity instruments for food manufacturers across Utah, with the whole food safety plan in mind.';
+const AUTHOR_CREDENTIALS = ['HACCP Manager certification', 'HARPC certification', 'PCQI (Preventive Controls Qualified Individual)', 'SQF Practitioner'];
 
 // Other posts to link at the end of each post (src/pages/ContentDetail.jsx shows the same)
 const relatedPosts = (posts, post) => posts.filter((p) => p.slug !== post.slug).slice(0, 3);
@@ -158,7 +161,9 @@ const postJsonLd = (p) => ({
   url: pageUrl(`/blog/${p.slug}`),
   mainEntityOfPage: pageUrl(`/blog/${p.slug}`),
   image: `${SITE_URL}/wheelerfslogo.png`,
-  author: { '@type': 'Person', name: AUTHOR, url: SITE_URL + '/' },
+  author: { '@type': 'Person', name: AUTHOR, url: SITE_URL + '/', jobTitle: 'Owner and technician', description: AUTHOR_BIO,
+    hasCredential: AUTHOR_CREDENTIALS.map((name) => ({ '@type': 'EducationalOccupationalCredential', name })),
+    worksFor: { '@type': 'Organization', name: SITE_NAME } },
   publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL + '/', logo: { '@type': 'ImageObject', url: `${SITE_URL}/wheelerfslogo.png` } },
 });
 
@@ -190,6 +195,7 @@ function homeHtml(services, posts) {
     '<section id="why-us"><h2>Why Choose Wheeler Food Safety?</h2><ul>',
     '<li>Specialized expertise in metal detectors, X-ray systems, magnets, and temperature mapping</li>',
     '<li>Independent, audit-ready documentation for FDA, USDA, and GFSI schemes</li>',
+    '<li>Certified food safety professional: Jordan Wheeler holds HACCP Manager, HARPC, and PCQI (Preventive Controls Qualified Individual) certifications and is an SQF Practitioner</li>',
     '<li>Local to Utah, based in Sandy and serving plants from Logan and Ogden to Salt Lake City, Provo, and Spanish Fork, to minimize downtime</li>',
     '</ul></section>',
     postItems ? `<section><h2>From the blog</h2><ul>${postItems}</ul></section>` : '',
@@ -219,7 +225,7 @@ function prerender(outDir, { posts, episodes, services }) {
       route: `/blog/${p.slug}`,
       title: `${p.seoTitle || p.title} | ${SITE_NAME}`,
       description: p.excerpt,
-      body: `<article><h1>${escapeHtml(p.title)}</h1><p><time datetime="${p.date}">${p.date}</time> · ${AUTHOR}</p>${p.html}${relatedHtml(posts, p)}</article>`,
+      body: `<article><h1>${escapeHtml(p.title)}</h1><p><time datetime="${p.date}">${p.date}</time> · ${AUTHOR}</p>${p.html}<aside><h2>About the author: ${AUTHOR}</h2><p>${escapeHtml(AUTHOR_BIO)}</p></aside>${relatedHtml(posts, p)}</article>`,
       type: 'article',
       lastmod: p.date,
       jsonLd: postJsonLd(p),
