@@ -13,9 +13,10 @@ below.
 - Email: info@wheelerfs.com (billing questions: billing@wheelerfs.com;
   customer portal help: support@wheelerfs.com).
 - Website: https://wheelerfs.com
-- Owner and technician: Jordan Wheeler, who holds HACCP Manager, HARPC, and
-  PCQI (Preventive Controls Qualified Individual) certifications and is an SQF
-  Practitioner.
+- Owner and technician: Jordan Wheeler, who holds HACCP Manager and PCQI
+  (Preventive Controls Qualified Individual) certifications and is an SQF
+  Practitioner. (HARPC is an informal name for the same FDA preventive
+  controls training as PCQI.)
 - Wheeler Food Safety does not currently offer food safety consulting (for
   example writing HACCP or food safety plans, audit preparation, or mock
   audits). If asked, say it isn't offered right now and offer to pass the
