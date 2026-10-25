@@ -88,11 +88,17 @@ function loadCollection(root, dir, includeDrafts, { dated = true } = {}) {
 }
 
 function loadContent(root, includeDrafts) {
-  return {
+  const content = {
     posts: loadCollection(root, 'blog', includeDrafts),
     episodes: loadCollection(root, 'podcast', includeDrafts),
     services: loadCollection(root, 'services', includeDrafts, { dated: false }),
   };
+  // A link to a post that isn't published yet (scheduled or draft) shows as plain
+  // text until the post goes live, so pages can link ahead without a broken link.
+  const live = new Set(content.posts.map((p) => p.slug));
+  const unlink = (html) => html.replace(/<a href="\/blog\/([\w-]+)\/(?:#[^"]*)?">([\s\S]*?)<\/a>/g, (m, slug, text) => (live.has(slug) ? m : text));
+  for (const list of Object.values(content)) for (const item of list) item.html = unlink(item.html);
+  return content;
 }
 
 // GitHub Pages serves /blog/post from blog/post/index.html by redirecting to
@@ -129,6 +135,8 @@ function renderPage(template, { route, title, description, body = '', type = 'we
 }
 
 const AUTHOR = 'Jordan Wheeler';
+// keep in step with AUTHOR_BIO in src/siteInfo.js
+const AUTHOR_BIO = 'Jordan Wheeler has served as a food manufacturer’s food safety manager, PCQI, and SQF Practitioner, and has International HACCP Alliance–accredited HACCP and FDA preventive controls (PCQI) training. Jordan validates metal detectors, X-ray systems, and magnets and calibrates temperature and humidity instruments for food manufacturers across Utah, with the whole food safety plan in mind.';
 
 // Other posts to link at the end of each post (src/pages/ContentDetail.jsx shows the same)
 const relatedPosts = (posts, post) => posts.filter((p) => p.slug !== post.slug).slice(0, 3);
@@ -152,7 +160,8 @@ const postJsonLd = (p) => ({
   url: pageUrl(`/blog/${p.slug}`),
   mainEntityOfPage: pageUrl(`/blog/${p.slug}`),
   image: `${SITE_URL}/wheelerfslogo.png`,
-  author: { '@type': 'Person', name: AUTHOR, url: SITE_URL + '/' },
+  author: { '@type': 'Person', name: AUTHOR, url: SITE_URL + '/', jobTitle: 'Owner and technician', description: AUTHOR_BIO,
+    worksFor: { '@type': 'Organization', name: SITE_NAME } },
   publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL + '/', logo: { '@type': 'ImageObject', url: `${SITE_URL}/wheelerfslogo.png` } },
 });
 
@@ -184,7 +193,8 @@ function homeHtml(services, posts) {
     '<section id="why-us"><h2>Why Choose Wheeler Food Safety?</h2><ul>',
     '<li>Specialized expertise in metal detectors, X-ray systems, magnets, and temperature mapping</li>',
     '<li>Independent, audit-ready documentation for FDA, USDA, and GFSI schemes</li>',
-    '<li>Local to Utah, based in Sandy and serving plants from Logan and Ogden to Salt Lake City and Provo, to minimize downtime</li>',
+    '<li>Food safety background: Jordan Wheeler has served as a food manufacturer’s food safety manager, PCQI, and SQF Practitioner, with International HACCP Alliance–accredited HACCP and FDA preventive controls (PCQI) training</li>',
+    '<li>Local to Utah, based in Sandy and serving plants from Logan and Ogden to Salt Lake City, Provo, and Spanish Fork, to minimize downtime</li>',
     '</ul></section>',
     postItems ? `<section><h2>From the blog</h2><ul>${postItems}</ul></section>` : '',
     '<section id="contact"><h2>Contact Us</h2>',
@@ -213,7 +223,7 @@ function prerender(outDir, { posts, episodes, services }) {
       route: `/blog/${p.slug}`,
       title: `${p.seoTitle || p.title} | ${SITE_NAME}`,
       description: p.excerpt,
-      body: `<article><h1>${escapeHtml(p.title)}</h1><p><time datetime="${p.date}">${p.date}</time> · ${AUTHOR}</p>${p.html}${relatedHtml(posts, p)}</article>`,
+      body: `<article><h1>${escapeHtml(p.title)}</h1><p><time datetime="${p.date}">${p.date}</time> · ${AUTHOR}</p>${p.html}<aside><h2>About the author: ${AUTHOR}</h2><p>${escapeHtml(AUTHOR_BIO)}</p></aside>${relatedHtml(posts, p)}</article>`,
       type: 'article',
       lastmod: p.date,
       jsonLd: postJsonLd(p),

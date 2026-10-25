@@ -116,9 +116,9 @@ const Layout = () => {
         <div className="footer-columns">
           <div>
             <strong style={{ fontSize: '1.15rem', fontWeight: 800 }}>Wheeler Food Safety Services</strong>
-            <div style={{ color: '#cfd8e3', marginTop: '0.5em', fontSize: '0.98rem', fontWeight: 400 }}>
-              Professional food safety validation services<br />
-              for Utah food manufacturers and related industries.
+            <div style={{ color: '#cfd8e3', marginTop: '0.5em', fontSize: '0.98rem', fontWeight: 400, maxWidth: '22rem' }}>
+              Food safety validation and calibration for food manufacturers and cold storage across
+              Northern &amp; Central Utah: Logan, Ogden, Salt Lake City, Sandy, Orem, Provo, and Spanish Fork.
             </div>
           </div>
           <div>

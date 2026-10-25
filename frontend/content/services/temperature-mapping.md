@@ -38,7 +38,7 @@ Temperatures vary from one part of a room to another. Temperature mapping finds 
 3. **Record:** the loggers record over normal operations, so door openings, defrost cycles, and loading are captured.
 4. **Report:** you get the warmest and coldest locations, the temperature spread, any readings outside your range, and where to put your monitoring sensors.
 
-We map coolers, freezers, and warehouses for food manufacturers and distributors across Utah, from Logan and Ogden to Salt Lake City and Provo.
+We map coolers, freezers, and warehouses for food manufacturers and distributors across Utah, from Logan and Ogden to Salt Lake City, Provo, and Spanish Fork.
 
 ## Pricing
 

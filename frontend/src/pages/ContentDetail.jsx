@@ -2,9 +2,10 @@ import { Link, useParams } from 'react-router-dom';
 import usePageMeta from '../usePageMeta';
 import formatDate from '../formatDate';
 import NotFound from './NotFound';
+import { AUTHOR_NAME, AUTHOR_BIO } from '../siteInfo';
 
 // Shared page for a single blog post or podcast episode.
-const ContentDetail = ({ items, basePath, backLabel, siteLabel, relatedLabel }) => {
+const ContentDetail = ({ items, basePath, backLabel, siteLabel, relatedLabel, showAuthor }) => {
   const { slug } = useParams();
   const item = items.find((i) => i.slug === slug);
 
@@ -52,6 +53,13 @@ const ContentDetail = ({ items, basePath, backLabel, siteLabel, relatedLabel }) 
         )}
 
         <div className="content-body" dangerouslySetInnerHTML={{ __html: item.html }} />
+
+        {showAuthor && (
+          <aside className="content-author">
+            <strong>About the author: {AUTHOR_NAME}</strong>
+            <p>{AUTHOR_BIO}</p>
+          </aside>
+        )}
 
         {related.length > 0 && (
           <section className="content-related">

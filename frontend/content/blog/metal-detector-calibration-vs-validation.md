@@ -1,9 +1,9 @@
 ---
 title: "Metal Detector Calibration vs. Validation: What's the Difference?"
 seoTitle: "Metal Detector Calibration vs. Validation"
-date: 2026-10-23
+date: 2026-11-18
 excerpt: Searching for metal detector calibration? Here's what calibration, validation, and verification really mean, what auditors expect, and what to ask a provider.
-draft: true
+draft: false
 ---
 
 "We need our metal detector calibrated." We hear it all the time, and you'll find plenty of companies offering "metal detector calibration." It's an understandable way to put it. But the word doesn't quite fit a metal detector, and the difference matters when an auditor reviews your records.
