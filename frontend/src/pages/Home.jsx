@@ -247,7 +247,7 @@ const Home = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                 <div><strong style={{ color: '#01426A', fontSize: '1.12rem' }}>Specialized Expertise</strong> – Focused on metal detectors, X-ray systems, magnets, and temperature devices</div>
                 <div><strong style={{ color: '#01426A', fontSize: '1.12rem' }}>Independent &amp; Audit-Ready</strong> – Unbiased results with clear documentation for FDA, USDA, and GFSI compliance</div>
-                <div><strong style={{ color: '#01426A', fontSize: '1.12rem' }}>Qualified Food Safety Professional</strong> – Owner Jordan Wheeler is a PCQI and SQF Practitioner with HACCP training, so your equipment is tested with your whole food safety plan in mind</div>
+                <div><strong style={{ color: '#01426A', fontSize: '1.12rem' }}>Food Safety Background</strong> – Owner Jordan Wheeler has HACCP and FDA preventive controls (PCQI) training and experience as an SQF Practitioner, so your equipment is tested with your whole food safety plan in mind</div>
                 <div><strong style={{ color: '#01426A', fontSize: '1.12rem' }}>Local &amp; Responsive</strong> – Utah-based service from Logan and Ogden to Salt Lake City, Provo, and Spanish Fork, that minimizes downtime and keeps production moving</div>
               </div>
             </div>
