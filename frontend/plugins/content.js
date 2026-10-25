@@ -136,7 +136,7 @@ function renderPage(template, { route, title, description, body = '', type = 'we
 
 const AUTHOR = 'Jordan Wheeler';
 // keep in step with AUTHOR_BIO in src/siteInfo.js
-const AUTHOR_BIO = 'Jordan Wheeler has International HACCP Alliance–accredited HACCP training, FDA preventive controls (PCQI) training, and experience as an SQF Practitioner. Jordan validates metal detectors, X-ray systems, and magnets and calibrates temperature and humidity instruments for food manufacturers across Utah, with the whole food safety plan in mind.';
+const AUTHOR_BIO = 'Jordan Wheeler has served as a food manufacturer’s food safety manager, PCQI, and SQF Practitioner, and has International HACCP Alliance–accredited HACCP and FDA preventive controls (PCQI) training. Jordan validates metal detectors, X-ray systems, and magnets and calibrates temperature and humidity instruments for food manufacturers across Utah, with the whole food safety plan in mind.';
 
 // Other posts to link at the end of each post (src/pages/ContentDetail.jsx shows the same)
 const relatedPosts = (posts, post) => posts.filter((p) => p.slug !== post.slug).slice(0, 3);
@@ -193,7 +193,7 @@ function homeHtml(services, posts) {
     '<section id="why-us"><h2>Why Choose Wheeler Food Safety?</h2><ul>',
     '<li>Specialized expertise in metal detectors, X-ray systems, magnets, and temperature mapping</li>',
     '<li>Independent, audit-ready documentation for FDA, USDA, and GFSI schemes</li>',
-    '<li>Food safety background: Jordan Wheeler has International HACCP Alliance–accredited HACCP training, FDA preventive controls (PCQI) training, and experience as an SQF Practitioner</li>',
+    '<li>Food safety background: Jordan Wheeler has served as a food manufacturer’s food safety manager, PCQI, and SQF Practitioner, with International HACCP Alliance–accredited HACCP and FDA preventive controls (PCQI) training</li>',
     '<li>Local to Utah, based in Sandy and serving plants from Logan and Ogden to Salt Lake City, Provo, and Spanish Fork, to minimize downtime</li>',
     '</ul></section>',
     postItems ? `<section><h2>From the blog</h2><ul>${postItems}</ul></section>` : '',
