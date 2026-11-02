@@ -160,10 +160,19 @@
   .page .content { display: flex; flex-direction: column; position: relative; }
 
   /* ---------- thermohygrometers & temperature probes ---------- */
-  .inst-grid { min-width: 430px; }
-  .inst-grid input, .inst-grid select { padding: 4px 4px; font-size: 13px; }
-  .inst-grid td.err { font-weight: 700; font-size: 12.5px; white-space: nowrap; text-align: center; min-width: 44px; }
-  .inst-grid td.err.good { color: #15803d; } .inst-grid td.err.bad { color: #b91c1c; }
+  .pt-card { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; background: #fff; }
+  .pt-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .pt-head label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--blue); }
+  .pt-head input { width: 64px; padding: 4px 6px; font-size: 13px; margin: 0; }
+  .pt-row { border-top: 1px solid #eef2f7; padding-top: 7px; margin-top: 7px; }
+  .pt-line1 { display: flex; gap: 6px; align-items: center; }
+  .pt-line1 select { width: 80px; flex: none; padding: 4px; font-size: 13px; }
+  .pt-line1 input { flex: 1; min-width: 0; padding: 4px 6px; font-size: 13px; }
+  .pt-line2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 6px; margin-top: 6px; align-items: end; }
+  .pt-line2 label { font-size: 11px; }
+  .pt-line2 input { padding: 4px 6px; font-size: 13px; }
+  .pt-line2 .err { font-weight: 700; font-size: 12.5px; text-align: center; padding-bottom: 6px; white-space: nowrap; }
+  .pt-line2 .err.good { color: #15803d; } .pt-line2 .err.bad { color: #b91c1c; }
   .ref-box { border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin-bottom: 8px; background: #fff; }
   .ref-box .ref-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: var(--blue); margin-bottom: 6px; }
   .page .inst-table th, .page .inst-table td { padding: 3px 5px; }
@@ -929,6 +938,12 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     return { found, left, foundOk: ok(found), result: (left ? ok(left) : ok(found)) ? 'PASS' : 'FAIL' };
   }
   const titleCase = v => String(v || '').trim().replace(/\b[a-z]/g, ch => ch.toUpperCase());
+  // readings grouped by point number, in order of first appearance: [{ point, idx: [row indexes] }]
+  function pointGroups(rows) {
+    const groups = [];
+    rows.forEach((r, i) => { let g = groups.find(x => x.point === r.point); if (!g) groups.push(g = { point: r.point, idx: [] }); g.idx.push(i); });
+    return groups;
+  }
   const rowUnit = (r, unit) => r.param === 'RH' ? '%RH' : unit;
   const withUnit = (v, u) => /^\s*-?\d+(\.\d+)?\s*$/.test(v || '') ? `${String(v).trim()} ${u}` : v;
 
@@ -1078,22 +1093,29 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     $('#resLegend').textContent = 'Readings';
     $('#resFields').innerHTML = `<label class="check" style="margin:0 0 8px"><input type="checkbox" id="instAdjusted"${I.adjusted ? ' checked' : ''}>
         Device was adjusted (adds As Left readings; the certificate shows as found and as left)</label>
-      <div style="overflow-x:auto"><table class="grid-results inst-grid">
-        <tr><th style="width:34px">Pt</th>${th ? '<th style="width:64px">Param</th>' : ''}<th>Nominal</th><th style="width:58px">Ref</th>
-          <th style="width:58px">As found</th><th style="width:48px">± Tol</th>${I.adjusted ? '<th style="width:58px">As left</th>' : ''}<th>Error</th><th></th></tr>
-        ${I.rows.map((r, i) => `<tr>
-          <td><input data-k="inst.rows.${i}.point"></td>
-          ${th ? `<td><select data-k="inst.rows.${i}.param">${opts(['RH', 'Temp'], r.param)}</select></td>` : ''}
-          <td><input data-k="inst.rows.${i}.nominal" placeholder="${th ? '' : 'e.g. 85.0 ' + esc(I.unit) + ' (kettle)'}"></td>
-          <td><input data-k="inst.rows.${i}.ref" inputmode="decimal"></td>
-          <td><input data-k="inst.rows.${i}.found" inputmode="decimal"></td>
-          <td><input data-k="inst.rows.${i}.tol" inputmode="decimal"></td>
-          ${I.adjusted ? `<td><input data-k="inst.rows.${i}.left" inputmode="decimal"></td>` : ''}
-          <td class="err" id="instErr${i}"></td>
-          <td><button type="button" class="small" data-remove-row="${i}" title="Remove this reading">✕</button></td></tr>`).join('')}
-      </table></div>
-      <div class="btn-row"><button type="button" class="small" id="btnAddRow">${th ? '+ Add point (e.g. 33 %RH MgCl₂)' : '+ Add point'}</button></div>
-      <p class="hint">Enter readings in ${th ? '%RH and ' : ''}${esc(I.unit)}${th ? ' (average of your 3 readings)' : ''}. Error = device − reference; it turns red when it's outside ± tolerance.${I.adjusted ? ' As Left: the device reading after adjustment, against the same reference.' : ''}</p>`;
+      ${pointGroups(I.rows).map(g => `<div class="pt-card">
+        <div class="pt-head">
+          <label>Point <input class="pt-no" data-point-idx="${g.idx.join(',')}" value="${esc(g.point)}" placeholder="#"></label>
+          <button type="button" class="small" data-remove-point="${g.idx.join(',')}" title="Remove this point and all its readings">Remove point ✕</button>
+        </div>
+        ${g.idx.map(i => { const r = I.rows[i]; return `<div class="pt-row">
+          <div class="pt-line1">
+            ${th ? `<select data-k="inst.rows.${i}.param" title="Parameter">${opts(['RH', 'Temp'], r.param)}</select>` : ''}
+            <input data-k="inst.rows.${i}.nominal" placeholder="${th ? (r.param === 'RH' ? 'Nominal, e.g. 75 %RH (NaCl)' : 'Nominal, e.g. Ambient') : 'Nominal, e.g. 85.0 ' + esc(I.unit) + ' (kettle)'}">
+            <button type="button" class="small" data-remove-row="${i}" title="Remove this reading">✕</button>
+          </div>
+          <div class="pt-line2">
+            <label>Reference<input data-k="inst.rows.${i}.ref" inputmode="decimal"></label>
+            <label>As found<input data-k="inst.rows.${i}.found" inputmode="decimal"></label>
+            <label>± Tolerance<input data-k="inst.rows.${i}.tol" inputmode="decimal"></label>
+            ${I.adjusted ? `<label>As left<input data-k="inst.rows.${i}.left" inputmode="decimal"></label>` : ''}
+            <div class="err" id="instErr${i}" title="Error = device − reference"></div>
+          </div></div>`; }).join('')}
+        ${th ? ['RH', 'Temp'].filter(pm => !g.idx.some(i => I.rows[i].param === pm)).map(pm =>
+          `<div class="btn-row"><button type="button" class="small" data-add-param="${pm}" data-at="${g.idx[g.idx.length - 1]}">+ Add ${pm === 'RH' ? 'RH' : 'temperature'} reading</button></div>`).join('') : ''}
+      </div>`).join('')}
+      <div class="btn-row"><button type="button" class="small" id="btnAddRow">${th ? '+ Add point (RH + temp)' : '+ Add point'}</button></div>
+      <p class="hint">Enter readings in ${th ? '%RH and ' : ''}${esc(I.unit)}${th ? ' (average of your 3 readings)' : ''}. Error = device − reference; it turns red when it's outside ± tolerance. Every point can be renumbered, renamed or removed.${I.adjusted ? ' As Left: the device reading after adjustment, against the same reference.' : ''}</p>`;
   }
 
   const shortStd = t => ({ 'Ferrous': 'Fe', 'Non-Ferrous': 'Non-Fe', 'Stainless 316': 'SS', 'Stainless 304': 'SS 304',
@@ -1106,6 +1128,10 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     render();
   }
   $('#form').addEventListener('input', e => {
+    if (e.target.dataset.pointIdx) {   // renumber every reading of this point
+      e.target.dataset.pointIdx.split(',').forEach(i => { cert.inst.rows[i].point = e.target.value; });
+      return render();
+    }
     const k = e.target.dataset.k; if (!k) return;
     if (k === 'valDate') {   // performed/issued dates follow the validation date unless you changed them
       for (const d of ['techDate', 'issueDate']) if (!cert[d] || cert[d] === cert.valDate) { cert[d] = e.target.value; $(`[data-k="${d}"]`).value = e.target.value; }
@@ -1168,6 +1194,18 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
       if (cert.type === 'th') rows.push({ point: next, param: 'RH', nominal: rows.some(r => /MgCl/.test(r.nominal)) ? '' : '33 %RH (MgCl₂)', tol: tolOf('RH') || '3', ...blank },
                                         { point: next, param: 'Temp', nominal: 'Ambient', tol: tolOf('Temp'), ...blank });
       else rows.push({ point: next, param: 'Temp', nominal: '', tol: tolOf('Temp'), ...blank });
+      fillForm();
+    }
+    const rp = e.target.dataset.removePoint;
+    if (rp !== undefined) {
+      const idx = rp.split(',').map(Number);
+      if (idx.length >= cert.inst.rows.length) return alert('A certificate needs at least one reading. Add another point first, then remove this one.');
+      cert.inst.rows = cert.inst.rows.filter((_, i) => !idx.includes(i)); fillForm();
+    }
+    const ap = e.target.dataset.addParam;
+    if (ap) {
+      const rows = cert.inst.rows, at = Number(e.target.dataset.at), tol = rows.find(r => r.param === ap)?.tol ?? (ap === 'RH' ? '3' : '');
+      rows.splice(at + 1, 0, { point: rows[at].point, param: ap, nominal: ap === 'Temp' ? 'Ambient' : '', tol, ref: '', found: '', left: '' });
       fillForm();
     }
     const rw = e.target.dataset.removeRow;
