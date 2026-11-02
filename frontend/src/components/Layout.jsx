@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { episodes, services } from 'virtual:content';
-import { REVIEW_URL } from '../siteInfo';
+import { LINKEDIN_URL, REVIEW_URL } from '../siteInfo';
 import ChatWidget from './ChatWidget';
 import '../chat.css';
 
@@ -140,6 +140,7 @@ const Layout = () => {
               <a href="mailto:info@wheelerfs.com">info@wheelerfs.com</a><br />
               <a href="tel:+13852015609">(385) 201-5609</a><br />
               <a href="https://www.wheelerfs.com" target="_blank" rel="noopener noreferrer">www.wheelerfs.com</a><br />
+              <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">LinkedIn</a><br />
               <span style={{ color: '#cfd8e3', fontSize: '0.98rem', fontWeight: 400 }}>541 W 9560 S Sandy, UT 84070</span>
             </div>
             <a href={REVIEW_URL} className="footer-review-link" target="_blank" rel="noopener noreferrer">★ Leave us a Google review</a>

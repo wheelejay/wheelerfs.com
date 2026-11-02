@@ -69,7 +69,9 @@ link, quote terms and the footer address are in Settings.
      fridge / freezer / room thermometers with one in-place point (pick the *Device type*; the
      certificate title follows it, e.g. "Thermometer Calibration"). Each device type has its own
      first-device / additional-device price in the price list, which "Invoice" from Records uses.
-     Interval defaults to 12 months. Saving the equipment remembers each unit's own points and tolerances.
+     Each calibration point is its own box: renumber it, rename any reading, add or remove the RH or
+     temperature reading, or remove the whole point (including the ambient and first points); at
+     least one reading stays. Interval defaults to 12 months. Saving the equipment remembers each unit's own points and tolerances.
    * **Magnet:** set the number of tubes (up to 24) and test points per tube (up to 8), enter
      each pull reading in lbs. A tube passes only if *every* reading meets the minimum pull;
      the certificate shows each tube's minimum and average.
