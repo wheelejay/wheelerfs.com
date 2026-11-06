@@ -650,7 +650,7 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
   const SUPABASE_KEY = 'sb_publishable_EjnwXzqk_jyHS0lVvfRbAw_zMs6S6e2';
   const SUPABASE_JS = HOSTED ? 'supabase.js' : 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js';
   const VERIFY_URL = 'https://wheelerfs.com/verify/?c=';
-  const BUILD = '2026-11-05 19:51';   // the website build writes the deploy time here (see frontend/plugins/content.js)
+  const BUILD = '2026-11-06 02:44';   // the website build writes the deploy time here (see frontend/plugins/content.js)
   const buildText = () => BUILD.startsWith('__') ? 'local file' : BUILD + ' UTC';
 
   // ---------- certificate types ----------
@@ -1066,8 +1066,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
         <label>Temperature unit<select data-k="inst.unit">${opts(['°C', '°F'], I.unit)}</select></label>
         ${field('Procedure / SOP No.', 'cond.procedure', `placeholder="${th ? 'e.g. WFS-SOP-RH-001' : 'e.g. WFS-SOP-TP-001'}"`)}
         ${field('Stabilization time', 'inst.stabilization', `placeholder="${th ? 'e.g. 3 hr per point' : 'e.g. 5 min per point'}"`)}
-        ${field(`Ambient temperature (${esc(I.unit)})`, 'inst.ambientTemp', 'inputmode="decimal"')}
-        ${field('Ambient humidity (%RH)', 'inst.ambientRH', 'inputmode="decimal"')}
+        ${th ? field(`Ambient temperature (${esc(I.unit)})`, 'inst.ambientTemp', 'inputmode="decimal"')
+             + field('Ambient humidity (%RH)', 'inst.ambientRH', 'inputmode="decimal"') : ''}
       </div>
       <div class="row full" style="margin-top:8px"><label>Method<textarea data-k="inst.method" style="min-height:58px"></textarea></label></div>
       ${th ? '<p class="hint">Run near 25 °C (77 °F), where the RH accuracy is specified. Allow 2–4 hours per point.</p>'
@@ -1534,7 +1534,8 @@ var qrcode=(function(){var P=function(x,w){var g=236,l=17,n=x,s=O[w],t=null,r=0,
     if (isInst(c.type)) {
       const I = c.inst;
       return dl([['Procedure / SOP', c.cond.procedure], ['Method', I.method], ['Performed', c.cond.location],
-        ['Ambient Temp.', withUnit(I.ambientTemp, I.unit)], ['Ambient Humidity', withUnit(I.ambientRH, '%RH')],
+        // ambient conditions matter for thermohygrometers only
+        ...(c.type === 'th' ? [['Ambient Temp.', withUnit(I.ambientTemp, I.unit)], ['Ambient Humidity', withUnit(I.ambientRH, '%RH')]] : []),
         ['Stabilization', I.stabilization]]);
     }
     if (c.type === 'mg') {
