@@ -44,14 +44,14 @@ const Home = () => {
       icon: '/icons/shield.png',
       alt: 'Metal Detector Shield Icon',
       title: 'Metal Detector Validation',
-      desc: 'Sensitivity testing with Fe/NFe/SS test samples and full audit-ready reports.'
+      desc: 'Validation and calibration of industrial metal detectors, your HACCP critical control point, with Fe/NFe/SS test samples and audit-ready reports.'
     },
     {
       slug: 'x-ray-system-validation',
       icon: '/icons/magglass.png',
       alt: 'X-ray Magnifying Glass Icon',
       title: 'X-ray System Validation',
-      desc: 'Detectability testing using certified contaminants with traceable documentation.'
+      desc: 'Industrial X-ray inspection testing with certified contaminants and traceable, audit-ready documentation.'
     },
     {
       slug: 'magnet-validation',
