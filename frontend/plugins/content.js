@@ -165,6 +165,16 @@ const postJsonLd = (p) => ({
   publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL + '/', logo: { '@type': 'ImageObject', url: `${SITE_URL}/wheelerfslogo.png` } },
 });
 
+// FAQPage details from a "Frequently asked questions" section (### question, then the answer paragraph)
+function faqJsonLd(html) {
+  const section = html.split(/<h2[^>]*>Frequently asked questions<\/h2>/i)[1]?.split(/<h2/)[0];
+  if (!section) return undefined;
+  const text = (h) => h.replace(/<[^>]+>/g, '').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').trim();
+  const qa = [...section.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>\s*<p>([\s\S]*?)<\/p>/g)]
+    .map(([, q, a]) => ({ '@type': 'Question', name: text(q), acceptedAnswer: { '@type': 'Answer', text: text(a) } }));
+  return qa.length ? { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: qa } : undefined;
+}
+
 const listHtml = (heading, items, base) =>
   `<h1>${escapeHtml(heading)}</h1>` +
   items
@@ -212,6 +222,7 @@ function prerender(outDir, { posts, episodes, services }) {
       title: `${s.seoTitle || s.title} | ${SITE_NAME}`,
       description: s.excerpt,
       body: `<article><h1>${escapeHtml(s.title)}</h1><p>${escapeHtml(s.excerpt)}</p>${s.html}</article>`,
+      jsonLd: faqJsonLd(s.html),
     })),
     {
       route: '/blog',
