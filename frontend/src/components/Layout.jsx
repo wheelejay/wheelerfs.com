@@ -102,6 +102,7 @@ const Layout = () => {
               <li><Link to="/#pricing" onClick={handleNavLinkClick}>Pricing</Link></li>
               <li><Link to="/#why-us" onClick={handleNavLinkClick}>Why Us</Link></li>
               <li><Link to="/blog/" onClick={handleNavLinkClick}>Blog</Link></li>
+              <li><Link to="/resources/" onClick={handleNavLinkClick}>Free Resources</Link></li>
               {episodes.length > 0 && <li><Link to="/podcast/" onClick={handleNavLinkClick}>Podcast</Link></li>}
               <li><Link to="/#contact" onClick={handleNavLinkClick}>Contact</Link></li>
             </ul>
@@ -130,6 +131,7 @@ const Layout = () => {
             </div>
             <div style={{ marginTop: '0.8em', fontSize: '0.98rem', fontWeight: 400 }}>
               <Link to="/blog/">Blog</Link>
+              {' · '}<Link to="/resources/">Free resources</Link>
               {episodes.length > 0 && <> · <Link to="/podcast/">Podcast</Link></>}
               {' · '}<Link to="/portal/">Customer portal</Link>
             </div>

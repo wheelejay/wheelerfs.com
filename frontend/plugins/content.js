@@ -12,6 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { marked } from 'marked';
+import { RESOURCES_TITLE, RESOURCES_INTRO, downloads, guideSlugs, pdfUrl } from '../src/resources.js';
 
 const SITE_URL = 'https://wheelerfs.com';
 const SITE_NAME = 'Wheeler Food Safety';
@@ -181,6 +182,14 @@ const listHtml = (heading, items, base) =>
     .map((i) => `<article><h2><a href="${base}/${i.slug}/">${escapeHtml(i.title)}</a></h2><p>${escapeHtml(i.excerpt)}</p></article>`)
     .join('');
 
+const resourcesHtml = (posts) =>
+  `<h1>${RESOURCES_TITLE}</h1><p>${escapeHtml(RESOURCES_INTRO)}</p><h2>Printable logs</h2>` +
+  downloads.map((d) => `<article><h3><a href="${pdfUrl(d)}">${escapeHtml(d.title)} (PDF)</a></h3><p>${escapeHtml(d.description)}</p><p>${escapeHtml(d.pages)}</p><p><a href="/services/${d.service.slug}/">${escapeHtml(d.service.label)}</a></p></article>`).join('') +
+  `<h2>Helpful guides</h2><ul>` +
+  guideSlugs.map((slug) => posts.find((p) => p.slug === slug)).filter(Boolean)
+    .map((p) => `<li><a href="/blog/${p.slug}/">${escapeHtml(p.title)}</a></li>`).join('') +
+  `</ul>`;
+
 // Text version of the homepage for search engines. The live page is built by
 // React (src/pages/Home.jsx); keep the wording here roughly in step with it.
 function homeHtml(services, posts) {
@@ -229,6 +238,12 @@ function prerender(outDir, { posts, episodes, services }) {
       title: `Blog | ${SITE_NAME}`,
       description: 'Food safety validation tips and audit prep for Utah food manufacturers, from Wheeler Food Safety.',
       body: listHtml('Blog', posts, '/blog'),
+    },
+    {
+      route: '/resources',
+      title: `${RESOURCES_TITLE} | ${SITE_NAME}`,
+      description: RESOURCES_INTRO,
+      body: resourcesHtml(posts),
     },
     ...posts.map((p) => ({
       route: `/blog/${p.slug}`,
