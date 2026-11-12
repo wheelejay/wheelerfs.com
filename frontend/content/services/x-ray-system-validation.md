@@ -29,6 +29,8 @@ Need to validate detection of other contaminants, like glass, stone, or bone? We
 - When you introduce a new product or packaging format
 - When a customer or certification body requires it
 
+**Free download:** our [X-ray inspection verification log (PDF)](/downloads/wheeler-x-ray-verification-log.pdf), with a one-page guide to running operator checks.
+
 ## Frequently asked questions
 
 ### Is an X-ray system a critical control point?

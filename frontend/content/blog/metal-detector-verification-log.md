@@ -62,6 +62,13 @@ The interval decides how much product you have to hold when a check fails. The l
 
 For more detail, see [what to do when your metal detector fails a check](/blog/metal-detector-failed-check).
 
+## Logs for X-ray systems and magnets
+
+Running X-ray inspection or magnets too? We have matching free logs:
+
+- **[X-Ray Inspection Verification Log (PDF)](/downloads/wheeler-x-ray-verification-log.pdf)**: the same checks, with an extra column for glass, stone, or bone test pieces
+- **[Magnet Inspection & Cleaning Log (PDF)](/downloads/wheeler-magnet-inspection-log.pdf)**: condition, captured metal, cleaning, and re-installation for every magnet
+
 ## Verification isn't validation
 
 The log shows your detector is working **right now**. **Validation** proves it finds and rejects your specified test pieces in every product you run, with every fail-safe tested, and auditors expect it at least once a year. QA should also review and sign the verification logs regularly.

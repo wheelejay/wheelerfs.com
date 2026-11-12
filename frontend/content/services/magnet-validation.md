@@ -24,6 +24,8 @@ Magnets lose strength over time and can be damaged in ways that aren't obvious. 
 - After any event that could have damaged a magnet
 - When a customer or certification body requires it
 
+**Free download:** our [magnet inspection and cleaning log (PDF)](/downloads/wheeler-magnet-inspection-log.pdf), with a one-page guide to inspecting and cleaning magnets safely.
+
 ## Pricing
 
 $350 for the first unit and $150 for each additional unit validated on the same visit. Annual service contracts save 5 to 20 percent. See [pricing](/#pricing) for details.

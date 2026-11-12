@@ -67,4 +67,6 @@ Wheeler Food Safety's [magnet validation](/services/magnet-validation) covers vi
 
 For more on the basics, see [Magnet Pull Testing: How to Verify Your Magnets Still Work](/blog/magnet-pull-testing).
 
+For day-to-day checks between validations, download our free [magnet inspection and cleaning log (PDF)](/downloads/wheeler-magnet-inspection-log.pdf).
+
 [Contact us](/#contact) to schedule magnet validation in Utah.
