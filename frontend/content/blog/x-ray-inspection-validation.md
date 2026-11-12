@@ -2,7 +2,7 @@
 title: "X-Ray Inspection Validation: How to Prove Your X-Ray System Works"
 seoTitle: "X-Ray Inspection System Validation Guide"
 date: 2026-12-16
-excerpt: X-ray systems are often trusted to catch what metal detectors can't. How food plants validate X-ray inspection, which test pieces to use, and what auditors expect.
+excerpt: X-ray systems often catch what metal detectors can't. How food plants validate X-ray inspection, which test pieces to use, and what auditors expect.
 draft: false
 ---
 

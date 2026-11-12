@@ -28,6 +28,8 @@ In most food plants, the metal detector is a **critical control point (CCP)** in
 - When you add a new product, package type, or line speed
 - When a customer or certification body requires it
 
+**Free download:** our [metal detector verification log (PDF)](/downloads/wheeler-metal-detector-verification-log.pdf), with a one-page guide to running operator checks.
+
 ## Your metal detector as a HACCP critical control point
 
 When metal is a hazard in your plan, your metal detector is usually the step that controls it, making it a critical control point under HACCP or a process preventive control under FDA's Preventive Controls rule. Either way, your plan needs:

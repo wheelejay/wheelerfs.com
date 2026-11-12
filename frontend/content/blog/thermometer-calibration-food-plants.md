@@ -2,7 +2,7 @@
 title: "Thermometer Calibration for Food Plants: How Often, How It's Done, and What Auditors Want"
 seoTitle: "Thermometer Calibration for Food Plants"
 date: 2026-11-25
-excerpt: Your cook, cooling, and storage records are only as good as your thermometers. How food plants should calibrate probes, gauges, and fridge thermometers, and how often.
+excerpt: Your cook, cooling, and storage records are only as good as your thermometers. How food plants should calibrate probes, gauges, and fridge thermometers.
 draft: false
 ---
 

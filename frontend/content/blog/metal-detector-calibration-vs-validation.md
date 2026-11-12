@@ -20,7 +20,7 @@ Here's what calibration, validation, and verification really mean, which one you
 
 ## Why "calibration" doesn't really fit a metal detector
 
-Calibration is for **measuring** instruments: devices that give you a number, like a thermometer, a hygrometer, or a scale. You compare that number with a reference, record the error, and decide whether it's within tolerance.
+Calibration is for **measuring** instruments: devices that give you a number, like a thermometer, a temperature probe, or a hygrometer. You compare that number with a reference, record the error, and decide whether it's within tolerance.
 
 A metal detector doesn't measure anything you can compare that way. Its job is to make a decision: metal or no metal, reject or accept. What matters is whether it **detects and rejects** contamination of a given size in your product, at your line speed, every time. Proving that is validation.
 
