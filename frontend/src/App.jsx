@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import ContentList from './pages/ContentList';
 import ContentDetail from './pages/ContentDetail';
 import NotFound from './pages/NotFound';
+import Resources from './pages/Resources';
 // Loaded on demand so the Supabase library only downloads on these pages.
 const Portal = lazy(() => import('./pages/Portal'));
 const Verify = lazy(() => import('./pages/Verify'));
@@ -32,6 +33,7 @@ const App = () => (
           />
         }
       />
+      <Route path="resources" element={<Resources />} />
       <Route
         path="services/:slug"
         element={<ContentDetail items={services} basePath="/#services" backLabel="All services" siteLabel="Wheeler Food Safety" />}
